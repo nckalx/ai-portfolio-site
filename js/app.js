@@ -1,4 +1,4 @@
-const scheduleData = [
+﻿const scheduleData = [
   {
     milestone: "Design Complete",
     originalDate: "2026-02-06",
@@ -54,9 +54,53 @@ function parseDate(dateString) {
   return new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
 }
 
+function formatDate(dateString) {
+  const date = parseDate(dateString);
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const year = date.getFullYear();
+
+  return `${month}/${day}/${year}`;
+}
+
 function calculateCalendarDaysMoved(originalDate, newDate) {
   const millisecondsPerDay = 24 * 60 * 60 * 1000;
   return Math.round((parseDate(newDate) - parseDate(originalDate)) / millisecondsPerDay);
+}
+
+function isWeekday(date) {
+  const dayOfWeek = date.getDay();
+  return dayOfWeek !== 0 && dayOfWeek !== 6;
+}
+
+function countWeekdaysInclusive(startDate, endDate) {
+  const currentDate = new Date(startDate);
+  let weekdayCount = 0;
+
+  while (currentDate <= endDate) {
+    if (isWeekday(currentDate)) {
+      weekdayCount += 1;
+    }
+
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  return weekdayCount;
+}
+
+function calculateWorkdaysMoved(originalDate, newDate) {
+  const original = parseDate(originalDate);
+  const updated = parseDate(newDate);
+
+  if (updated.getTime() === original.getTime()) {
+    return 0;
+  }
+
+  if (updated > original) {
+    return countWeekdaysInclusive(original, updated) - 1;
+  }
+
+  return -(countWeekdaysInclusive(updated, original) - 1);
 }
 
 function getMovementDirection(daysMoved) {
@@ -82,8 +126,9 @@ function analyzeSchedule() {
   let unchangedCount = 0;
 
   scheduleData.forEach((item) => {
-    const daysMoved = calculateCalendarDaysMoved(item.originalDate, item.newDate);
-    const direction = getMovementDirection(daysMoved);
+    const calendarDaysMoved = calculateCalendarDaysMoved(item.originalDate, item.newDate);
+    const workdaysMoved = calculateWorkdaysMoved(item.originalDate, item.newDate);
+    const direction = getMovementDirection(calendarDaysMoved);
 
     if (direction === "Delayed") {
       delayedCount += 1;
@@ -97,9 +142,10 @@ function analyzeSchedule() {
 
     row.innerHTML = `
       <td>${item.milestone}</td>
-      <td>${item.originalDate}</td>
-      <td>${item.newDate}</td>
-      <td>${daysMoved}</td>
+      <td>${formatDate(item.originalDate)}</td>
+      <td>${formatDate(item.newDate)}</td>
+      <td>${calendarDaysMoved}</td>
+      <td>${workdaysMoved}</td>
       <td>${direction}</td>
     `;
 
@@ -110,7 +156,8 @@ function analyzeSchedule() {
     `Analyzed ${scheduleData.length} milestones: ` +
     `${delayedCount} delayed, ` +
     `${acceleratedCount} accelerated, ` +
-    `${unchangedCount} unchanged.`;
+    `${unchangedCount} unchanged. ` +
+    `Workday movement excludes Saturdays and Sundays.`;
 }
 
 function renderFormulaExamples(filterValue = "All") {
