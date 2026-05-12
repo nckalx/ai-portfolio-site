@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --bg: #f6f3ee;
   --surface: #ffffff;
   --surface-alt: #ebe4da;
@@ -203,6 +203,14 @@ h3 {
 .project-card ul {
   padding-left: 20px;
   color: var(--text);
+}
+
+.project-card li {
+  margin-bottom: 10px;
+}
+
+.portfolio-note {
+  margin-top: 32px;
 }
 
 .demo-card {
