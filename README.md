@@ -13,15 +13,15 @@ The site is designed to showcase practical, business-facing automation projects 
 
 ## Live Site
 
-The portfolio is currently published with GitHub Pages:
+The portfolio is published at:
 
-- Live site: https://nckalx.github.io/ai-portfolio-site/
+- Live site: https://nickalexander.io
 
-The long-term destination for this portfolio is:
+The site is hosted with GitHub Pages and backed by this repository.
 
-- Custom domain: https://nickalexander.io
+Development/staging URL:
 
-During development, GitHub Pages is being used as the staging/live preview environment before connecting the custom domain.
+- GitHub Pages URL: https://nckalx.github.io/ai-portfolio-site/
 
 ## Project Purpose
 
@@ -29,11 +29,15 @@ This portfolio is the central home for Nick's AI-enabled project controls work.
 
 Rather than only linking to GitHub repositories, the site presents each project with business context, skills demonstrated, and lightweight interactive demos.
 
+The goal is to show how AI-assisted development can support real project controls workflows by turning manual, repetitive processes into cleaner and more repeatable tools.
+
 ## Featured Projects
 
 ### Project #1: Schedule Movement Analyzer
 
 A Python tool that compares original and updated milestone dates, calculates schedule movement, and generates a variance report.
+
+The tool calculates both calendar-day movement and workday movement, helping project controls teams summarize schedule changes more consistently.
 
 Repository:
 
@@ -42,6 +46,8 @@ https://github.com/nckalx/schedule-movement-analyzer
 ### Project #2: Smartsheet Formula Helper
 
 A Python tool that converts structured Smartsheet formula examples into a reusable Markdown reference guide grouped by formula type and business use case.
+
+The tool supports repeatable Smartsheet workflow documentation for formulas related to dates, milestone IDs, cross-sheet lookups, RIO tracking, and reporting helpers.
 
 Repository:
 
@@ -65,8 +71,19 @@ This first version is intentionally simple:
 - CSS
 - JavaScript
 - GitHub Pages
+- Custom domain through Namecheap
 
 The goal is to keep the site easy to understand, easy to maintain, and easy to deploy.
+
+## Current Features
+
+- Single-page portfolio layout
+- Project cards for completed portfolio projects
+- Business problem / automation solution / skills shown framing
+- Interactive schedule movement demo
+- Interactive Smartsheet formula reference filter
+- GitHub Pages deployment
+- Custom domain: `nickalexander.io`
 
 ## Future Plans
 
@@ -75,6 +92,5 @@ Planned improvements include:
 - Add screenshots from Projects #1 and #2
 - Add richer interactive demos
 - Add a dedicated project detail page for each tool
-- Continue publishing with GitHub Pages during development
-- Connect the custom domain `nickalexander.io`
-- Expand the portfolio with additional project controls and workflow automation tools
+- Add future project controls and workflow automation tools
+- Continue refining the portfolio as the broader AI project portfolio grows
