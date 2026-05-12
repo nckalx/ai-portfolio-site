@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nick Alexander | AI Project Controls Portfolio</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav">
+      <a href="#" class="logo">Nick Alexander</a>
+      <div class="nav-links">
+        <a href="#projects">Projects</a>
+        <a href="#demos">Demos</a>
+        <a href="#about">About</a>
+      </div>
+    </nav>
+
+    <section class="hero">
+      <p class="eyebrow">AI-enabled project controls and workflow automation</p>
+      <h1>Practical automation tools for schedule analysis, Smartsheet workflows, and project reporting.</h1>
+      <p class="hero-text">
+        I build business-facing tools that turn repetitive project controls workflows into cleaner,
+        faster, and more repeatable processes.
+      </p>
+      <div class="hero-actions">
+        <a class="button primary" href="#projects">View Projects</a>
+        <a class="button secondary" href="https://github.com/nckalx" target="_blank" rel="noopener noreferrer">
+          GitHub Profile
+        </a>
+      </div>
+    </section>
+  </header>
+
+  <main>
+    <section id="projects" class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Portfolio Projects</p>
+        <h2>Project controls tools built with Python, GitHub, and AI-assisted development.</h2>
+      </div>
+
+      <div class="project-grid">
+        <article class="project-card">
+          <p class="project-number">Project #1</p>
+          <h3>Schedule Movement Analyzer</h3>
+          <p>
+            Compares original and updated milestone dates, calculates movement in calendar days and workdays,
+            and generates a schedule variance report.
+          </p>
+          <ul>
+            <li>Python CSV analysis</li>
+            <li>Workday movement logic</li>
+            <li>Validation and friendly errors</li>
+            <li>Unit tests</li>
+          </ul>
+          <a href="https://github.com/nckalx/schedule-movement-analyzer" target="_blank" rel="noopener noreferrer">
+            View Repository
+          </a>
+        </article>
+
+        <article class="project-card">
+          <p class="project-number">Project #2</p>
+          <h3>Smartsheet Formula Helper</h3>
+          <p>
+            Converts structured Smartsheet formula examples into a reusable Markdown reference guide grouped
+            by formula type and business use case.
+          </p>
+          <ul>
+            <li>Formula reference generation</li>
+            <li>Smartsheet workflow support</li>
+            <li>CSV validation</li>
+            <li>Unit tests</li>
+          </ul>
+          <a href="https://github.com/nckalx/smartsheet-formula-helper" target="_blank" rel="noopener noreferrer">
+            View Repository
+          </a>
+        </article>
+
+        <article class="project-card">
+          <p class="project-number">Project #3</p>
+          <h3>AI Portfolio Site</h3>
+          <p>
+            A static portfolio website designed to showcase project controls automation tools with
+            business context, GitHub links, and lightweight interactive demos.
+          </p>
+          <ul>
+            <li>HTML, CSS, and JavaScript</li>
+            <li>GitHub Pages ready</li>
+            <li>Portfolio storytelling</li>
+            <li>Future custom domain</li>
+          </ul>
+          <a href="#demos">View Demo Sections</a>
+        </article>
+      </div>
+    </section>
+
+    <section id="demos" class="section alt-section">
+      <div class="section-heading">
+        <p class="eyebrow">Interactive Demo</p>
+        <h2>Sample schedule movement analysis</h2>
+        <p>
+          This small browser demo mirrors the business logic from Project #1 in a web-friendly format.
+        </p>
+      </div>
+
+      <div class="demo-card">
+        <button id="analyzeScheduleButton" class="button primary">Analyze Sample Schedule</button>
+        <div id="scheduleSummary" class="summary-box">
+          Click the button to calculate sample schedule movement results.
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Milestone</th>
+                <th>Original Date</th>
+                <th>New Date</th>
+                <th>Calendar Days Moved</th>
+                <th>Movement Direction</th>
+              </tr>
+            </thead>
+            <tbody id="scheduleResultsTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section-heading formula-heading">
+        <p class="eyebrow">Interactive Demo</p>
+        <h2>Smartsheet formula reference filter</h2>
+        <p>
+          This demo previews how Project #2 can become a searchable web reference.
+        </p>
+      </div>
+
+      <div class="demo-card">
+        <label for="formulaFilter">Filter by formula type:</label>
+        <select id="formulaFilter">
+          <option value="All">All</option>
+          <option value="Cross-Sheet Formula">Cross-Sheet Formula</option>
+          <option value="Date Formula">Date Formula</option>
+          <option value="Summary Formula">Summary Formula</option>
+          <option value="Text Formula">Text Formula</option>
+          <option value="Text/Number Formula">Text/Number Formula</option>
+        </select>
+
+        <div id="formulaList" class="formula-list"></div>
+      </div>
+    </section>
+
+    <section id="about" class="section">
+      <div class="about-card">
+        <p class="eyebrow">About This Portfolio</p>
+        <h2>Built around real project controls workflows.</h2>
+        <p>
+          This portfolio focuses on practical automation: schedule analysis, Smartsheet formula logic,
+          project reporting, workflow standardization, and AI-assisted process improvement.
+        </p>
+        <p>
+          Each project is designed to show both technical growth and business value: clear inputs,
+          repeatable logic, useful outputs, documentation, testing, and version control.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© 2026 Nick Alexander. Built as an AI project controls portfolio.</p>
+  </footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
