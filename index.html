@@ -137,24 +137,38 @@
 
       <div class="section-heading formula-heading">
         <p class="eyebrow">Interactive Demo</p>
-        <h2>Smartsheet formula reference filter</h2>
+        <h2>Smartsheet formula builder</h2>
         <p>
-          This demo previews how Project #2 can become a searchable web reference.
+          Choose a formula pattern, enter the relevant Smartsheet columns, and generate a
+          copy/paste-ready formula with setup notes for any cross-sheet references.
         </p>
       </div>
 
-      <div class="demo-card">
-        <label for="formulaFilter">Filter by formula type:</label>
-        <select id="formulaFilter">
-          <option value="All">All</option>
-          <option value="Cross-Sheet Formula">Cross-Sheet Formula</option>
-          <option value="Date Formula">Date Formula</option>
-          <option value="Summary Formula">Summary Formula</option>
-          <option value="Text Formula">Text Formula</option>
-          <option value="Text/Number Formula">Text/Number Formula</option>
-        </select>
+      <div class="demo-card formula-builder-card">
+        <div class="formula-builder-layout">
+          <form id="formulaBuilderForm" class="formula-builder-form">
+            <div class="builder-field">
+              <label for="formulaType">Formula type:</label>
+              <select id="formulaType">
+                <option value="totalDateLabel">Total Date / Milestone Label</option>
+                <option value="scheduleMovedWorkdays">Schedule Moved in Workdays</option>
+                <option value="twoCriteriaLookup">Cross-Sheet Two-Criteria Lookup</option>
+                <option value="checkboxMatch">Checkbox Based on Cross-Sheet Match</option>
+                <option value="rioIdLookup">RIO ID Lookup</option>
+              </select>
+            </div>
 
-        <div id="formulaList" class="formula-list"></div>
+            <div id="formulaInputFields" class="builder-fields"></div>
+          </form>
+
+          <div class="formula-output-panel">
+            <p class="formula-type">Generated Formula</p>
+            <pre id="generatedFormula" class="formula-output"></pre>
+            <button id="copyFormulaButton" class="button primary" type="button">Copy Formula</button>
+            <p id="copyFormulaStatus" class="copy-status" aria-live="polite"></p>
+            <div id="referenceInstructions" class="reference-instructions"></div>
+          </div>
+        </div>
       </div>
     </section>
 

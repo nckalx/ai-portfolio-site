@@ -261,6 +261,7 @@ label {
   font-weight: 800;
 }
 
+input,
 select {
   width: 100%;
   max-width: 360px;
@@ -271,21 +272,91 @@ select {
   background: #ffffff;
 }
 
-.formula-list {
+.formula-builder-layout {
   display: grid;
-  gap: 16px;
-  margin-top: 24px;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 1fr);
+  gap: 28px;
+  align-items: start;
 }
 
-.formula-item {
-  padding: 18px;
+.formula-builder-form,
+.builder-fields {
+  display: grid;
+  gap: 18px;
+}
+
+.formula-builder-form select,
+.formula-builder-form input {
+  max-width: none;
+}
+
+.field-help {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.formula-output-panel {
+  display: grid;
+  gap: 14px;
+  padding: 20px;
   background: #f7f8fa;
   border: 1px solid var(--border);
   border-radius: 16px;
 }
 
-.formula-item h3 {
-  margin-bottom: 6px;
+.formula-output {
+  min-height: 120px;
+  margin: 0;
+  padding: 16px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.copy-status {
+  min-height: 1.4em;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.reference-instructions {
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.reference-instructions h3 {
+  margin-bottom: 8px;
+  font-size: 1.05rem;
+}
+
+.reference-instructions p {
+  margin-top: 0;
+  color: var(--muted);
+}
+
+.reference-list,
+.setup-steps {
+  padding-left: 20px;
+  margin: 0 0 16px;
+}
+
+.reference-list li,
+.setup-steps li {
+  margin-bottom: 8px;
 }
 
 .formula-type {
@@ -327,6 +398,10 @@ select {
   }
 
   .project-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .formula-builder-layout {
     grid-template-columns: 1fr;
   }
 }
