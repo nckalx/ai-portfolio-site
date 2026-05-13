@@ -119,10 +119,10 @@
 
       <div class="demo-card schedule-upload-card">
         <div class="demo-card-heading">
-          <p class="eyebrow">Phase 1 Upload Shell</p>
+          <p class="eyebrow">Phase 2 Workbook Preview</p>
           <h3>Uploaded Smartsheet schedule analyzer</h3>
           <p>
-            Choose a future <code>.xlsx</code> schedule export and map the columns the analyzer should use.
+            Choose a Smartsheet <code>.xlsx</code> schedule export and map the columns the analyzer should use.
             Extra columns in the file will be ignored.
           </p>
         </div>
@@ -135,7 +135,7 @@
               type="file"
               accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             />
-            <p class="field-help">Phase 1 validates the setup only. Workbook parsing will be added later.</p>
+            <p class="field-help">Phase 2 validates mapped columns and previews normalized rows only.</p>
           </div>
 
           <div class="mapping-section">
@@ -248,6 +248,32 @@
             </p>
           </div>
         </form>
+
+        <section id="scheduleAnalyzerPreview" class="schedule-preview-panel" hidden>
+          <div class="preview-heading">
+            <p class="eyebrow">Validation Preview</p>
+            <h4>Workbook parsing summary</h4>
+            <p>
+              These results show the workbook structure and first normalized rows using only mapped columns.
+            </p>
+          </div>
+
+          <dl id="scheduleWorkbookSummary" class="workbook-summary-list"></dl>
+
+          <div class="mapped-columns-panel">
+            <p class="formula-type">Mapped Columns Used</p>
+            <ul id="scheduleMappedColumns" class="mapped-column-list"></ul>
+          </div>
+
+          <div class="table-wrapper preview-table-wrapper">
+            <table class="preview-table">
+              <thead>
+                <tr id="schedulePreviewHeader"></tr>
+              </thead>
+              <tbody id="schedulePreviewBody"></tbody>
+            </table>
+          </div>
+        </section>
       </div>
 
       <div class="schedule-placeholder-grid">
@@ -396,6 +422,7 @@
   </footer>
 
   <script src="js/app.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="js/schedule-analyzer.js"></script>
 </body>
 </html>
