@@ -150,7 +150,7 @@
             <div class="builder-field">
               <label for="formulaType">Formula type:</label>
               <select id="formulaType">
-                <option value="totalDateLabel">Total Date / Milestone Label</option>
+                <option value="appendFinishDateLabel">Append Finish Date to Milestone Label</option>
                 <option value="scheduleMovedWorkdays">Schedule Moved in Workdays</option>
                 <option value="twoCriteriaLookup">Cross-Sheet Two-Criteria Lookup</option>
                 <option value="checkboxMatch">Checkbox Based on Cross-Sheet Match</option>
@@ -162,6 +162,10 @@
           </form>
 
           <div class="formula-output-panel">
+            <div class="formula-explanation">
+              <h3>What this formula does</h3>
+              <p id="formulaExplanation"></p>
+            </div>
             <p class="formula-type">Generated Formula</p>
             <pre id="generatedFormula" class="formula-output"></pre>
             <button id="copyFormulaButton" class="button primary" type="button">Copy Formula</button>

@@ -22,7 +22,9 @@
 ];
 
 const formulaBuilderConfigs = {
-  totalDateLabel: {
+  appendFinishDateLabel: {
+    explanation:
+      "Creates a clean milestone label for project controls reports by keeping the milestone name as the base text and appending the row's Finish Date when that date is available.",
     fields: [
       {
         id: "milestoneLabelColumn",
@@ -31,17 +33,17 @@ const formulaBuilderConfigs = {
         help: "The current-sheet column that stores the readable milestone name."
       },
       {
-        id: "totalDateColumn",
-        label: "Total date column",
-        defaultValue: "Total Date",
-        help: "The current-sheet date column to append when it has a value."
+        id: "finishDateColumn",
+        label: "Finish date column",
+        defaultValue: "Finish Date",
+        help: "The current-sheet finish date column to append when it has a value."
       }
     ],
     buildFormula(values) {
       return (
-        `=IF(ISBLANK(${rowColumn(values.totalDateColumn)}), ` +
+        `=IF(ISBLANK(${rowColumn(values.finishDateColumn)}), ` +
         `${rowColumn(values.milestoneLabelColumn)}, ` +
-        `${rowColumn(values.milestoneLabelColumn)} + " - " + ${rowColumn(values.totalDateColumn)})`
+        `${rowColumn(values.milestoneLabelColumn)} + " - " + ${rowColumn(values.finishDateColumn)})`
       );
     },
     getReferences() {
@@ -50,12 +52,14 @@ const formulaBuilderConfigs = {
     getInstructions(values) {
       return [
         `Add this formula to the helper column where you want the combined label to appear.`,
-        `Confirm the column names match ${values.milestoneLabelColumn} and ${values.totalDateColumn}.`,
+        `Confirm the column names match ${values.milestoneLabelColumn} and ${values.finishDateColumn}.`,
         `Use a Text/Number column for the formula output.`
       ];
     }
   },
   scheduleMovedWorkdays: {
+    explanation:
+      "Calculates how many weekdays a milestone moved between its original date and revised date, giving project controls teams a quick schedule variance value for reporting.",
     fields: [
       {
         id: "originalDateColumn",
@@ -91,6 +95,8 @@ const formulaBuilderConfigs = {
     }
   },
   twoCriteriaLookup: {
+    explanation:
+      "Looks up a value from another Smartsheet sheet only when two current-row criteria match the source sheet, which is useful for pulling the correct forecast date, owner, status, or control value from a master project source.",
     fields: [
       {
         id: "lookupCurrentCriteriaOneColumn",
@@ -182,6 +188,8 @@ const formulaBuilderConfigs = {
     }
   },
   checkboxMatch: {
+    explanation:
+      "Checks a box when the current row has a matching value in another sheet, helping teams flag milestones that are tied to an external log, action tracker, or control register.",
     fields: [
       {
         id: "checkboxCurrentMatchColumn",
@@ -229,6 +237,8 @@ const formulaBuilderConfigs = {
     }
   },
   rioIdLookup: {
+    explanation:
+      "Finds the related Risk, Issue, or Opportunity ID from a RIO log by matching the current milestone ID, so project teams can connect schedule rows back to their active risk and issue records.",
     fields: [
       {
         id: "rioCurrentIdColumn",
@@ -505,12 +515,14 @@ function renderReferenceInstructions(config, values) {
 function renderFormulaBuilderOutput() {
   const formulaType = document.getElementById("formulaType").value;
   const config = formulaBuilderConfigs[formulaType];
+  const formulaExplanation = document.getElementById("formulaExplanation");
   const generatedFormula = document.getElementById("generatedFormula");
   const copyFormulaButton = document.getElementById("copyFormulaButton");
   const copyFormulaStatus = document.getElementById("copyFormulaStatus");
   const values = getFormulaValues(config);
   const missingFields = getMissingFields(config, values);
 
+  formulaExplanation.textContent = config.explanation;
   copyFormulaStatus.textContent = "";
 
   if (missingFields.length > 0) {
