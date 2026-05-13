@@ -651,6 +651,866 @@ const formulaBuilderConfigs = {
         `Use the selected attribute for budget timing analysis, grouping, filtering, or dashboard rollups.`
       ];
     }
+  },
+  singleCriteriaLookup: {
+    explanation:
+      "Looks up a value from another sheet when the current row has a matching ID, name, or other lookup key.",
+    fields: [
+      {
+        id: "singleLookupReturnReference",
+        label: "Source return reference",
+        defaultValue: "Source Return Value",
+        help: "The cross-sheet reference that points to the source value you want returned."
+      },
+      {
+        id: "singleLookupMatchReference",
+        label: "Source match reference",
+        defaultValue: "Source Match ID",
+        help: "The cross-sheet reference that points to the source lookup key or ID column."
+      },
+      {
+        id: "singleLookupCurrentColumn",
+        label: "Current sheet lookup column",
+        defaultValue: "Lookup ID",
+        help: "The current-sheet column that contains the value to match."
+      }
+    ],
+    buildFormula(values) {
+      return (
+        `=IFERROR(INDEX(${sheetReference(values.singleLookupReturnReference)}, ` +
+        `MATCH(${rowColumn(values.singleLookupCurrentColumn)}, ${sheetReference(values.singleLookupMatchReference)}, 0)), "")`
+      );
+    },
+    getReferences(values) {
+      return [
+        {
+          name: values.singleLookupReturnReference,
+          sheet: "Source lookup sheet",
+          range: "Value column to return"
+        },
+        {
+          name: values.singleLookupMatchReference,
+          sheet: "Source lookup sheet",
+          range: "Source ID or lookup key column"
+        }
+      ];
+    },
+    getSetupNotes() {
+      return [
+        "Create a cross-sheet reference for the value you want returned.",
+        "Create a cross-sheet reference for the source column that contains the matching ID or key.",
+        "The current sheet must have a lookup column containing the value to match."
+      ];
+    },
+    getInstructions(values) {
+      return [
+        `Add this formula to the column where you want the returned value to appear.`,
+        `Create ${sheetReference(values.singleLookupReturnReference)} and ${sheetReference(values.singleLookupMatchReference)} in Smartsheet.`,
+        `Confirm ${values.singleLookupCurrentColumn} matches the values in ${sheetReference(values.singleLookupMatchReference)}.`
+      ];
+    }
+  },
+  joinMatchingValues: {
+    explanation:
+      "Collects multiple matching values from another sheet and displays them together in one cell.",
+    fields: [
+      {
+        id: "joinSourceValuesReference",
+        label: "Source values reference",
+        defaultValue: "Source Values",
+        help: "The cross-sheet reference that points to the values you want to return."
+      },
+      {
+        id: "joinSourceMatchReference",
+        label: "Source match reference",
+        defaultValue: "Source Match ID",
+        help: "The cross-sheet reference that points to the source match column."
+      },
+      {
+        id: "joinCurrentLookupColumn",
+        label: "Current sheet lookup column",
+        defaultValue: "Lookup ID",
+        help: "The current-sheet column that contains the value to match."
+      },
+      {
+        id: "joinOutputType",
+        label: "Match output type",
+        type: "select",
+        defaultValue: "all",
+        options: [
+          { value: "all", label: "All matching values" },
+          { value: "distinct", label: "Distinct matching values only" }
+        ],
+        help: "Choose whether repeated matching values should be kept or removed."
+      },
+      {
+        id: "joinSeparator",
+        label: "Separator",
+        type: "select",
+        defaultValue: "comma",
+        options: [
+          { value: "comma", label: "Comma" },
+          { value: "lineBreak", label: "Line break" }
+        ],
+        help: "Choose how the matching values should be separated in the output cell."
+      }
+    ],
+    buildFormula(values) {
+      const collectedValues =
+        `COLLECT(${sheetReference(values.joinSourceValuesReference)}, ` +
+        `${sheetReference(values.joinSourceMatchReference)}, ${rowColumn(values.joinCurrentLookupColumn)})`;
+      const valuesToJoin = values.joinOutputType === "distinct" ? `DISTINCT(${collectedValues})` : collectedValues;
+      const separator = values.joinSeparator === "lineBreak" ? "CHAR(10)" : `", "`;
+
+      return `=IFERROR(JOIN(${valuesToJoin}, ${separator}), "")`;
+    },
+    getReferences(values) {
+      return [
+        {
+          name: values.joinSourceValuesReference,
+          sheet: "Source detail sheet",
+          range: "Values to join"
+        },
+        {
+          name: values.joinSourceMatchReference,
+          sheet: "Source detail sheet",
+          range: "Source match column"
+        }
+      ];
+    },
+    getSetupNotes() {
+      return [
+        "Create a cross-sheet reference for the values you want to return.",
+        "Create a cross-sheet reference for the source match column.",
+        "Enable wrap text in Smartsheet if using line break output."
+      ];
+    },
+    getInstructions() {
+      return [
+        "Use this when one lookup value may have multiple matching records.",
+        "Choose distinct values if you want repeated matches removed.",
+        "Choose line breaks for report-friendly stacked labels."
+      ];
+    }
+  },
+  countRowsMultipleCriteria: {
+    explanation:
+      "Counts rows from another sheet where both conditions are true.",
+    fields: [
+      {
+        id: "countCriteriaReferenceOne",
+        label: "Criteria range 1 reference",
+        defaultValue: "Source Status",
+        help: "The cross-sheet reference for the first criteria column."
+      },
+      {
+        id: "countCriteriaValueOne",
+        label: "Criteria 1 value",
+        defaultValue: "Complete",
+        help: "The first exact text value to count."
+      },
+      {
+        id: "countCriteriaReferenceTwo",
+        label: "Criteria range 2 reference",
+        defaultValue: "Source Category",
+        help: "The cross-sheet reference for the second criteria column."
+      },
+      {
+        id: "countCriteriaValueTwo",
+        label: "Criteria 2 value",
+        defaultValue: "Renovation",
+        help: "The second exact text value to count."
+      }
+    ],
+    buildFormula(values) {
+      return (
+        `=COUNTIFS(${sheetReference(values.countCriteriaReferenceOne)}, ${smartsheetText(values.countCriteriaValueOne)}, ` +
+        `${sheetReference(values.countCriteriaReferenceTwo)}, ${smartsheetText(values.countCriteriaValueTwo)})`
+      );
+    },
+    getReferences(values) {
+      return [
+        {
+          name: values.countCriteriaReferenceOne,
+          sheet: "Source data sheet",
+          range: "First criteria column"
+        },
+        {
+          name: values.countCriteriaReferenceTwo,
+          sheet: "Source data sheet",
+          range: "Second criteria column"
+        }
+      ];
+    },
+    getSetupNotes() {
+      return [
+        "Create one cross-sheet reference for each criteria column.",
+        "Criteria values are treated as exact text matches by default."
+      ];
+    },
+    getInstructions() {
+      return [
+        "Add this formula to a summary or dashboard metric cell.",
+        "Set each criteria reference to the source column you want to evaluate.",
+        "Enter the criteria text to count."
+      ];
+    }
+  },
+  sumValuesMultipleCriteria: {
+    explanation:
+      "Adds numeric values from rows that match multiple conditions.",
+    fields: [
+      {
+        id: "sumValueReference",
+        label: "Source value reference",
+        defaultValue: "Source Amount",
+        help: "The cross-sheet reference that points to the numeric values to sum."
+      },
+      {
+        id: "sumCriteriaReferenceOne",
+        label: "Criteria range 1 reference",
+        defaultValue: "Source Status",
+        help: "The cross-sheet reference for the first criteria column."
+      },
+      {
+        id: "sumCriteriaValueOne",
+        label: "Criteria 1 value",
+        defaultValue: "Approved",
+        help: "The first exact text value to match."
+      },
+      {
+        id: "sumCriteriaReferenceTwo",
+        label: "Criteria range 2 reference",
+        defaultValue: "Source Category",
+        help: "The cross-sheet reference for the second criteria column."
+      },
+      {
+        id: "sumCriteriaValueTwo",
+        label: "Criteria 2 value",
+        defaultValue: "Renovation",
+        help: "The second exact text value to match."
+      }
+    ],
+    buildFormula(values) {
+      return (
+        `=SUMIFS(${sheetReference(values.sumValueReference)}, ` +
+        `${sheetReference(values.sumCriteriaReferenceOne)}, ${smartsheetText(values.sumCriteriaValueOne)}, ` +
+        `${sheetReference(values.sumCriteriaReferenceTwo)}, ${smartsheetText(values.sumCriteriaValueTwo)})`
+      );
+    },
+    getReferences(values) {
+      return [
+        {
+          name: values.sumValueReference,
+          sheet: "Source data sheet",
+          range: "Numeric value column"
+        },
+        {
+          name: values.sumCriteriaReferenceOne,
+          sheet: "Source data sheet",
+          range: "First criteria column"
+        },
+        {
+          name: values.sumCriteriaReferenceTwo,
+          sheet: "Source data sheet",
+          range: "Second criteria column"
+        }
+      ];
+    },
+    getSetupNotes() {
+      return [
+        "The source value reference should point to a numeric column.",
+        "Criteria references should point to the source columns used for filtering."
+      ];
+    },
+    getInstructions() {
+      return [
+        "Use this for budget, cost, hours, units, or quantity summaries.",
+        "Add it to a dashboard, summary sheet, or helper column.",
+        "Confirm the value column contains numbers."
+      ];
+    }
+  },
+  averageValuesMultipleCriteria: {
+    explanation:
+      "Calculates the average of values that match multiple conditions.",
+    fields: [
+      {
+        id: "averageValueReference",
+        label: "Source value reference",
+        defaultValue: "Source Duration",
+        help: "The cross-sheet reference that points to the numeric values to average."
+      },
+      {
+        id: "averageCriteriaReferenceOne",
+        label: "Criteria range 1 reference",
+        defaultValue: "Source Status",
+        help: "The cross-sheet reference for the first criteria column."
+      },
+      {
+        id: "averageCriteriaValueOne",
+        label: "Criteria 1 value",
+        defaultValue: "Complete",
+        help: "The first exact text value to match."
+      },
+      {
+        id: "averageCriteriaReferenceTwo",
+        label: "Criteria range 2 reference",
+        defaultValue: "Source Category",
+        help: "The cross-sheet reference for the second criteria column."
+      },
+      {
+        id: "averageCriteriaValueTwo",
+        label: "Criteria 2 value",
+        defaultValue: "Renovation",
+        help: "The second exact text value to match."
+      }
+    ],
+    buildFormula(values) {
+      return (
+        `=IFERROR(AVG(COLLECT(${sheetReference(values.averageValueReference)}, ` +
+        `${sheetReference(values.averageCriteriaReferenceOne)}, ${smartsheetText(values.averageCriteriaValueOne)}, ` +
+        `${sheetReference(values.averageCriteriaReferenceTwo)}, ${smartsheetText(values.averageCriteriaValueTwo)})), "")`
+      );
+    },
+    getReferences(values) {
+      return [
+        {
+          name: values.averageValueReference,
+          sheet: "Source data sheet",
+          range: "Numeric value column"
+        },
+        {
+          name: values.averageCriteriaReferenceOne,
+          sheet: "Source data sheet",
+          range: "First criteria column"
+        },
+        {
+          name: values.averageCriteriaReferenceTwo,
+          sheet: "Source data sheet",
+          range: "Second criteria column"
+        }
+      ];
+    },
+    getSetupNotes() {
+      return [
+        "The source value reference should point to a numeric column.",
+        "Uses COLLECT because Smartsheet does not use an AVGIFS-style formula in the same way as spreadsheet tools like Excel."
+      ];
+    },
+    getInstructions() {
+      return [
+        "Use this for average duration, average score, average percent complete, or cycle-time analysis.",
+        "Add it to a summary or dashboard sheet.",
+        "Confirm the value column contains numbers."
+      ];
+    }
+  },
+  matchingDateExtremes: {
+    explanation:
+      "Finds the latest or earliest date related to the current row's lookup value.",
+    fields: [
+      {
+        id: "matchingDateReference",
+        label: "Source date reference",
+        defaultValue: "Source Date",
+        help: "The cross-sheet reference that points to the source date column."
+      },
+      {
+        id: "matchingDateMatchReference",
+        label: "Source match reference",
+        defaultValue: "Source Match ID",
+        help: "The cross-sheet reference that points to the source match column."
+      },
+      {
+        id: "matchingDateLookupColumn",
+        label: "Current sheet lookup column",
+        defaultValue: "Lookup ID",
+        help: "The current-sheet column that contains the value to match."
+      },
+      {
+        id: "matchingDateResultType",
+        label: "Date result type",
+        type: "select",
+        defaultValue: "latest",
+        options: [
+          { value: "latest", label: "Latest date" },
+          { value: "earliest", label: "Earliest date" }
+        ],
+        help: "Choose whether to return the newest or oldest matching date."
+      }
+    ],
+    buildFormula(values) {
+      const dateFunction = values.matchingDateResultType === "earliest" ? "MIN" : "MAX";
+
+      return (
+        `=IFERROR(${dateFunction}(COLLECT(${sheetReference(values.matchingDateReference)}, ` +
+        `${sheetReference(values.matchingDateMatchReference)}, ${rowColumn(values.matchingDateLookupColumn)})), "")`
+      );
+    },
+    getReferences(values) {
+      return [
+        {
+          name: values.matchingDateReference,
+          sheet: "Source date sheet",
+          range: "Source date column"
+        },
+        {
+          name: values.matchingDateMatchReference,
+          sheet: "Source date sheet",
+          range: "Source match column"
+        }
+      ];
+    },
+    getSetupNotes() {
+      return [
+        "Create a cross-sheet reference for the source date column.",
+        "Create a cross-sheet reference for the source match column.",
+        "The current sheet must have a lookup column."
+      ];
+    },
+    getInstructions() {
+      return [
+        "Use latest date for last update, latest completion, latest submission, or most recent activity.",
+        "Use earliest date for next due date, first start, or earliest milestone.",
+        "Format the destination column as a Date column."
+      ];
+    }
+  },
+  uniqueCountCriteria: {
+    explanation:
+      "Counts unique matching values without double-counting repeated records.",
+    fields: [
+      {
+        id: "uniqueValueReference",
+        label: "Source unique value reference",
+        defaultValue: "Source Project ID",
+        help: "The cross-sheet reference that points to the value to count once."
+      },
+      {
+        id: "uniqueCriteriaReferenceOne",
+        label: "Criteria range 1 reference",
+        defaultValue: "Source Status",
+        help: "The cross-sheet reference for the first criteria column."
+      },
+      {
+        id: "uniqueCriteriaValueOne",
+        label: "Criteria 1 value",
+        defaultValue: "Complete",
+        help: "The first exact text value to match."
+      },
+      {
+        id: "uniqueCriteriaReferenceTwo",
+        label: "Criteria range 2 reference",
+        defaultValue: "Source Category",
+        help: "The cross-sheet reference for the second criteria column."
+      },
+      {
+        id: "uniqueCriteriaValueTwo",
+        label: "Criteria 2 value",
+        defaultValue: "Renovation",
+        help: "The second exact text value to match."
+      }
+    ],
+    buildFormula(values) {
+      return (
+        `=IFERROR(COUNT(DISTINCT(COLLECT(${sheetReference(values.uniqueValueReference)}, ` +
+        `${sheetReference(values.uniqueCriteriaReferenceOne)}, ${smartsheetText(values.uniqueCriteriaValueOne)}, ` +
+        `${sheetReference(values.uniqueCriteriaReferenceTwo)}, ${smartsheetText(values.uniqueCriteriaValueTwo)}))), 0)`
+      );
+    },
+    getReferences(values) {
+      return [
+        {
+          name: values.uniqueValueReference,
+          sheet: "Source data sheet",
+          range: "Unique value column"
+        },
+        {
+          name: values.uniqueCriteriaReferenceOne,
+          sheet: "Source data sheet",
+          range: "First criteria column"
+        },
+        {
+          name: values.uniqueCriteriaReferenceTwo,
+          sheet: "Source data sheet",
+          range: "Second criteria column"
+        }
+      ];
+    },
+    getSetupNotes() {
+      return [
+        "The unique value reference should point to the ID, name, owner, location, or other value to count once.",
+        "Criteria references filter which rows are included."
+      ];
+    },
+    getInstructions() {
+      return [
+        "Use this when a source sheet may contain multiple rows for the same project, owner, location, or item.",
+        "Add it to a dashboard or summary metric.",
+        "Confirm the unique value reference contains consistent naming."
+      ];
+    }
+  },
+  parentChildRollup: {
+    explanation:
+      "Rolls up child-row values into a parent row.",
+    fields: [
+      {
+        id: "childValueColumn",
+        label: "Child value column",
+        defaultValue: "Amount",
+        help: "The current-sheet column that contains the child values to summarize."
+      },
+      {
+        id: "childRollupType",
+        label: "Rollup type",
+        type: "select",
+        defaultValue: "sum",
+        options: [
+          { value: "sum", label: "Sum child values" },
+          { value: "count", label: "Count child values" },
+          { value: "average", label: "Average child values" },
+          { value: "maximum", label: "Maximum child value" },
+          { value: "minimum", label: "Minimum child value" },
+          { value: "checked", label: "Count checked child boxes" }
+        ],
+        help: "Choose how the child values should roll up to the parent row."
+      }
+    ],
+    buildFormula(values) {
+      const childValues = `CHILDREN(${rowColumn(values.childValueColumn)})`;
+
+      if (values.childRollupType === "count") {
+        return `=COUNT(${childValues})`;
+      }
+
+      if (values.childRollupType === "average") {
+        return `=IFERROR(AVG(${childValues}), "")`;
+      }
+
+      if (values.childRollupType === "maximum") {
+        return `=IFERROR(MAX(${childValues}), "")`;
+      }
+
+      if (values.childRollupType === "minimum") {
+        return `=IFERROR(MIN(${childValues}), "")`;
+      }
+
+      if (values.childRollupType === "checked") {
+        return `=COUNTIF(${childValues}, 1)`;
+      }
+
+      return `=SUM(${childValues})`;
+    },
+    getSetupNotes() {
+      return [
+        "This formula is intended for hierarchy-enabled Smartsheet sheets with parent and child rows.",
+        "Add the formula to parent rows or use a column formula if appropriate for the workflow."
+      ];
+    },
+    getInstructions() {
+      return [
+        "Choose the column that contains the child values.",
+        "Choose the rollup type.",
+        "Place the formula on the parent row where the summary should appear."
+      ];
+    }
+  },
+  hierarchyLevelHelper: {
+    explanation:
+      "Identifies how deeply a row is indented in the sheet hierarchy.",
+    fields: [
+      {
+        id: "hierarchyLevelStart",
+        label: "Level numbering type",
+        type: "select",
+        defaultValue: "zero",
+        options: [
+          { value: "zero", label: "Top level starts at 0" },
+          { value: "one", label: "Top level starts at 1" }
+        ],
+        help: "Choose whether top-level rows should return 0 or 1."
+      }
+    ],
+    buildFormula(values) {
+      return values.hierarchyLevelStart === "one" ? "=COUNT(ANCESTORS()) + 1" : "=COUNT(ANCESTORS())";
+    },
+    getSetupNotes() {
+      return [
+        "This formula uses Smartsheet hierarchy functions.",
+        "Top-level rows have no ancestors."
+      ];
+    },
+    getInstructions() {
+      return [
+        "Add this to a helper column.",
+        "Use it for reports, filters, conditional formatting, or separating phases from tasks.",
+        "Choose whether top-level rows should return 0 or 1."
+      ];
+    }
+  },
+  showParentValue: {
+    explanation:
+      "Pulls the parent row's value into the current row.",
+    fields: [
+      {
+        id: "parentValueColumn",
+        label: "Parent value column",
+        defaultValue: "Task Name",
+        help: "The current-sheet column whose parent value should appear on child rows."
+      }
+    ],
+    buildFormula(values) {
+      return `=IFERROR(PARENT(${rowColumn(values.parentValueColumn)}), "")`;
+    },
+    getSetupNotes() {
+      return [
+        "This works on indented child rows.",
+        "Top-level rows without a parent return blank."
+      ];
+    },
+    getInstructions() {
+      return [
+        "Add this to a helper column.",
+        "Use it when reports include child rows but need parent context.",
+        "Common uses include showing parent task, phase, location, project, or category."
+      ];
+    }
+  },
+  multiSelectHasCheck: {
+    explanation:
+      "Checks whether a selected value exists in a multi-select dropdown or multi-contact cell.",
+    fields: [
+      {
+        id: "multiSelectColumn",
+        label: "Multi-select column",
+        defaultValue: "Tags",
+        help: "The multi-select dropdown or multi-contact column to check."
+      },
+      {
+        id: "multiSelectValue",
+        label: "Value to check for",
+        defaultValue: "Risk",
+        help: "The selectable value that should be found in the cell."
+      },
+      {
+        id: "multiSelectOutputType",
+        label: "Output type",
+        type: "select",
+        defaultValue: "checkbox",
+        options: [
+          { value: "checkbox", label: "Checkbox" },
+          { value: "yesNo", label: "Yes/No text" },
+          { value: "foundBlank", label: "Found/Blank text" }
+        ],
+        help: "Choose the type of result the formula should return."
+      }
+    ],
+    buildFormula(values) {
+      const hasCheck = `HAS(${rowColumn(values.multiSelectColumn)}, ${smartsheetText(values.multiSelectValue)})`;
+
+      if (values.multiSelectOutputType === "yesNo") {
+        return `=IF(${hasCheck}, "Yes", "No")`;
+      }
+
+      if (values.multiSelectOutputType === "foundBlank") {
+        return `=IF(${hasCheck}, "Found", "")`;
+      }
+
+      return `=IF(${hasCheck}, 1, 0)`;
+    },
+    getSetupNotes() {
+      return [
+        "HAS is best for multi-select dropdown and multi-contact columns.",
+        "The value must match one of the selectable values."
+      ];
+    },
+    getInstructions() {
+      return [
+        "Use this to flag rows by owner, department, tag, phase, risk category, region, or workflow type.",
+        "Choose checkbox output if the destination column is a checkbox column.",
+        "Choose text output if the destination column is text/number."
+      ];
+    }
+  },
+  textBeforeAfterDelimiter: {
+    explanation:
+      "Splits combined text into the portion before or after a selected delimiter.",
+    fields: [
+      {
+        id: "delimiterSourceColumn",
+        label: "Source text column",
+        defaultValue: "Combined Text",
+        help: "The current-sheet text column that contains the combined value."
+      },
+      {
+        id: "delimiterText",
+        label: "Delimiter",
+        defaultValue: "-",
+        help: "The delimiter exactly as it appears in the source text."
+      },
+      {
+        id: "delimiterExtractType",
+        label: "Extract type",
+        type: "select",
+        defaultValue: "before",
+        options: [
+          { value: "before", label: "Text before delimiter" },
+          { value: "after", label: "Text after delimiter" }
+        ],
+        help: "Choose which side of the delimiter should be returned."
+      }
+    ],
+    buildFormula(values) {
+      const sourceColumn = rowColumn(values.delimiterSourceColumn);
+      const delimiter = smartsheetText(values.delimiterText);
+
+      if (values.delimiterExtractType === "after") {
+        return `=IFERROR(RIGHT(${sourceColumn}, LEN(${sourceColumn}) - FIND(${delimiter}, ${sourceColumn}) - LEN(${delimiter}) + 1), "")`;
+      }
+
+      return `=IFERROR(LEFT(${sourceColumn}, FIND(${delimiter}, ${sourceColumn}) - 1), ${sourceColumn})`;
+    },
+    getSetupNotes() {
+      return [
+        "This is useful for imported data, combined IDs, labels, codes, and report helper columns.",
+        "If the delimiter is not found, the before-delimiter formula returns the full source text and the after-delimiter formula returns blank."
+      ];
+    },
+    getInstructions() {
+      return [
+        "Enter the source text column.",
+        "Enter the delimiter exactly as it appears in the text.",
+        "Choose whether to return the text before or after that delimiter."
+      ];
+    }
+  },
+  readyToStartBasedOnPredecessors: {
+    explanation:
+      "Returns whether a task is complete, ready to start, or blocked by unfinished predecessor work.",
+    fields: [
+      {
+        id: "openPredecessorCountColumn",
+        label: "Open predecessor count column",
+        defaultValue: "Open Predecessor Count",
+        help: "The current-sheet column that stores the number of unfinished predecessor tasks."
+      },
+      {
+        id: "readinessStatusColumn",
+        label: "Status column",
+        defaultValue: "Status",
+        help: "The current-sheet status column."
+      },
+      {
+        id: "readinessCompleteStatus",
+        label: "Complete status value",
+        defaultValue: "Complete",
+        help: "The status value that means the task is complete."
+      },
+      {
+        id: "readinessReadyValue",
+        label: "Ready output value",
+        defaultValue: "Ready",
+        help: "The value to return when open predecessor count is zero."
+      },
+      {
+        id: "readinessBlockedValue",
+        label: "Blocked output value",
+        defaultValue: "Blocked",
+        help: "The value to return when open predecessor count is greater than zero."
+      },
+      {
+        id: "readinessCompleteValue",
+        label: "Complete output value",
+        defaultValue: "Complete",
+        help: "The value to return when the status already shows complete."
+      }
+    ],
+    buildFormula(values) {
+      return (
+        `=IF(${rowColumn(values.readinessStatusColumn)} = ${smartsheetText(values.readinessCompleteStatus)}, ` +
+        `${smartsheetText(values.readinessCompleteValue)}, ` +
+        `IF(${rowColumn(values.openPredecessorCountColumn)} = 0, ${smartsheetText(values.readinessReadyValue)}, ` +
+        `${smartsheetText(values.readinessBlockedValue)}))`
+      );
+    },
+    getSetupNotes() {
+      return [
+        "This formula assumes another column already provides the number of open predecessors.",
+        "It is a practical project-control helper for dependency readiness reporting."
+      ];
+    },
+    getInstructions() {
+      return [
+        "Add or maintain an Open Predecessor Count column.",
+        "Add this formula to a readiness/status helper column.",
+        "Use the result in reports, dashboards, filters, or conditional formatting."
+      ];
+    }
+  },
+  rankedValue: {
+    explanation:
+      "Returns a ranked value from a set of numbers, such as the highest priority score, second-highest cost, lowest variance, or third-lowest duration.",
+    fields: [
+      {
+        id: "rankedValueReference",
+        label: "Source value reference",
+        defaultValue: "Source Score",
+        help: "The cross-sheet reference that points to the numeric values to rank."
+      },
+      {
+        id: "rankNumber",
+        label: "Rank number",
+        defaultValue: "1",
+        help: "The rank to return. Use 1 for the highest or lowest value."
+      },
+      {
+        id: "rankingType",
+        label: "Ranking type",
+        type: "select",
+        defaultValue: "highest",
+        options: [
+          { value: "highest", label: "Nth highest" },
+          { value: "lowest", label: "Nth lowest" }
+        ],
+        help: "Choose whether to rank from the top or bottom of the source values."
+      }
+    ],
+    buildFormula(values) {
+      const rankFunction = values.rankingType === "lowest" ? "SMALL" : "LARGE";
+      return `=IFERROR(${rankFunction}(${sheetReference(values.rankedValueReference)}, ${values.rankNumber}), "")`;
+    },
+    validate(values) {
+      if (!isPositiveWholeNumber(values.rankNumber)) {
+        return ["Rank number must be a positive whole number."];
+      }
+
+      return [];
+    },
+    getReferences(values) {
+      return [
+        {
+          name: values.rankedValueReference,
+          sheet: "Source ranking sheet",
+          range: "Numeric values to rank"
+        }
+      ];
+    },
+    getSetupNotes() {
+      return [
+        "Create a cross-sheet reference to the numeric values you want to rank.",
+        "The source values should be numeric.",
+        "Rank 1 means highest or lowest, depending on the selected ranking type."
+      ];
+    },
+    getInstructions() {
+      return [
+        "Choose the source value reference.",
+        "Enter the rank number.",
+        "Choose whether to return the Nth highest or Nth lowest value."
+      ];
+    }
   }
 };
 
@@ -665,6 +1525,10 @@ function sheetReference(referenceName) {
 
 function smartsheetText(text) {
   return `"${text.replace(/"/g, '""')}"`;
+}
+
+function isPositiveWholeNumber(value) {
+  return /^[1-9]\d*$/.test(value);
 }
 
 function locationWordFormula(trimmedLocation, wordNumber) {
@@ -859,6 +1723,14 @@ function getMissingFields(config, values) {
   return config.fields.filter((field) => values[field.id] === "");
 }
 
+function getValidationErrors(config, values) {
+  if (!config.validate) {
+    return [];
+  }
+
+  return config.validate(values);
+}
+
 function renderList(container, listClassName, items) {
   const list = document.createElement(listClassName === "setup-steps" ? "ol" : "ul");
   list.className = listClassName;
@@ -931,6 +1803,7 @@ function renderFormulaBuilderOutput() {
   const copyFormulaStatus = document.getElementById("copyFormulaStatus");
   const values = getFormulaValues(config);
   const missingFields = getMissingFields(config, values);
+  const validationErrors = getValidationErrors(config, values);
 
   formulaExplanation.textContent = config.explanation;
   copyFormulaStatus.textContent = "";
@@ -938,6 +1811,13 @@ function renderFormulaBuilderOutput() {
   if (missingFields.length > 0) {
     const missingLabels = missingFields.map((field) => field.label).join(", ");
     generatedFormula.textContent = `Complete these fields to generate a formula: ${missingLabels}.`;
+    copyFormulaButton.disabled = true;
+    renderReferenceInstructions(config, values);
+    return;
+  }
+
+  if (validationErrors.length > 0) {
+    generatedFormula.textContent = validationErrors.join(" ");
     copyFormulaButton.disabled = true;
     renderReferenceInstructions(config, values);
     return;
