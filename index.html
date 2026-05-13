@@ -107,12 +107,190 @@
         <p class="eyebrow">Interactive Demo</p>
         <h2>Sample schedule movement analysis</h2>
         <p>
-          This browser demo mirrors the core logic from Project #1 by calculating both calendar-day
-          movement and weekday-only workday movement.
+          This tool is being expanded into a browser-based analyzer for exported Smartsheet
+          <code>.xlsx</code> schedules. It will use only the columns mapped below and ignore
+          unrelated columns that may exist in the export.
+        </p>
+        <p>
+          Files are intended to be processed locally in the browser from a Smartsheet export,
+          not through a Smartsheet API integration.
         </p>
       </div>
 
-      <div class="demo-card">
+      <div class="demo-card schedule-upload-card">
+        <div class="demo-card-heading">
+          <p class="eyebrow">Phase 1 Upload Shell</p>
+          <h3>Uploaded Smartsheet schedule analyzer</h3>
+          <p>
+            Choose a future <code>.xlsx</code> schedule export and map the columns the analyzer should use.
+            Extra columns in the file will be ignored.
+          </p>
+        </div>
+
+        <form id="scheduleAnalyzerForm" class="schedule-analyzer-form" novalidate>
+          <div class="upload-field">
+            <label for="scheduleAnalyzerFile">Smartsheet .xlsx export</label>
+            <input
+              id="scheduleAnalyzerFile"
+              type="file"
+              accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            />
+            <p class="field-help">Phase 1 validates the setup only. Workbook parsing will be added later.</p>
+          </div>
+
+          <div class="mapping-section">
+            <div class="mapping-heading">
+              <h4>Column Mapping</h4>
+              <p>Enter column names exactly as they appear in the exported schedule.</p>
+            </div>
+
+            <div class="mapping-grid">
+              <div class="mapping-field">
+                <label for="scheduleTaskIdColumn">
+                  Task ID / Row ID column <span class="field-requirement">Optional</span>
+                </label>
+                <input id="scheduleTaskIdColumn" type="text" placeholder="Row ID" autocomplete="off" />
+              </div>
+
+              <div class="mapping-field">
+                <label for="scheduleTaskNameColumn">
+                  Task or Milestone Name column <span class="field-requirement required">Required</span>
+                </label>
+                <input
+                  id="scheduleTaskNameColumn"
+                  type="text"
+                  placeholder="Task Name"
+                  autocomplete="off"
+                  data-required-mapping="true"
+                />
+              </div>
+
+              <div class="mapping-field">
+                <label for="scheduleBaselineStartColumn">
+                  Baseline Start column <span class="field-requirement required">Required</span>
+                </label>
+                <input
+                  id="scheduleBaselineStartColumn"
+                  type="text"
+                  placeholder="Baseline Start"
+                  autocomplete="off"
+                  data-required-mapping="true"
+                />
+              </div>
+
+              <div class="mapping-field">
+                <label for="scheduleBaselineFinishColumn">
+                  Baseline Finish column <span class="field-requirement required">Required</span>
+                </label>
+                <input
+                  id="scheduleBaselineFinishColumn"
+                  type="text"
+                  placeholder="Baseline Finish"
+                  autocomplete="off"
+                  data-required-mapping="true"
+                />
+              </div>
+
+              <div class="mapping-field">
+                <label for="scheduleCurrentStartColumn">
+                  Actual / Current Start column <span class="field-requirement required">Required</span>
+                </label>
+                <input
+                  id="scheduleCurrentStartColumn"
+                  type="text"
+                  placeholder="Current Start"
+                  autocomplete="off"
+                  data-required-mapping="true"
+                />
+              </div>
+
+              <div class="mapping-field">
+                <label for="scheduleCurrentFinishColumn">
+                  Actual / Current Finish column <span class="field-requirement required">Required</span>
+                </label>
+                <input
+                  id="scheduleCurrentFinishColumn"
+                  type="text"
+                  placeholder="Current Finish"
+                  autocomplete="off"
+                  data-required-mapping="true"
+                />
+              </div>
+
+              <div class="mapping-field">
+                <label for="schedulePredecessorsColumn">
+                  Predecessors column <span class="field-requirement required">Required</span>
+                </label>
+                <input
+                  id="schedulePredecessorsColumn"
+                  type="text"
+                  placeholder="Predecessors"
+                  autocomplete="off"
+                  data-required-mapping="true"
+                />
+              </div>
+
+              <div class="mapping-field">
+                <label for="scheduleStatusColumn">
+                  Status / % Complete column <span class="field-requirement">Optional</span>
+                </label>
+                <input id="scheduleStatusColumn" type="text" placeholder="% Complete" autocomplete="off" />
+              </div>
+            </div>
+          </div>
+
+          <div class="schedule-actions">
+            <button id="analyzeUploadedScheduleButton" class="button primary" type="button">
+              Analyze Uploaded Schedule
+            </button>
+            <p id="scheduleAnalyzerStatus" class="status-message" aria-live="polite">
+              Map the required columns and choose a Smartsheet .xlsx export to prepare the analyzer.
+            </p>
+          </div>
+        </form>
+      </div>
+
+      <div class="schedule-placeholder-grid">
+        <article class="result-placeholder">
+          <p class="eyebrow">Placeholder</p>
+          <h3>Executive Summary</h3>
+          <p>Future high-level counts, date movement totals, and schedule health indicators will appear here.</p>
+        </article>
+
+        <article class="result-placeholder">
+          <p class="eyebrow">Placeholder</p>
+          <h3>Task Movement Detail</h3>
+          <p>Future task-by-task baseline versus current start and finish movement results will appear here.</p>
+        </article>
+
+        <article class="result-placeholder">
+          <p class="eyebrow">Placeholder</p>
+          <h3>Estimated Critical Path</h3>
+          <p>Future predecessor-based critical path estimates and driving task notes will appear here.</p>
+        </article>
+
+        <article class="result-placeholder">
+          <p class="eyebrow">Placeholder</p>
+          <h3>Dependency / Data Quality Warnings</h3>
+          <p>Future missing dates, unmapped required fields, broken predecessor links, and other data issues will appear here.</p>
+        </article>
+
+        <article class="result-placeholder download-placeholder">
+          <p class="eyebrow">Future Option</p>
+          <h3>Future Download .xlsx Summary</h3>
+          <p>A later phase can add a generated workbook summary for sharing the schedule movement analysis.</p>
+        </article>
+      </div>
+
+      <div class="demo-card sample-demo-card">
+        <div class="demo-card-heading">
+          <p class="eyebrow">Sample Demo</p>
+          <h3>Hardcoded schedule movement sample</h3>
+          <p>
+            This small sample keeps the original demo logic available until uploaded workbook parsing is added.
+          </p>
+        </div>
+
         <button id="analyzeScheduleButton" class="button primary">Analyze Sample Schedule</button>
         <div id="scheduleSummary" class="summary-box">
           Click the button to calculate sample schedule movement results.
@@ -218,5 +396,6 @@
   </footer>
 
   <script src="js/app.js"></script>
+  <script src="js/schedule-analyzer.js"></script>
 </body>
 </html>

@@ -36,6 +36,11 @@ a:hover {
   color: var(--accent-dark);
 }
 
+code {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.95em;
+}
+
 .site-header {
   padding: 24px;
 }
@@ -85,7 +90,8 @@ a:hover {
 
 h1,
 h2,
-h3 {
+h3,
+h4 {
   margin-top: 0;
   line-height: 1.15;
 }
@@ -216,6 +222,148 @@ h3 {
 .demo-card {
   padding: 28px;
   margin-bottom: 48px;
+}
+
+.demo-card-heading {
+  margin-bottom: 24px;
+}
+
+.demo-card-heading p:not(.eyebrow) {
+  max-width: 760px;
+  color: var(--muted);
+}
+
+.schedule-analyzer-form,
+.upload-field,
+.mapping-section,
+.schedule-actions {
+  display: grid;
+}
+
+.schedule-analyzer-form {
+  gap: 26px;
+}
+
+.upload-field {
+  max-width: 560px;
+  gap: 8px;
+}
+
+.upload-field input,
+.mapping-field input {
+  max-width: none;
+}
+
+.mapping-section {
+  gap: 18px;
+}
+
+.mapping-heading h4 {
+  margin-bottom: 6px;
+  font-size: 1.15rem;
+}
+
+.mapping-heading p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.mapping-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 20px;
+}
+
+.mapping-field {
+  min-width: 0;
+}
+
+.mapping-field label {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.field-requirement {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.field-requirement.required {
+  color: var(--accent);
+}
+
+.schedule-actions {
+  gap: 14px;
+  align-items: start;
+}
+
+.schedule-actions .button {
+  justify-self: start;
+}
+
+.status-message {
+  margin: 0;
+  padding: 14px 16px;
+  background: #f7f8fa;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 12px;
+  color: var(--muted);
+}
+
+.status-message.is-error {
+  background: #fff4f2;
+  border-left-color: #b42318;
+  color: #7a271a;
+}
+
+.status-message.is-ready {
+  background: #f0fdf4;
+  border-left-color: #167a3b;
+  color: #14532d;
+}
+
+.status-message.is-info {
+  background: #f7f8fa;
+  border-left-color: var(--accent);
+}
+
+.schedule-placeholder-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 48px;
+}
+
+.result-placeholder {
+  padding: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+}
+
+.result-placeholder h3 {
+  margin-bottom: 10px;
+  font-size: 1.2rem;
+}
+
+.result-placeholder p:not(.eyebrow) {
+  margin: 0;
+  color: var(--muted);
+}
+
+.download-placeholder {
+  grid-column: 1 / -1;
+}
+
+.sample-demo-card .demo-card-heading {
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
 }
 
 .summary-box {
@@ -418,6 +566,25 @@ select {
 
   .project-grid {
     grid-template-columns: 1fr;
+  }
+
+  .mapping-grid,
+  .schedule-placeholder-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .download-placeholder {
+    grid-column: auto;
+  }
+
+  .mapping-field label {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .schedule-actions .button {
+    width: 100%;
+    justify-self: stretch;
   }
 
   .formula-builder-layout {
