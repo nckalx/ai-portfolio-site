@@ -21,13 +21,7 @@
   }
 ];
 
-const propertyNameExceptions = [
-  { fullName: "Waterstone at Big Creek", shortName: "Waterstone Big" },
-  { fullName: "Waterstone at Brier Creek", shortName: "Waterstone Brier" },
-  { fullName: "The Shores", shortName: "Shores" },
-  { fullName: "St. James at Goose Creek", shortName: "St. James" },
-  { fullName: "Retreat at Hamburg Place", shortName: "Retreat at Hamburg" }
-];
+const maxLocationWordsToCheck = 6;
 
 const monthNameSortValues = [
   { name: "January", value: 1 },
@@ -330,63 +324,74 @@ const formulaBuilderConfigs = {
   },
   buildMilestoneId: {
     explanation:
-      "Creates a standardized milestone identifier that is easier to read in reports, dashboards, automation records, and schedule tracking sheets.",
+      "Creates a standardized milestone ID for reports, dashboards, automation records, and cross-sheet matching by combining a milestone number, location, and task name.",
     fields: [
       {
         id: "milestoneNumberColumn",
         label: "Milestone number column",
-        defaultValue: "Walk Milestone Number",
+        defaultValue: "Milestone Number",
         help: "The current-sheet column that stores the milestone sequence or ID number."
       },
       {
-        id: "propertyColumn",
-        label: "Property column",
-        defaultValue: "Property",
-        help: "The property name to shorten inside the milestone ID."
+        id: "locationColumn",
+        label: "Location or short location column",
+        defaultValue: "Location",
+        help: "The current-sheet location column, or a helper column that already stores a shortened location label."
       },
       {
         id: "taskNameColumn",
         label: "Task name column",
         defaultValue: "Task Name",
-        help: "The task or milestone name to append after the shortened property name."
+        help: "The task or milestone name to append after the location."
       }
     ],
     buildFormula(values) {
       const milestoneNumber = rowColumn(values.milestoneNumberColumn);
-      const shortPropertyName = propertyShortNameFormula(values.propertyColumn);
 
       return (
         `=IF(ISBLANK(${milestoneNumber}), "", ` +
-        `${milestoneNumber} + " - " + ${shortPropertyName} + " " + ${rowColumn(values.taskNameColumn)})`
+        `${milestoneNumber} + " - " + ${rowColumn(values.locationColumn)} + " " + ${rowColumn(values.taskNameColumn)})`
       );
+    },
+    getSetupNotes() {
+      return [
+        "This formula only uses columns from the current sheet.",
+        "If you want a shortened location name, create a helper column with the Shorten Location Name formula first, then point this formula's Location field to that helper column."
+      ];
     },
     getInstructions(values) {
       return [
         `Add this formula to the helper column that stores your report-ready milestone ID.`,
-        `Confirm ${values.milestoneNumberColumn}, ${values.propertyColumn}, and ${values.taskNameColumn} match your sheet exactly.`,
+        `Confirm ${values.milestoneNumberColumn}, ${values.locationColumn}, and ${values.taskNameColumn} match your sheet exactly.`,
         `Use the generated ID in reports, dashboards, automations, or cross-sheet matching workflows.`
       ];
     }
   },
-  shortenPropertyName: {
+  shortenLocationName: {
     explanation:
-      "Standardizes long property names into shorter labels that are easier to use in milestone IDs, reports, dashboards, and helper columns.",
+      "Creates a short location label from a longer location name. It is useful for milestone IDs, dashboards, reports, and helper columns where shorter text is easier to read.",
     fields: [
       {
-        id: "shortPropertyColumn",
-        label: "Property column",
-        defaultValue: "Property",
-        help: "The current-sheet column that stores the full property name."
+        id: "locationNameColumn",
+        label: "Location name column",
+        defaultValue: "Location",
+        help: "The current-sheet column that stores the full location name."
       }
     ],
     buildFormula(values) {
-      return `=${propertyShortNameFormula(values.shortPropertyColumn)}`;
+      return `=IF(ISBLANK(${rowColumn(values.locationNameColumn)}), "", ${longestLocationWordFormula(values.locationNameColumn)})`;
+    },
+    getSetupNotes() {
+      return [
+        `This formula is intended for common location names and evaluates the first ${maxLocationWordsToCheck} words in the location name.`,
+        "For very long names, simplify the source text or customize the formula to evaluate more words."
+      ];
     },
     getInstructions(values) {
       return [
-        `Add this formula to a helper column that stores the shortened property name.`,
-        `Confirm ${values.shortPropertyColumn} contains the full property name for each row.`,
-        `Use the shortened result in milestone IDs, report grouping, or dashboard labels.`
+        `Add this formula to a helper column that stores the shortened location name.`,
+        `Confirm ${values.locationNameColumn} contains the full location name for each row.`,
+        `Use the shortened result in milestone IDs, report grouping, dashboard labels, or other helper formulas.`
       ];
     }
   },
@@ -474,106 +479,6 @@ const formulaBuilderConfigs = {
       ];
     }
   },
-  quarterFromBudgetText: {
-    explanation:
-      "Normalizes budget period text into a clean quarter value that can be used for grouping, filtering, dashboards, and budget reporting.",
-    fields: [
-      {
-        id: "budgetQuarterTextColumn",
-        label: "Budget period column",
-        defaultValue: "Quarter Budgeted",
-        help: "The current-sheet column that contains budget period text such as Q1, Q2, Q3, or Q4."
-      }
-    ],
-    buildFormula(values) {
-      const budgetColumn = rowColumn(values.budgetQuarterTextColumn);
-      const quarterFormula = nestedContainsFormula(
-        budgetColumn,
-        [
-          { match: "Q1", result: `"Q1"` },
-          { match: "Q2", result: `"Q2"` },
-          { match: "Q3", result: `"Q3"` },
-          { match: "Q4", result: `"Q4"` }
-        ],
-        `""`
-      );
-
-      return `=IF(ISBLANK(${budgetColumn}), "", ${quarterFormula})`;
-    },
-    getInstructions(values) {
-      return [
-        `Add this formula to a quarter helper column.`,
-        `Confirm ${values.budgetQuarterTextColumn} contains text that includes Q1, Q2, Q3, or Q4.`,
-        `Use the clean quarter value for grouping budget items, filtering reports, or feeding dashboard charts.`
-      ];
-    }
-  },
-  preConMeetingDueDate: {
-    explanation:
-      "Assigns planning deadlines based on budget quarter, helping standardize pre-construction meeting due dates across project workflows.",
-    fields: [
-      {
-        id: "preConBudgetQuarterColumn",
-        label: "Budget period column",
-        defaultValue: "Quarter Budgeted",
-        help: "The current-sheet column that contains budget period text such as Q1, Q2, Q3, or Q4."
-      },
-      {
-        id: "q1DueDate",
-        label: "Q1 due date",
-        defaultValue: "02/13/2026",
-        help: "Enter the Q1 meeting due date in MM/DD/YYYY format."
-      },
-      {
-        id: "q2DueDate",
-        label: "Q2 due date",
-        defaultValue: "03/13/2026",
-        help: "Enter the Q2 meeting due date in MM/DD/YYYY format."
-      },
-      {
-        id: "q3DueDate",
-        label: "Q3 due date",
-        defaultValue: "06/12/2026",
-        help: "Enter the Q3 meeting due date in MM/DD/YYYY format."
-      },
-      {
-        id: "q4DueDate",
-        label: "Q4 due date",
-        defaultValue: "09/11/2026",
-        help: "Enter the Q4 meeting due date in MM/DD/YYYY format."
-      }
-    ],
-    buildFormula(values) {
-      const budgetColumn = rowColumn(values.preConBudgetQuarterColumn);
-      const dueDateFormula = nestedContainsFormula(
-        budgetColumn,
-        [
-          { match: "Q1", result: dateToSmartsheetDate(values.q1DueDate) },
-          { match: "Q2", result: dateToSmartsheetDate(values.q2DueDate) },
-          { match: "Q3", result: dateToSmartsheetDate(values.q3DueDate) },
-          { match: "Q4", result: dateToSmartsheetDate(values.q4DueDate) }
-        ],
-        `""`
-      );
-
-      return `=IF(ISBLANK(${budgetColumn}), "", ${dueDateFormula})`;
-    },
-    validate(values) {
-      return validateDateFields([
-        { label: "Q1 due date", value: values.q1DueDate },
-        { label: "Q2 due date", value: values.q2DueDate },
-        { label: "Q3 due date", value: values.q3DueDate },
-        { label: "Q4 due date", value: values.q4DueDate }
-      ]);
-    },
-    getInstructions(values) {
-      return [
-        `Add this formula to a Date column for the Pre-Con Meeting due date.`,
-        `Confirm ${values.preConBudgetQuarterColumn} contains text that includes Q1, Q2, Q3, or Q4.`,
-        `Update the quarter due dates in the builder when the planning calendar changes.`
-      ];
-    }
-  },
   statusIndicator: {
     explanation:
       "Creates a simple Red, Yellow, or Green schedule health indicator for reports and dashboards using start date, finish date, and status values.",
@@ -632,7 +537,7 @@ const formulaBuilderConfigs = {
   },
   multiLineReportLabel: {
     explanation:
-      "Creates cleaner multi-line report labels from structured project data, especially for dashboards, exports, or reports where milestone context and ownership need to appear together.",
+      "Creates a readable multi-line label from structured task, location, and assignment fields, especially for dashboards, exports, or reports where several fields need to appear together.",
     fields: [
       {
         id: "reportTaskColumn",
@@ -641,28 +546,28 @@ const formulaBuilderConfigs = {
         help: "The current-sheet column that stores the milestone or task name."
       },
       {
-        id: "reportPropertyColumn",
-        label: "Property column",
-        defaultValue: "Property",
-        help: "The current-sheet column that stores the property name."
+        id: "reportLocationColumn",
+        label: "Location column",
+        defaultValue: "Location",
+        help: "The current-sheet column that stores the location name."
       },
       {
         id: "leadOwnerColumn",
-        label: "Lead owner/designer column",
-        defaultValue: "Lead Designer",
-        help: "The current-sheet column that stores the lead owner or designer."
+        label: "Task lead column",
+        defaultValue: "Task Lead",
+        help: "The current-sheet column that stores the primary task assignee."
       },
       {
         id: "secondaryOwnerColumn",
-        label: "Secondary owner/designer column",
-        defaultValue: "Secondary Designer",
-        help: "The current-sheet column that stores the secondary owner or designer."
+        label: "Task second column",
+        defaultValue: "Task Second",
+        help: "The current-sheet column that stores the secondary task assignee."
       },
       {
         id: "tertiaryOwnerColumn",
-        label: "Tertiary owner/designer column",
-        defaultValue: "Tertiary Designer",
-        help: "The current-sheet column that stores the tertiary owner or designer."
+        label: "Task third column",
+        defaultValue: "Task Third",
+        help: "The current-sheet column that stores the third task assignee."
       }
     ],
     buildFormula(values) {
@@ -670,17 +575,23 @@ const formulaBuilderConfigs = {
       const tertiaryOwner = rowColumn(values.tertiaryOwnerColumn);
 
       return (
-        `=${rowColumn(values.reportTaskColumn)} + CHAR(10) + ${rowColumn(values.reportPropertyColumn)} + ` +
-        `CHAR(10) + "Lead: " + ${rowColumn(values.leadOwnerColumn)} + ` +
-        `IF(ISBLANK(${secondaryOwner}), "", CHAR(10) + "Secondary: " + ${secondaryOwner}) + ` +
-        `IF(ISBLANK(${tertiaryOwner}), "", CHAR(10) + "Tertiary: " + ${tertiaryOwner})`
+        `=${rowColumn(values.reportTaskColumn)} + CHAR(10) + ${rowColumn(values.reportLocationColumn)} + ` +
+        `CHAR(10) + "Task Lead: " + ${rowColumn(values.leadOwnerColumn)} + ` +
+        `IF(ISBLANK(${secondaryOwner}), "", CHAR(10) + "Task Second: " + ${secondaryOwner}) + ` +
+        `IF(ISBLANK(${tertiaryOwner}), "", CHAR(10) + "Task Third: " + ${tertiaryOwner})`
       );
+    },
+    getSetupNotes() {
+      return [
+        "This formula only uses columns from the current sheet.",
+        "Enable wrap text in Smartsheet if you want the CHAR(10) line breaks to display cleanly."
+      ];
     },
     getInstructions(values) {
       return [
         `Add this formula to a Text/Number helper column used by reports or dashboards.`,
-        `Confirm ${values.reportTaskColumn}, ${values.reportPropertyColumn}, and owner/designer columns are available on the sheet.`,
-        `Enable wrap text in Smartsheet if you want the CHAR(10) line breaks to display cleanly.`
+        `Confirm ${values.reportTaskColumn}, ${values.reportLocationColumn}, and task assignment columns are available on the sheet.`,
+        `Use the result anywhere a compact task, location, and assignment summary is useful.`
       ];
     }
   },
@@ -756,58 +667,32 @@ function smartsheetText(text) {
   return `"${text.replace(/"/g, '""')}"`;
 }
 
-function propertyShortNameFormula(propertyColumnName) {
-  const propertyColumn = rowColumn(propertyColumnName);
-  const fallbackFormula = `IFERROR(LEFT(${propertyColumn}, FIND(" ", ${propertyColumn}) - 1), ${propertyColumn})`;
+function locationWordFormula(trimmedLocation, wordNumber) {
+  const locationLength = `LEN(${trimmedLocation})`;
+  const startPosition = wordNumber === 1 ? "1" : `${wordNumber - 1} * ${locationLength} + 1`;
 
-  return propertyNameExceptions.reduceRight((formula, propertyName) => {
-    return (
-      `IF(${propertyColumn} = ${smartsheetText(propertyName.fullName)}, ` +
-      `${smartsheetText(propertyName.shortName)}, ${formula})`
-    );
-  }, fallbackFormula);
+  return `TRIM(MID(SUBSTITUTE(${trimmedLocation}, " ", REPT(" ", ${locationLength})), ${startPosition}, ${locationLength}))`;
+}
+
+function longestLocationWordFormula(locationColumnName) {
+  const trimmedLocation = `TRIM(${rowColumn(locationColumnName)})`;
+  const words = [];
+
+  for (let wordNumber = 1; wordNumber <= maxLocationWordsToCheck; wordNumber += 1) {
+    words.push(locationWordFormula(trimmedLocation, wordNumber));
+  }
+
+  const maxWordLength = `MAX(${words.map((word) => `LEN(${word})`).join(", ")})`;
+
+  return words.reduceRight((formula, word) => {
+    return `IF(LEN(${word}) = ${maxWordLength}, ${word}, ${formula})`;
+  });
 }
 
 function nestedEqualsFormula(targetFormula, options, fallbackFormula) {
   return options.reduceRight((formula, option) => {
     return `IF(${targetFormula} = ${smartsheetText(option.match)}, ${option.result}, ${formula})`;
   }, fallbackFormula);
-}
-
-function nestedContainsFormula(targetFormula, options, fallbackFormula) {
-  return options.reduceRight((formula, option) => {
-    return `IF(CONTAINS(${smartsheetText(option.match)}, ${targetFormula}), ${option.result}, ${formula})`;
-  }, fallbackFormula);
-}
-
-function isValidDateString(dateString) {
-  const dateMatch = dateString.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-
-  if (!dateMatch) {
-    return false;
-  }
-
-  const month = Number(dateMatch[1]);
-  const day = Number(dateMatch[2]);
-  const year = Number(dateMatch[3]);
-  const parsedDate = new Date(year, month - 1, day);
-
-  return (
-    parsedDate.getFullYear() === year &&
-    parsedDate.getMonth() === month - 1 &&
-    parsedDate.getDate() === day
-  );
-}
-
-function dateToSmartsheetDate(dateString) {
-  const dateParts = dateString.split("/").map(Number);
-  return `DATE(${dateParts[2]}, ${dateParts[0]}, ${dateParts[1]})`;
-}
-
-function validateDateFields(dateFields) {
-  return dateFields
-    .filter((field) => !isValidDateString(field.value))
-    .map((field) => `${field.label} must use MM/DD/YYYY format.`);
 }
 
 function parseDate(dateString) {
@@ -974,14 +859,6 @@ function getMissingFields(config, values) {
   return config.fields.filter((field) => values[field.id] === "");
 }
 
-function getValidationErrors(config, values) {
-  if (!config.validate) {
-    return [];
-  }
-
-  return config.validate(values);
-}
-
 function renderList(container, listClassName, items) {
   const list = document.createElement(listClassName === "setup-steps" ? "ol" : "ul");
   list.className = listClassName;
@@ -1054,7 +931,6 @@ function renderFormulaBuilderOutput() {
   const copyFormulaStatus = document.getElementById("copyFormulaStatus");
   const values = getFormulaValues(config);
   const missingFields = getMissingFields(config, values);
-  const validationErrors = getValidationErrors(config, values);
 
   formulaExplanation.textContent = config.explanation;
   copyFormulaStatus.textContent = "";
@@ -1062,13 +938,6 @@ function renderFormulaBuilderOutput() {
   if (missingFields.length > 0) {
     const missingLabels = missingFields.map((field) => field.label).join(", ");
     generatedFormula.textContent = `Complete these fields to generate a formula: ${missingLabels}.`;
-    copyFormulaButton.disabled = true;
-    renderReferenceInstructions(config, values);
-    return;
-  }
-
-  if (validationErrors.length > 0) {
-    generatedFormula.textContent = validationErrors.join(" ");
     copyFormulaButton.disabled = true;
     renderReferenceInstructions(config, values);
     return;
