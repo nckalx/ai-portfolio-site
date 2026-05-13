@@ -365,12 +365,14 @@ select {
   color: var(--muted);
 }
 
+.setup-notes,
 .reference-list,
 .setup-steps {
   padding-left: 20px;
   margin: 0 0 16px;
 }
 
+.setup-notes li,
 .reference-list li,
 .setup-steps li {
   margin-bottom: 8px;

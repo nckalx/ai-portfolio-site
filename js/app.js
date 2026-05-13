@@ -21,6 +21,29 @@
   }
 ];
 
+const propertyNameExceptions = [
+  { fullName: "Waterstone at Big Creek", shortName: "Waterstone Big" },
+  { fullName: "Waterstone at Brier Creek", shortName: "Waterstone Brier" },
+  { fullName: "The Shores", shortName: "Shores" },
+  { fullName: "St. James at Goose Creek", shortName: "St. James" },
+  { fullName: "Retreat at Hamburg Place", shortName: "Retreat at Hamburg" }
+];
+
+const monthNameSortValues = [
+  { name: "January", value: 1 },
+  { name: "February", value: 2 },
+  { name: "March", value: 3 },
+  { name: "April", value: 4 },
+  { name: "May", value: 5 },
+  { name: "June", value: 6 },
+  { name: "July", value: 7 },
+  { name: "August", value: 8 },
+  { name: "September", value: 9 },
+  { name: "October", value: 10 },
+  { name: "November", value: 11 },
+  { name: "December", value: 12 }
+];
+
 const formulaBuilderConfigs = {
   appendFinishDateLabel: {
     explanation:
@@ -304,15 +327,487 @@ const formulaBuilderConfigs = {
         `Paste the formula into the current sheet where the related RIO ID should appear.`
       ];
     }
+  },
+  buildMilestoneId: {
+    explanation:
+      "Creates a standardized milestone identifier that is easier to read in reports, dashboards, automation records, and schedule tracking sheets.",
+    fields: [
+      {
+        id: "milestoneNumberColumn",
+        label: "Milestone number column",
+        defaultValue: "Walk Milestone Number",
+        help: "The current-sheet column that stores the milestone sequence or ID number."
+      },
+      {
+        id: "propertyColumn",
+        label: "Property column",
+        defaultValue: "Property",
+        help: "The property name to shorten inside the milestone ID."
+      },
+      {
+        id: "taskNameColumn",
+        label: "Task name column",
+        defaultValue: "Task Name",
+        help: "The task or milestone name to append after the shortened property name."
+      }
+    ],
+    buildFormula(values) {
+      const milestoneNumber = rowColumn(values.milestoneNumberColumn);
+      const shortPropertyName = propertyShortNameFormula(values.propertyColumn);
+
+      return (
+        `=IF(ISBLANK(${milestoneNumber}), "", ` +
+        `${milestoneNumber} + " - " + ${shortPropertyName} + " " + ${rowColumn(values.taskNameColumn)})`
+      );
+    },
+    getInstructions(values) {
+      return [
+        `Add this formula to the helper column that stores your report-ready milestone ID.`,
+        `Confirm ${values.milestoneNumberColumn}, ${values.propertyColumn}, and ${values.taskNameColumn} match your sheet exactly.`,
+        `Use the generated ID in reports, dashboards, automations, or cross-sheet matching workflows.`
+      ];
+    }
+  },
+  shortenPropertyName: {
+    explanation:
+      "Standardizes long property names into shorter labels that are easier to use in milestone IDs, reports, dashboards, and helper columns.",
+    fields: [
+      {
+        id: "shortPropertyColumn",
+        label: "Property column",
+        defaultValue: "Property",
+        help: "The current-sheet column that stores the full property name."
+      }
+    ],
+    buildFormula(values) {
+      return `=${propertyShortNameFormula(values.shortPropertyColumn)}`;
+    },
+    getInstructions(values) {
+      return [
+        `Add this formula to a helper column that stores the shortened property name.`,
+        `Confirm ${values.shortPropertyColumn} contains the full property name for each row.`,
+        `Use the shortened result in milestone IDs, report grouping, or dashboard labels.`
+      ];
+    }
+  },
+  countCheckboxValues: {
+    explanation:
+      "Counts completed, incomplete, or total checkbox items from another sheet, which is useful for dashboards and summary sheets that track checklist progress.",
+    fields: [
+      {
+        id: "checkboxCountReference",
+        label: "Cross-sheet checkbox reference name",
+        defaultValue: "Hold Kick-off",
+        help: "The named Smartsheet reference that points to the checkbox column you want to count."
+      },
+      {
+        id: "checkboxCountType",
+        label: "Count type",
+        type: "select",
+        defaultValue: "checkedOnly",
+        options: [
+          { value: "checkedOnly", label: "Checked only" },
+          { value: "uncheckedOnly", label: "Unchecked only" },
+          { value: "checkedAndUnchecked", label: "Checked and unchecked" }
+        ],
+        help: "Choose whether to count checked boxes, unchecked boxes, or both."
+      }
+    ],
+    buildFormula(values) {
+      const checkboxReference = sheetReference(values.checkboxCountReference);
+
+      if (values.checkboxCountType === "uncheckedOnly") {
+        return `=COUNTIF(${checkboxReference}, 0)`;
+      }
+
+      if (values.checkboxCountType === "checkedAndUnchecked") {
+        return `=COUNTIF(${checkboxReference}, 1) + COUNTIF(${checkboxReference}, 0)`;
+      }
+
+      return `=COUNTIF(${checkboxReference}, 1)`;
+    },
+    getReferences(values) {
+      return [
+        {
+          name: values.checkboxCountReference,
+          sheet: "Source checklist or tracking sheet",
+          range: "Checkbox column to count"
+        }
+      ];
+    },
+    getInstructions(values) {
+      return [
+        `Create ${sheetReference(values.checkboxCountReference)} as a cross-sheet reference to the checkbox column you want to summarize.`,
+        `Place the formula in a summary sheet, dashboard source sheet, or sheet summary field.`,
+        `Use the selected count type to track completed, incomplete, or total checklist items.`
+      ];
+    }
+  },
+  monthNameSortNumber: {
+    explanation:
+      "Turns month names into sortable numbers so reports, filters, dashboards, and budget timing views display months in calendar order.",
+    fields: [
+      {
+        id: "monthNameColumn",
+        label: "Month name column",
+        defaultValue: "First Month Budgeted",
+        help: "The current-sheet column that stores a month name such as January or February."
+      }
+    ],
+    buildFormula(values) {
+      const monthColumn = rowColumn(values.monthNameColumn);
+      const monthSortFormula = nestedEqualsFormula(
+        monthColumn,
+        monthNameSortValues.map((month) => {
+          return { match: month.name, result: String(month.value) };
+        }),
+        `""`
+      );
+
+      return `=IF(ISBLANK(${monthColumn}), "", ${monthSortFormula})`;
+    },
+    getInstructions(values) {
+      return [
+        `Add this formula to a Text/Number helper column.`,
+        `Confirm ${values.monthNameColumn} stores full month names like January, February, or March.`,
+        `Sort reports and dashboard source data by this helper column instead of the month name text.`
+      ];
+    }
+  },
+  quarterFromBudgetText: {
+    explanation:
+      "Normalizes budget period text into a clean quarter value that can be used for grouping, filtering, dashboards, and budget reporting.",
+    fields: [
+      {
+        id: "budgetQuarterTextColumn",
+        label: "Budget period column",
+        defaultValue: "Quarter Budgeted",
+        help: "The current-sheet column that contains budget period text such as Q1, Q2, Q3, or Q4."
+      }
+    ],
+    buildFormula(values) {
+      const budgetColumn = rowColumn(values.budgetQuarterTextColumn);
+      const quarterFormula = nestedContainsFormula(
+        budgetColumn,
+        [
+          { match: "Q1", result: `"Q1"` },
+          { match: "Q2", result: `"Q2"` },
+          { match: "Q3", result: `"Q3"` },
+          { match: "Q4", result: `"Q4"` }
+        ],
+        `""`
+      );
+
+      return `=IF(ISBLANK(${budgetColumn}), "", ${quarterFormula})`;
+    },
+    getInstructions(values) {
+      return [
+        `Add this formula to a quarter helper column.`,
+        `Confirm ${values.budgetQuarterTextColumn} contains text that includes Q1, Q2, Q3, or Q4.`,
+        `Use the clean quarter value for grouping budget items, filtering reports, or feeding dashboard charts.`
+      ];
+    }
+  },
+  preConMeetingDueDate: {
+    explanation:
+      "Assigns planning deadlines based on budget quarter, helping standardize pre-construction meeting due dates across project workflows.",
+    fields: [
+      {
+        id: "preConBudgetQuarterColumn",
+        label: "Budget period column",
+        defaultValue: "Quarter Budgeted",
+        help: "The current-sheet column that contains budget period text such as Q1, Q2, Q3, or Q4."
+      },
+      {
+        id: "q1DueDate",
+        label: "Q1 due date",
+        defaultValue: "02/13/2026",
+        help: "Enter the Q1 meeting due date in MM/DD/YYYY format."
+      },
+      {
+        id: "q2DueDate",
+        label: "Q2 due date",
+        defaultValue: "03/13/2026",
+        help: "Enter the Q2 meeting due date in MM/DD/YYYY format."
+      },
+      {
+        id: "q3DueDate",
+        label: "Q3 due date",
+        defaultValue: "06/12/2026",
+        help: "Enter the Q3 meeting due date in MM/DD/YYYY format."
+      },
+      {
+        id: "q4DueDate",
+        label: "Q4 due date",
+        defaultValue: "09/11/2026",
+        help: "Enter the Q4 meeting due date in MM/DD/YYYY format."
+      }
+    ],
+    buildFormula(values) {
+      const budgetColumn = rowColumn(values.preConBudgetQuarterColumn);
+      const dueDateFormula = nestedContainsFormula(
+        budgetColumn,
+        [
+          { match: "Q1", result: dateToSmartsheetDate(values.q1DueDate) },
+          { match: "Q2", result: dateToSmartsheetDate(values.q2DueDate) },
+          { match: "Q3", result: dateToSmartsheetDate(values.q3DueDate) },
+          { match: "Q4", result: dateToSmartsheetDate(values.q4DueDate) }
+        ],
+        `""`
+      );
+
+      return `=IF(ISBLANK(${budgetColumn}), "", ${dueDateFormula})`;
+    },
+    validate(values) {
+      return validateDateFields([
+        { label: "Q1 due date", value: values.q1DueDate },
+        { label: "Q2 due date", value: values.q2DueDate },
+        { label: "Q3 due date", value: values.q3DueDate },
+        { label: "Q4 due date", value: values.q4DueDate }
+      ]);
+    },
+    getInstructions(values) {
+      return [
+        `Add this formula to a Date column for the Pre-Con Meeting due date.`,
+        `Confirm ${values.preConBudgetQuarterColumn} contains text that includes Q1, Q2, Q3, or Q4.`,
+        `Update the quarter due dates in the builder when the planning calendar changes.`
+      ];
+    }
+  },
+  statusIndicator: {
+    explanation:
+      "Creates a simple Red, Yellow, or Green schedule health indicator for reports and dashboards using start date, finish date, and status values.",
+    fields: [
+      {
+        id: "statusStartColumn",
+        label: "Start date column",
+        defaultValue: "Updated Start",
+        help: "The current-sheet start date column used to flag work that should have started."
+      },
+      {
+        id: "statusFinishColumn",
+        label: "Finish date column",
+        defaultValue: "Updated Finish",
+        help: "The current-sheet finish date column used to flag overdue work."
+      },
+      {
+        id: "statusColumn",
+        label: "Status column",
+        defaultValue: "Status",
+        help: "The current-sheet column that stores the task status."
+      },
+      {
+        id: "notStartedValue",
+        label: "Not started value",
+        defaultValue: "Not Started",
+        help: "The status text that means work has not started."
+      },
+      {
+        id: "completeValue",
+        label: "Complete value",
+        defaultValue: "Complete",
+        help: "The status text that means the work is complete."
+      }
+    ],
+    buildFormula(values) {
+      const startColumn = rowColumn(values.statusStartColumn);
+      const finishColumn = rowColumn(values.statusFinishColumn);
+      const statusColumn = rowColumn(values.statusColumn);
+      const completeValue = smartsheetText(values.completeValue);
+      const notStartedValue = smartsheetText(values.notStartedValue);
+
+      return (
+        `=IF(${statusColumn} = ${completeValue}, "Green", ` +
+        `IF(OR(AND(NOT(ISBLANK(${startColumn})), ${startColumn} < TODAY(), ${statusColumn} = ${notStartedValue}), ` +
+        `AND(NOT(ISBLANK(${finishColumn})), ${finishColumn} < TODAY())), "Red", "Yellow"))`
+      );
+    },
+    getInstructions(values) {
+      return [
+        `Add this formula to a Symbol or Text/Number column used for schedule health reporting.`,
+        `Confirm ${values.statusColumn} uses ${values.notStartedValue} and ${values.completeValue} consistently.`,
+        `Use the result to highlight overdue work, not-started work, and completed items in reports or dashboards.`
+      ];
+    }
+  },
+  multiLineReportLabel: {
+    explanation:
+      "Creates cleaner multi-line report labels from structured project data, especially for dashboards, exports, or reports where milestone context and ownership need to appear together.",
+    fields: [
+      {
+        id: "reportTaskColumn",
+        label: "Milestone or task column",
+        defaultValue: "Task Name",
+        help: "The current-sheet column that stores the milestone or task name."
+      },
+      {
+        id: "reportPropertyColumn",
+        label: "Property column",
+        defaultValue: "Property",
+        help: "The current-sheet column that stores the property name."
+      },
+      {
+        id: "leadOwnerColumn",
+        label: "Lead owner/designer column",
+        defaultValue: "Lead Designer",
+        help: "The current-sheet column that stores the lead owner or designer."
+      },
+      {
+        id: "secondaryOwnerColumn",
+        label: "Secondary owner/designer column",
+        defaultValue: "Secondary Designer",
+        help: "The current-sheet column that stores the secondary owner or designer."
+      },
+      {
+        id: "tertiaryOwnerColumn",
+        label: "Tertiary owner/designer column",
+        defaultValue: "Tertiary Designer",
+        help: "The current-sheet column that stores the tertiary owner or designer."
+      }
+    ],
+    buildFormula(values) {
+      const secondaryOwner = rowColumn(values.secondaryOwnerColumn);
+      const tertiaryOwner = rowColumn(values.tertiaryOwnerColumn);
+
+      return (
+        `=${rowColumn(values.reportTaskColumn)} + CHAR(10) + ${rowColumn(values.reportPropertyColumn)} + ` +
+        `CHAR(10) + "Lead: " + ${rowColumn(values.leadOwnerColumn)} + ` +
+        `IF(ISBLANK(${secondaryOwner}), "", CHAR(10) + "Secondary: " + ${secondaryOwner}) + ` +
+        `IF(ISBLANK(${tertiaryOwner}), "", CHAR(10) + "Tertiary: " + ${tertiaryOwner})`
+      );
+    },
+    getInstructions(values) {
+      return [
+        `Add this formula to a Text/Number helper column used by reports or dashboards.`,
+        `Confirm ${values.reportTaskColumn}, ${values.reportPropertyColumn}, and owner/designer columns are available on the sheet.`,
+        `Enable wrap text in Smartsheet if you want the CHAR(10) line breaks to display cleanly.`
+      ];
+    }
+  },
+  spendDateAttribute: {
+    explanation:
+      "Supports budget timing, capital planning, and reporting workflows by deriving year, quarter, or month attributes from spend milestone dates.",
+    fields: [
+      {
+        id: "spendingMilestoneColumn",
+        label: "Spending milestone checkbox column",
+        defaultValue: "Spending Milestone",
+        help: "The checkbox column that identifies rows used for spend reporting."
+      },
+      {
+        id: "spendStartColumn",
+        label: "Start date column",
+        defaultValue: "Start",
+        help: "The start date to use when Finish is blank."
+      },
+      {
+        id: "spendFinishColumn",
+        label: "Finish date column",
+        defaultValue: "Finish",
+        help: "The finish date to use first when it is available."
+      },
+      {
+        id: "spendAttribute",
+        label: "Attribute to return",
+        type: "select",
+        defaultValue: "year",
+        options: [
+          { value: "year", label: "Year" },
+          { value: "quarter", label: "Quarter" },
+          { value: "monthNumber", label: "Month Number" }
+        ],
+        help: "Choose the spend date attribute needed for reporting."
+      }
+    ],
+    buildFormula(values) {
+      const spendingMilestone = rowColumn(values.spendingMilestoneColumn);
+      const spendDate = `IF(ISBLANK(${rowColumn(values.spendFinishColumn)}), ${rowColumn(values.spendStartColumn)}, ${rowColumn(values.spendFinishColumn)})`;
+
+      if (values.spendAttribute === "quarter") {
+        return `=IF(${spendingMilestone} <> 1, "", "Q" + ROUNDUP(MONTH(${spendDate}) / 3, 0))`;
+      }
+
+      if (values.spendAttribute === "monthNumber") {
+        return `=IF(${spendingMilestone} <> 1, "", MONTH(${spendDate}))`;
+      }
+
+      return `=IF(${spendingMilestone} <> 1, "", YEAR(${spendDate}))`;
+    },
+    getInstructions(values) {
+      return [
+        `Add this formula to a helper column for spend reporting attributes.`,
+        `Confirm ${values.spendingMilestoneColumn} is checked only for rows that should feed spend timing reports.`,
+        `Use the selected attribute for budget timing analysis, grouping, filtering, or dashboard rollups.`
+      ];
+    }
   }
 };
 
 function rowColumn(columnName) {
-  return `[${columnName}]@row`;
+  return `[${columnName.trim()}]@row`;
 }
 
 function sheetReference(referenceName) {
-  return `{${referenceName}}`;
+  const cleanedName = referenceName.trim().replace(/^\{+/, "").replace(/\}+$/, "").trim();
+  return `{${cleanedName}}`;
+}
+
+function smartsheetText(text) {
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
+function propertyShortNameFormula(propertyColumnName) {
+  const propertyColumn = rowColumn(propertyColumnName);
+  const fallbackFormula = `IFERROR(LEFT(${propertyColumn}, FIND(" ", ${propertyColumn}) - 1), ${propertyColumn})`;
+
+  return propertyNameExceptions.reduceRight((formula, propertyName) => {
+    return (
+      `IF(${propertyColumn} = ${smartsheetText(propertyName.fullName)}, ` +
+      `${smartsheetText(propertyName.shortName)}, ${formula})`
+    );
+  }, fallbackFormula);
+}
+
+function nestedEqualsFormula(targetFormula, options, fallbackFormula) {
+  return options.reduceRight((formula, option) => {
+    return `IF(${targetFormula} = ${smartsheetText(option.match)}, ${option.result}, ${formula})`;
+  }, fallbackFormula);
+}
+
+function nestedContainsFormula(targetFormula, options, fallbackFormula) {
+  return options.reduceRight((formula, option) => {
+    return `IF(CONTAINS(${smartsheetText(option.match)}, ${targetFormula}), ${option.result}, ${formula})`;
+  }, fallbackFormula);
+}
+
+function isValidDateString(dateString) {
+  const dateMatch = dateString.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+
+  if (!dateMatch) {
+    return false;
+  }
+
+  const month = Number(dateMatch[1]);
+  const day = Number(dateMatch[2]);
+  const year = Number(dateMatch[3]);
+  const parsedDate = new Date(year, month - 1, day);
+
+  return (
+    parsedDate.getFullYear() === year &&
+    parsedDate.getMonth() === month - 1 &&
+    parsedDate.getDate() === day
+  );
+}
+
+function dateToSmartsheetDate(dateString) {
+  const dateParts = dateString.split("/").map(Number);
+  return `DATE(${dateParts[2]}, ${dateParts[0]}, ${dateParts[1]})`;
+}
+
+function validateDateFields(dateFields) {
+  return dateFields
+    .filter((field) => !isValidDateString(field.value))
+    .map((field) => `${field.label} must use MM/DD/YYYY format.`);
 }
 
 function parseDate(dateString) {
@@ -434,11 +929,24 @@ function createFormulaInput(field) {
   label.setAttribute("for", field.id);
   label.textContent = field.label;
 
-  const input = document.createElement("input");
+  const input = document.createElement(field.type === "select" ? "select" : "input");
   input.id = field.id;
-  input.type = "text";
-  input.value = field.defaultValue;
-  input.addEventListener("input", renderFormulaBuilderOutput);
+
+  if (field.type === "select") {
+    field.options.forEach((option) => {
+      const optionElement = document.createElement("option");
+      optionElement.value = option.value;
+      optionElement.textContent = option.label;
+      input.appendChild(optionElement);
+    });
+
+    input.value = field.defaultValue;
+    input.addEventListener("change", renderFormulaBuilderOutput);
+  } else {
+    input.type = "text";
+    input.value = field.defaultValue;
+    input.addEventListener("input", renderFormulaBuilderOutput);
+  }
 
   const helpText = document.createElement("p");
   helpText.className = "field-help";
@@ -466,6 +974,14 @@ function getMissingFields(config, values) {
   return config.fields.filter((field) => values[field.id] === "");
 }
 
+function getValidationErrors(config, values) {
+  if (!config.validate) {
+    return [];
+  }
+
+  return config.validate(values);
+}
+
 function renderList(container, listClassName, items) {
   const list = document.createElement(listClassName === "setup-steps" ? "ol" : "ul");
   list.className = listClassName;
@@ -479,31 +995,48 @@ function renderList(container, listClassName, items) {
   container.appendChild(list);
 }
 
+function getSetupNotes(config, values, references) {
+  if (config.getSetupNotes) {
+    return config.getSetupNotes(values);
+  }
+
+  if (references.length > 0) {
+    return [
+      "Create the named cross-sheet references in Smartsheet before using this formula.",
+      "Keep the referenced source ranges aligned so Smartsheet can compare rows correctly."
+    ];
+  }
+
+  return ["This formula only uses columns from the current sheet."];
+}
+
 function renderReferenceInstructions(config, values) {
   const referenceInstructions = document.getElementById("referenceInstructions");
-  const references = config.getReferences(values);
+  const references = config.getReferences ? config.getReferences(values) : [];
+  const setupNotes = getSetupNotes(config, values, references);
   const instructions = config.getInstructions(values);
 
   referenceInstructions.innerHTML = "";
 
-  const referenceHeading = document.createElement("h3");
-  referenceHeading.textContent = references.length > 0 ? "Cross-sheet references" : "Setup notes";
-  referenceInstructions.appendChild(referenceHeading);
+  const setupHeading = document.createElement("h3");
+  setupHeading.textContent = "Setup notes";
+  referenceInstructions.appendChild(setupHeading);
+  renderList(referenceInstructions, "setup-notes", setupNotes);
 
   if (references.length > 0) {
+    const referenceHeading = document.createElement("h3");
+    referenceHeading.textContent = "Cross-sheet references";
+    referenceInstructions.appendChild(referenceHeading);
+
     const referenceIntro = document.createElement("p");
     referenceIntro.textContent = "Create these named reference placeholders in Smartsheet before using the formula.";
     referenceInstructions.appendChild(referenceIntro);
 
     const referenceItems = references.map((reference) => {
-      return `{${reference.name}}: in "${reference.sheet}", select the "${reference.range}" column.`;
+      return `${sheetReference(reference.name)}: in "${reference.sheet}", select the "${reference.range}" column.`;
     });
 
     renderList(referenceInstructions, "reference-list", referenceItems);
-  } else {
-    const noReferenceText = document.createElement("p");
-    noReferenceText.textContent = "This formula only uses columns from the current sheet.";
-    referenceInstructions.appendChild(noReferenceText);
   }
 
   const instructionHeading = document.createElement("h3");
@@ -521,6 +1054,7 @@ function renderFormulaBuilderOutput() {
   const copyFormulaStatus = document.getElementById("copyFormulaStatus");
   const values = getFormulaValues(config);
   const missingFields = getMissingFields(config, values);
+  const validationErrors = getValidationErrors(config, values);
 
   formulaExplanation.textContent = config.explanation;
   copyFormulaStatus.textContent = "";
@@ -528,6 +1062,13 @@ function renderFormulaBuilderOutput() {
   if (missingFields.length > 0) {
     const missingLabels = missingFields.map((field) => field.label).join(", ");
     generatedFormula.textContent = `Complete these fields to generate a formula: ${missingLabels}.`;
+    copyFormulaButton.disabled = true;
+    renderReferenceInstructions(config, values);
+    return;
+  }
+
+  if (validationErrors.length > 0) {
+    generatedFormula.textContent = validationErrors.join(" ");
     copyFormulaButton.disabled = true;
     renderReferenceInstructions(config, values);
     return;
