@@ -135,9 +135,9 @@ The repository includes fake, sanitized sample workbooks that can be used to tes
 - `assets/data/sample-smartsheet-schedule-input.xlsx`
 - `assets/data/sample-schedule-analysis-output.xlsx`
 
-The sample input workbook uses generic demo project names only. It includes parent/summary rows, child/detail rows, mapped hierarchy levels, baseline/current date movement, predecessor examples, and two project groups for grouped estimated critical path testing.
+The sample input workbook uses generic demo project names only. It includes parent/summary rows, child/detail rows, mapped hierarchy levels, baseline/current date movement, predecessor examples, and two project groups for grouped estimated critical path testing. It also demonstrates Row Type and Include in Critical Path? examples.
 
-The sample output report was generated from the sample input workbook using the browser analyzer. Visitors can download the input workbook, upload it into the tool, and compare their generated report against the sample output.
+A matching sample output report will be refreshed after the updated sample input workbook is run through the browser analyzer.
 
 These files are fake and sanitized. They contain no real company, property, project, employee, vendor, or internal data.
 
