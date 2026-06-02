@@ -136,6 +136,7 @@
               <li>Compares baseline dates to actual/current dates for calendar-day and workday movement.</li>
               <li>Validates predecessor/dependency data and flags unresolved or risky links.</li>
               <li>Excludes detected parent/summary rows from estimated critical path logic.</li>
+              <li>Supports optional Row Type and Include in Critical Path controls for non-schedule rows.</li>
               <li>Supports grouped analysis when one workbook contains multiple projects, properties, or schedules.</li>
               <li>Generates a downloadable Excel report for a fuller audit trail.</li>
             </ul>
@@ -148,7 +149,7 @@
             </p>
             <p>
               <strong>Optional:</strong> Task ID / Row ID, Status / % Complete, Row Hierarchy / Outline Level,
-              and Project Name / Project Grouping.
+              Project Name / Project Grouping, Row Type, and the Include in Critical Path? helper column.
             </p>
             <p>
               Row Hierarchy / Outline Level is recommended for Smartsheet parent/child schedules so parent
@@ -158,6 +159,10 @@
             <p>
               Project Name / Project Grouping is recommended when one workbook contains multiple projects,
               properties, or schedules.
+            </p>
+            <p>
+              Row Type and Include in Critical Path? affect estimated critical path eligibility only. Excluded
+              rows still appear in the full Excel report.
             </p>
           </div>
         </div>
@@ -331,6 +336,40 @@
                 </p>
               </div>
 
+              <div class="mapping-field mapping-field-wide">
+                <label for="scheduleRowTypeColumn">
+                  Row Type column <span class="field-requirement">Optional</span>
+                </label>
+                <input
+                  id="scheduleRowTypeColumn"
+                  type="text"
+                  placeholder="Row Type"
+                  autocomplete="off"
+                />
+                <p class="mapping-help">
+                  Map this when your export labels non-schedule rows such as reporting, budget, spend,
+                  placeholder, admin, or summary rows. Those row types will be excluded from estimated
+                  critical path logic, while still appearing in the full report.
+                </p>
+              </div>
+
+              <div class="mapping-field mapping-field-wide">
+                <label for="scheduleIncludeCriticalPathColumn">
+                  Include in Critical Path? column <span class="field-requirement">Optional</span>
+                </label>
+                <input
+                  id="scheduleIncludeCriticalPathColumn"
+                  type="text"
+                  placeholder="Include in Critical Path?"
+                  autocomplete="off"
+                />
+                <p class="mapping-help">
+                  Map this if your sheet has a Yes/No, True/False, Checked/Unchecked, Include/Exclude, or
+                  1/0 helper column for estimated critical path eligibility. A No-style value excludes the
+                  row from estimated critical path logic only.
+                </p>
+              </div>
+
               <div class="mapping-field">
                 <label for="scheduleStatusColumn">
                   Status / % Complete column <span class="field-requirement">Optional</span>
@@ -438,7 +477,8 @@
           <p>
             This is an estimated dependency-based critical path. Parent/summary rows are excluded by
             default when hierarchy data or fallback heuristics identify them. The analyzer works best when
-            you map a Row Hierarchy / Outline Level helper column. Holiday calendars are not yet applied.
+            you map a Row Hierarchy / Outline Level helper column. Optional Row Type and Include in Critical
+            Path mappings can further exclude non-schedule rows. Holiday calendars are not yet applied.
             When a Project Name / Project Grouping column is mapped, estimated critical paths are calculated
             separately for each project group.
           </p>

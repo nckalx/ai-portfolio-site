@@ -25,6 +25,13 @@
       label: "Project Name / Project Grouping column",
       required: false
     },
+    { key: "rowTypeRaw", id: "scheduleRowTypeColumn", label: "Row Type column", required: false },
+    {
+      key: "includeInCriticalPathRaw",
+      id: "scheduleIncludeCriticalPathColumn",
+      label: "Include in Critical Path? column",
+      required: false
+    },
     { key: "status", id: "scheduleStatusColumn", label: "Status / % Complete column", required: false }
   ];
 
@@ -38,11 +45,18 @@
     { key: "predecessors", label: "Predecessors" },
     { key: "hierarchyLevelRaw", label: "Hierarchy Level" },
     { key: "projectName", label: "Project Name" },
+    { key: "rowTypeRaw", label: "Row Type" },
+    { key: "includeInCriticalPathRaw", label: "Include in Critical Path?" },
     { key: "status", label: "Status / % Complete" }
   ];
 
   const normalizedRowPresenceColumns = previewColumns.filter((column) => {
-    return column.key !== "hierarchyLevelRaw" && column.key !== "projectName";
+    return (
+      column.key !== "hierarchyLevelRaw" &&
+      column.key !== "projectName" &&
+      column.key !== "rowTypeRaw" &&
+      column.key !== "includeInCriticalPathRaw"
+    );
   });
 
   const dateColumns = [
@@ -81,6 +95,8 @@
     "Task ID",
     "Task / Milestone",
     "Row Classification",
+    "Row Type",
+    "Include in Critical Path?",
     "Hierarchy Level",
     "Has Child Rows",
     "Critical Path Eligible",
@@ -105,6 +121,8 @@
     "Task ID",
     "Task / Milestone",
     "Row Classification",
+    "Row Type",
+    "Include in Critical Path?",
     "Hierarchy Level",
     "Has Child Rows",
     "Critical Path Eligible",
@@ -169,6 +187,8 @@
     "Task ID",
     "Task / Milestone",
     "Row Classification",
+    "Row Type",
+    "Include in Critical Path?",
     "Hierarchy Level",
     "Has Child Rows",
     "Critical Path Eligible",
@@ -642,6 +662,10 @@
           hasChildRows: false,
           projectNameRaw: "",
           projectName: "",
+          rowTypeRaw: "",
+          rowType: "",
+          includeInCriticalPathRaw: "",
+          includeInCriticalPathOverride: null,
           status: ""
         };
 
@@ -681,6 +705,48 @@
 
   function isProjectGroupingMapped(mappingValues) {
     return Boolean(mappingValues.projectNameRaw);
+  }
+
+  function normalizeRowType(value) {
+    return normalizeCellValue(value);
+  }
+
+  function normalizeControlKeyword(value) {
+    return normalizeCellValue(value).toLowerCase();
+  }
+
+  function parseIncludeInCriticalPathOverride(value) {
+    const normalizedValue = normalizeControlKeyword(value);
+    const includeValues = new Set(["yes", "y", "true", "checked", "include", "1"]);
+    const excludeValues = new Set(["no", "n", "false", "unchecked", "exclude", "0"]);
+
+    if (normalizedValue === "") {
+      return null;
+    }
+
+    if (includeValues.has(normalizedValue)) {
+      return true;
+    }
+
+    if (excludeValues.has(normalizedValue)) {
+      return false;
+    }
+
+    return null;
+  }
+
+  function isExcludedCriticalPathRowType(rowType) {
+    const excludedRowTypes = new Set([
+      "reporting",
+      "spend",
+      "budget",
+      "administrative",
+      "admin",
+      "placeholder",
+      "summary"
+    ]);
+
+    return excludedRowTypes.has(normalizeControlKeyword(rowType));
   }
 
   function normalizeProjectName(row, mappingValues) {
@@ -848,9 +914,8 @@
 
     // When hierarchy data is unavailable or inconclusive, this remains an
     // intentionally conservative estimate.
-    // TODO: A future version may support an optional Row Type or Include in
-    // Critical Path mapping for reporting, spend milestones, and other
-    // non-schedule rows.
+    // Row Type and Include in Critical Path mappings refine CPM eligibility
+    // later; they do not infer summary status from task names.
     if (isLikelySummaryRow(summarySignals)) {
       return "likely-summary";
     }
@@ -895,6 +960,8 @@
     const dateWarnings = getDateWarnings(parsedDates);
     const validForMovement = dateWarnings.length === 0;
     const classification = classifyScheduleRow(row, parsedDates, dateWarnings, mappingValues);
+    const rowType = normalizeRowType(row.rowTypeRaw);
+    const includeInCriticalPathOverride = parseIncludeInCriticalPathOverride(row.includeInCriticalPathRaw);
     const movementValues = validForMovement
       ? buildMovementValues(parsedDates)
       : {
@@ -908,6 +975,8 @@
 
     return {
       ...row,
+      rowType,
+      includeInCriticalPathOverride,
       classification,
       dateWarnings,
       excludeFromFutureCriticalPath: classification === "likely-summary" || row.hasChildRows,
@@ -1133,6 +1202,10 @@
   }
 
   function getCriticalPathExclusionReason(row) {
+    if (!row.validForMovement || !hasUsableCriticalPathDates(row)) {
+      return row.dateWarnings.length > 0 ? "Invalid or missing schedule dates" : "Warning/non-calculable row";
+    }
+
     if (row.hasChildRows) {
       return "Parent/summary row based on hierarchy";
     }
@@ -1141,8 +1214,15 @@
       return "Likely parent/summary row based on fallback heuristic";
     }
 
-    if (!row.validForMovement || !hasUsableCriticalPathDates(row)) {
-      return row.dateWarnings.length > 0 ? "Invalid or missing schedule dates" : "Warning/non-calculable row";
+    // Optional user mappings refine only estimated critical path eligibility.
+    // An explicit include preference never overrides invalid dates or detected
+    // parent/summary rows.
+    if (row.includeInCriticalPathOverride === false) {
+      return "Excluded by Include in Critical Path mapping";
+    }
+
+    if (isExcludedCriticalPathRowType(row.rowType)) {
+      return "Excluded by Row Type mapping";
     }
 
     return "Eligible";
@@ -1430,11 +1510,20 @@
     }, null);
   }
 
+  function countRowsExcludedByReason(rows, reason) {
+    return rows.filter((row) => row.criticalPathExclusionReason === reason).length;
+  }
+
   function buildCriticalPathSummary(projectName, rows, baselinePathRows, currentPathRows, warnings) {
     const eligibleRows = rows.filter((row) => isEligibleForCriticalPath(row));
     const excludedLikelySummaryRows = rows.filter((row) => {
       return row.classification === "likely-summary" || row.excludeFromFutureCriticalPath;
     }).length;
+    const excludedByRowTypeMapping = countRowsExcludedByReason(rows, "Excluded by Row Type mapping");
+    const excludedByIncludeMapping = countRowsExcludedByReason(
+      rows,
+      "Excluded by Include in Critical Path mapping"
+    );
     const baselineFinishRow = baselinePathRows[baselinePathRows.length - 1] || null;
     const currentFinishRow = currentPathRows[currentPathRows.length - 1] || null;
     const baselineFinishDate = baselineFinishRow ? getCriticalPathDate(baselineFinishRow, "baselineFinish") : null;
@@ -1448,6 +1537,8 @@
       projectName,
       eligibleRowCount: eligibleRows.length,
       excludedLikelySummaryRows,
+      excludedByRowTypeMapping,
+      excludedByIncludeMapping,
       baselineCriticalPathTaskCount: baselinePathRows.length,
       currentCriticalPathTaskCount: currentPathRows.length,
       baselineEstimatedProjectFinish: baselineFinishDate ? formatDateValue(baselineFinishDate) : "Not calculated",
@@ -1524,6 +1615,11 @@
     const excludedLikelySummaryRows = rows.filter((row) => {
       return row.classification === "likely-summary" || row.excludeFromFutureCriticalPath;
     }).length;
+    const excludedByRowTypeMapping = countRowsExcludedByReason(rows, "Excluded by Row Type mapping");
+    const excludedByIncludeMapping = countRowsExcludedByReason(
+      rows,
+      "Excluded by Include in Critical Path mapping"
+    );
     const warnings = getUniqueWarnings(projectResults.flatMap((projectResult) => projectResult.summary.warnings));
 
     return {
@@ -1532,6 +1628,8 @@
       projectGroupCount: projectResults.length,
       eligibleRowCount: eligibleRows.length,
       excludedLikelySummaryRows,
+      excludedByRowTypeMapping,
+      excludedByIncludeMapping,
       baselineCriticalPathTaskCount: baselinePathRows.length,
       currentCriticalPathTaskCount: currentPathRows.length,
       baselineEstimatedProjectFinish: baselineFinishDate ? formatDateValue(baselineFinishDate) : "Not calculated",
@@ -1940,6 +2038,16 @@
     );
     appendDescriptionItem(
       criticalPathSummary,
+      "Rows excluded by Row Type mapping",
+      String(summary.excludedByRowTypeMapping)
+    );
+    appendDescriptionItem(
+      criticalPathSummary,
+      "Rows excluded by Include in Critical Path mapping",
+      String(summary.excludedByIncludeMapping)
+    );
+    appendDescriptionItem(
+      criticalPathSummary,
       "Baseline critical path task count",
       String(summary.baselineCriticalPathTaskCount)
     );
@@ -1989,6 +2097,16 @@
       criticalPathSummary,
       "Rows excluded as likely parent/summary rows",
       String(summary.excludedLikelySummaryRows)
+    );
+    appendDescriptionItem(
+      criticalPathSummary,
+      "Rows excluded by Row Type mapping",
+      String(summary.excludedByRowTypeMapping)
+    );
+    appendDescriptionItem(
+      criticalPathSummary,
+      "Rows excluded by Include in Critical Path mapping",
+      String(summary.excludedByIncludeMapping)
     );
     appendDescriptionItem(
       criticalPathSummary,
@@ -2128,6 +2246,18 @@
     return value ? "Yes" : "No";
   }
 
+  function formatIncludeInCriticalPathOverride(value) {
+    if (value === true) {
+      return "Yes";
+    }
+
+    if (value === false) {
+      return "No";
+    }
+
+    return "";
+  }
+
   function getWarningsText(row) {
     return row.dateWarnings.length > 0 ? row.dateWarnings.join(" ") : "";
   }
@@ -2146,6 +2276,8 @@
       "Task ID": row.taskId,
       "Task / Milestone": row.taskName,
       "Row Classification": row.classification,
+      "Row Type": row.rowType,
+      "Include in Critical Path?": formatIncludeInCriticalPathOverride(row.includeInCriticalPathOverride),
       "Hierarchy Level": getReportHierarchyLevel(row),
       "Has Child Rows": formatYesNo(row.hasChildRows),
       "Critical Path Eligible": formatYesNo(row.criticalPathEligible),
@@ -2172,6 +2304,8 @@
       "Task ID": row.taskId,
       "Task / Milestone": row.taskName,
       "Row Classification": row.classification,
+      "Row Type": row.rowType,
+      "Include in Critical Path?": formatIncludeInCriticalPathOverride(row.includeInCriticalPathOverride),
       "Hierarchy Level": getReportHierarchyLevel(row),
       "Has Child Rows": formatYesNo(row.hasChildRows),
       "Critical Path Eligible": formatYesNo(row.criticalPathEligible),
@@ -2216,6 +2350,8 @@
       "Task ID": row.taskId,
       "Task / Milestone": row.taskName,
       "Row Classification": row.classification,
+      "Row Type": row.rowType,
+      "Include in Critical Path?": formatIncludeInCriticalPathOverride(row.includeInCriticalPathOverride),
       "Hierarchy Level": getReportHierarchyLevel(row),
       "Has Child Rows": formatYesNo(row.hasChildRows),
       "Critical Path Eligible": formatYesNo(row.criticalPathEligible),
@@ -2283,6 +2419,11 @@
       ],
       ["Eligible critical path rows considered", criticalPathSummary.eligibleRowCount],
       ["Rows excluded as likely parent/summary rows", criticalPathSummary.excludedLikelySummaryRows],
+      ["Rows excluded from estimated critical path by Row Type mapping", criticalPathSummary.excludedByRowTypeMapping],
+      [
+        "Rows excluded from estimated critical path by Include in Critical Path mapping",
+        criticalPathSummary.excludedByIncludeMapping
+      ],
       ["Baseline critical path task count", criticalPathSummary.baselineCriticalPathTaskCount],
       ["Current critical path task count", criticalPathSummary.currentCriticalPathTaskCount],
       ["Baseline estimated project finish", criticalPathSummary.baselineEstimatedProjectFinish],
@@ -2350,21 +2491,21 @@
       reportSheetNames.changedItems,
       changedRows.map((row) => buildScheduleReportRow(row)),
       scheduleReportHeaders,
-      [26, 16, 34, 22, 16, 16, 22, 38, 16, 16, 22, 22, 16, 16, 22, 22, 26, 18, 20, 46, 30]
+      [26, 16, 34, 22, 18, 24, 16, 16, 22, 38, 16, 16, 22, 22, 16, 16, 22, 22, 26, 18, 20, 46, 30]
     );
     addJsonWorksheet(
       reportWorkbook,
       reportSheetNames.allItems,
       result.analyzedRows.map((row) => buildScheduleReportRow(row)),
       scheduleReportHeaders,
-      [26, 16, 34, 22, 16, 16, 22, 38, 16, 16, 22, 22, 16, 16, 22, 22, 26, 18, 20, 46, 30]
+      [26, 16, 34, 22, 18, 24, 16, 16, 22, 38, 16, 16, 22, 22, 16, 16, 22, 22, 26, 18, 20, 46, 30]
     );
     addJsonWorksheet(
       reportWorkbook,
       reportSheetNames.warnings,
       warningRows.map((row) => buildWarningReportRow(row)),
       warningReportHeaders,
-      [26, 16, 34, 22, 16, 16, 22, 38, 16, 16, 16, 16, 26, 52, 34, 30]
+      [26, 16, 34, 22, 18, 24, 16, 16, 22, 38, 16, 16, 16, 16, 26, 52, 34, 30]
     );
     addJsonWorksheet(
       reportWorkbook,
@@ -2378,7 +2519,7 @@
       reportSheetNames.estimatedCriticalPath,
       criticalPathRows,
       criticalPathReportHeaders,
-      [26, 14, 12, 16, 34, 22, 16, 16, 22, 38, 16, 16, 16, 16, 22, 22, 26, 22, 28, 28, 20, 30]
+      [26, 14, 12, 16, 34, 22, 18, 24, 16, 16, 22, 38, 16, 16, 16, 16, 22, 22, 26, 22, 28, 28, 20, 30]
     );
     addAoaWorksheet(
       reportWorkbook,

@@ -83,6 +83,7 @@ The analyzer:
 - Identifies likely parent/summary rows and excludes them from estimated critical path logic by default
 - Supports Row Hierarchy / Outline Level mapping for parent/child Smartsheet schedules
 - Supports Project Name / Project Grouping mapping when one export contains multiple projects, properties, or schedules
+- Supports optional Row Type and Include in Critical Path? mappings for estimated critical path eligibility
 - Generates a downloadable Excel report using the SheetJS browser library
 
 ### Required Column Mappings
@@ -100,10 +101,18 @@ The analyzer:
 - Status / % Complete
 - Row Hierarchy / Outline Level
 - Project Name / Project Grouping
+- Row Type
+- Include in Critical Path?
 
 Row Hierarchy / Outline Level is recommended for Smartsheet schedules with parent/child rows. It helps the analyzer identify parent/summary rows so they do not drive estimated critical path logic. If a sheet does not already have a helper column, the site's Smartsheet Formula Builder includes a Hierarchy Level Helper formula option.
 
 Project Name / Project Grouping is recommended when one workbook contains multiple projects, properties, or schedules. When mapped, estimated critical paths are calculated separately by project group.
+
+Row Type can be mapped when the export labels non-schedule rows such as Reporting, Spend, Budget, Administrative, Admin, Placeholder, or Summary. Those row types are excluded from estimated critical path logic, while Task, Activity, Milestone, blank, or unrecognized values remain eligible if all other rules pass.
+
+Include in Critical Path? can be mapped to a helper column with values such as Yes/No, True/False, Checked/Unchecked, Include/Exclude, or 1/0. No-style values exclude the row from estimated critical path logic. Yes-style values do not override invalid dates, parent/summary detection, or other existing exclusions.
+
+Row Type and Include in Critical Path? affect estimated critical path eligibility only. Rows excluded by these mappings still appear in the full workbook/report audit trail.
 
 ## Generated Excel Report
 
@@ -151,6 +160,7 @@ Current limitations:
 
 - Holiday calendars are not yet applied
 - Parent/summary rows are excluded only where hierarchy data or fallback heuristics identify them
+- Optional Row Type and Include in Critical Path? mappings help refine eligibility, but they do not replace scheduler review
 - Dependency validation focuses on parsed predecessor references, not full scheduling-engine behavior
 - The estimated path should be reviewed by a scheduler or project controls professional before being used for formal schedule decisions
 
@@ -182,7 +192,6 @@ The goal is to keep the site easy to understand, easy to maintain, and easy to d
 
 Planned improvements include:
 
-- Add optional Row Type / Include in Critical Path mapping
 - Add holiday calendar support
 - Add an All Dependency Links Excel report tab
 - Refactor schedule analyzer JavaScript into smaller modules
