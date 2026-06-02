@@ -232,6 +232,41 @@
                 />
               </div>
 
+              <div class="mapping-field mapping-field-wide">
+                <label for="scheduleHierarchyLevelColumn">
+                  Row Hierarchy / Outline Level column <span class="field-requirement">Optional</span>
+                </label>
+                <input
+                  id="scheduleHierarchyLevelColumn"
+                  type="text"
+                  placeholder="Hierarchy Level"
+                  autocomplete="off"
+                />
+                <p class="mapping-help">
+                  Optional but recommended for Smartsheet schedules with parent/child rows. Map a helper
+                  column that identifies each row's hierarchy or outline level. This helps exclude
+                  parent/summary rows from critical path analysis. If your sheet does not have one, use
+                  the Smartsheet Formula Builder's 'Hierarchy Level Helper' option below to create one
+                  before exporting.
+                </p>
+              </div>
+
+              <div class="mapping-field mapping-field-wide">
+                <label for="scheduleProjectNameColumn">
+                  Project Name / Project Grouping column <span class="field-requirement">Optional</span>
+                </label>
+                <input
+                  id="scheduleProjectNameColumn"
+                  type="text"
+                  placeholder="Property"
+                  autocomplete="off"
+                />
+                <p class="mapping-help">
+                  Map this when one uploaded workbook contains multiple projects, properties, or schedules.
+                  Estimated critical paths will be calculated separately for each mapped project group.
+                </p>
+              </div>
+
               <div class="mapping-field">
                 <label for="scheduleStatusColumn">
                   Status / % Complete column <span class="field-requirement">Optional</span>
@@ -288,7 +323,7 @@
             and current dates are the same.
           </p>
           <p class="summary-note">
-            Likely parent/summary rows are counted separately and will be excluded from future critical path
+            Likely parent/summary rows are counted separately and will be excluded from estimated critical path
             analysis by default. When they appear in changed-row or dependency output, they remain visible so
             schedule reviewers can inspect the source rows.
           </p>
@@ -303,7 +338,8 @@
             downloadable Excel report.
           </p>
           <p class="detail-note">
-            Rows with invalid mapped dates stay in the table, but their movement values are not calculated.
+            Rows with invalid mapped dates are counted in the summary and included in the downloadable
+            Excel report, but their movement values are not calculated.
           </p>
           <div class="table-wrapper movement-table-wrapper">
             <table class="movement-table">
@@ -319,8 +355,7 @@
           <p class="eyebrow">Dependency Check</p>
           <h3>Dependency / Predecessor Validation</h3>
           <p>
-            Predecessor values are parsed for dependency quality checks only. Critical path calculation has not
-            been added yet.
+            Predecessor values are parsed for dependency quality checks and estimated critical path logic.
           </p>
           <dl id="scheduleDependencySummary" class="dependency-summary-list"></dl>
           <div class="table-wrapper dependency-table-wrapper">
@@ -333,12 +368,33 @@
           </div>
         </article>
 
+        <article class="result-panel critical-path-panel">
+          <p class="eyebrow">Estimated Path</p>
+          <h3>Estimated Critical Path</h3>
+          <p>
+            This is an estimated dependency-based critical path. Parent/summary rows are excluded by
+            default when hierarchy data or fallback heuristics identify them. The analyzer works best when
+            you map a Row Hierarchy / Outline Level helper column. Holiday calendars are not yet applied.
+            When a Project Name / Project Grouping column is mapped, estimated critical paths are calculated
+            separately for each project group.
+          </p>
+          <dl id="scheduleCriticalPathSummary" class="critical-path-summary-list"></dl>
+          <div class="table-wrapper critical-path-table-wrapper">
+            <table class="critical-path-table">
+              <thead>
+                <tr id="scheduleCriticalPathDetailHeader"></tr>
+              </thead>
+              <tbody id="scheduleCriticalPathDetailBody"></tbody>
+            </table>
+          </div>
+        </article>
+
         <article class="result-panel report-download-panel">
           <p class="eyebrow">Excel Report</p>
           <h3>Download Summary Workbook</h3>
           <p>
             The Excel report includes changed rows, all analyzed rows, warning rows, dependency validation,
-            and the column mapping used.
+            estimated critical path output, and the column mapping used.
           </p>
           <button id="downloadScheduleReportButton" class="button primary" type="button" disabled>
             Download Excel Summary
@@ -349,7 +405,7 @@
           <p class="eyebrow">Future Phase</p>
           <h3>Not included in Phase 3</h3>
           <p>
-            Full critical path calculation and holiday calendars are intentionally reserved for later phases.
+            Full CPM refinement and holiday calendars are intentionally reserved for later phases.
           </p>
         </article>
       </div>

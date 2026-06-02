@@ -1,7 +1,4 @@
-// Phase 3 implementation for the uploaded Smartsheet .xlsx schedule analyzer.
-//
-// Later phases can add:
-// - estimated critical path logic.
+// Phase 3+ implementation for the uploaded Smartsheet .xlsx schedule analyzer.
 //
 // This file intentionally does not call the Smartsheet API. It parses exported
 // workbooks in the browser, validates only mapped columns, and ignores unrelated
@@ -16,6 +13,18 @@
     { key: "currentStart", id: "scheduleCurrentStartColumn", label: "Actual / Current Start column", required: true },
     { key: "currentFinish", id: "scheduleCurrentFinishColumn", label: "Actual / Current Finish column", required: true },
     { key: "predecessors", id: "schedulePredecessorsColumn", label: "Predecessors column", required: true },
+    {
+      key: "hierarchyLevelRaw",
+      id: "scheduleHierarchyLevelColumn",
+      label: "Row Hierarchy / Outline Level column",
+      required: false
+    },
+    {
+      key: "projectNameRaw",
+      id: "scheduleProjectNameColumn",
+      label: "Project Name / Project Grouping column",
+      required: false
+    },
     { key: "status", id: "scheduleStatusColumn", label: "Status / % Complete column", required: false }
   ];
 
@@ -27,8 +36,14 @@
     { key: "currentStart", label: "Current Start" },
     { key: "currentFinish", label: "Current Finish" },
     { key: "predecessors", label: "Predecessors" },
+    { key: "hierarchyLevelRaw", label: "Hierarchy Level" },
+    { key: "projectName", label: "Project Name" },
     { key: "status", label: "Status / % Complete" }
   ];
+
+  const normalizedRowPresenceColumns = previewColumns.filter((column) => {
+    return column.key !== "hierarchyLevelRaw" && column.key !== "projectName";
+  });
 
   const dateColumns = [
     { key: "baselineStart", label: "baseline start" },
@@ -57,13 +72,19 @@
     allItems: "All Schedule Items",
     warnings: "Warnings - Data Quality",
     dependencyValidation: "Dependency Validation",
+    estimatedCriticalPath: "Estimated Critical Path",
     columnMapping: "Column Mapping Used"
   };
 
   const scheduleReportHeaders = [
+    "Project Name",
     "Task ID",
     "Task / Milestone",
     "Row Classification",
+    "Hierarchy Level",
+    "Has Child Rows",
+    "Critical Path Eligible",
+    "Critical Path Exclusion Reason",
     "Baseline Start",
     "Current Start",
     "Start Calendar Movement",
@@ -80,9 +101,14 @@
   ];
 
   const warningReportHeaders = [
+    "Project Name",
     "Task ID",
     "Task / Milestone",
     "Row Classification",
+    "Hierarchy Level",
+    "Has Child Rows",
+    "Critical Path Eligible",
+    "Critical Path Exclusion Reason",
     "Baseline Start",
     "Baseline Finish",
     "Current Start",
@@ -119,6 +145,46 @@
     { key: "lagDays", label: "Lag Days" },
     { key: "resolved", label: "Resolved?" },
     { key: "issueMessage", label: "Issue / Warning" }
+  ];
+
+  const criticalPathDetailColumns = [
+    { key: "projectName", label: "Project Name" },
+    { key: "criticalPathSequenceCurrent", label: "Sequence" },
+    { key: "taskId", label: "Task ID" },
+    { key: "taskName", label: "Task / Milestone" },
+    { key: "baselineStart", label: "Baseline Start" },
+    { key: "baselineFinish", label: "Baseline Finish" },
+    { key: "currentStart", label: "Current Start" },
+    { key: "currentFinish", label: "Current Finish" },
+    { key: "finishWorkdayMovement", label: "Finish Workday Movement" },
+    { key: "movementDirection", label: "Movement Status" },
+    { key: "criticalPathStatus", label: "Critical Path Status" },
+    { key: "predecessors", label: "Predecessors" }
+  ];
+
+  const criticalPathReportHeaders = [
+    "Project Name",
+    "Path Type",
+    "Sequence",
+    "Task ID",
+    "Task / Milestone",
+    "Row Classification",
+    "Hierarchy Level",
+    "Has Child Rows",
+    "Critical Path Eligible",
+    "Critical Path Exclusion Reason",
+    "Baseline Start",
+    "Baseline Finish",
+    "Current Start",
+    "Current Finish",
+    "Finish Calendar Movement",
+    "Finish Workday Movement",
+    "Movement Status",
+    "Critical Path Status",
+    "Baseline Critical Path Sequence",
+    "Current Critical Path Sequence",
+    "Predecessors",
+    "Excluded From Future Critical Path"
   ];
 
   let normalizedScheduleRows = [];
@@ -161,6 +227,9 @@
     const dependencySummary = getScheduleAnalyzerElement("scheduleDependencySummary");
     const dependencyWarningHeader = getScheduleAnalyzerElement("scheduleDependencyWarningHeader");
     const dependencyWarningBody = getScheduleAnalyzerElement("scheduleDependencyWarningBody");
+    const criticalPathSummary = getScheduleAnalyzerElement("scheduleCriticalPathSummary");
+    const criticalPathDetailHeader = getScheduleAnalyzerElement("scheduleCriticalPathDetailHeader");
+    const criticalPathDetailBody = getScheduleAnalyzerElement("scheduleCriticalPathDetailBody");
 
     latestAnalysisResult = null;
     setReportDownloadReady(false);
@@ -183,7 +252,10 @@
       movementDetailBody,
       dependencySummary,
       dependencyWarningHeader,
-      dependencyWarningBody
+      dependencyWarningBody,
+      criticalPathSummary,
+      criticalPathDetailHeader,
+      criticalPathDetailBody
     ].forEach((element) => {
       if (element) {
         element.replaceChildren();
@@ -565,6 +637,11 @@
           currentStart: "",
           currentFinish: "",
           predecessors: "",
+          hierarchyLevelRaw: "",
+          hierarchyLevel: null,
+          hasChildRows: false,
+          projectNameRaw: "",
+          projectName: "",
           status: ""
         };
 
@@ -576,8 +653,92 @@
         return normalizedRow;
       })
       .filter((row) => {
-        return previewColumns.some((column) => row[column.key] !== "");
+        return normalizedRowPresenceColumns.some((column) => row[column.key] !== "");
       });
+  }
+
+  function parseHierarchyLevelValue(value) {
+    const normalizedValue = normalizeCellValue(value);
+
+    if (normalizedValue === "") {
+      return null;
+    }
+
+    const numericLevel = Number(normalizedValue);
+
+    if (Number.isFinite(numericLevel)) {
+      return numericLevel;
+    }
+
+    const embeddedNumberMatch = normalizedValue.match(/-?\d+(?:\.\d+)?/);
+
+    return embeddedNumberMatch ? Number(embeddedNumberMatch[0]) : null;
+  }
+
+  function isHierarchyMappingProvided(mappingValues) {
+    return Boolean(mappingValues.hierarchyLevelRaw);
+  }
+
+  function isProjectGroupingMapped(mappingValues) {
+    return Boolean(mappingValues.projectNameRaw);
+  }
+
+  function normalizeProjectName(row, mappingValues) {
+    if (!isProjectGroupingMapped(mappingValues)) {
+      return "Uploaded Schedule";
+    }
+
+    const projectName = normalizeCellValue(row.projectNameRaw);
+
+    return projectName === "" ? "Ungrouped Project" : projectName;
+  }
+
+  function addProjectGroupingAnalysis(rows, mappingValues) {
+    rows.forEach((row) => {
+      row.projectName = normalizeProjectName(row, mappingValues);
+    });
+
+    return rows;
+  }
+
+  function addHierarchyAnalysis(rows, mappingValues) {
+    const hierarchyMapped = isHierarchyMappingProvided(mappingValues);
+
+    rows.forEach((row) => {
+      row.hierarchyLevel = hierarchyMapped ? parseHierarchyLevelValue(row.hierarchyLevelRaw) : null;
+      row.hasChildRows = false;
+    });
+
+    if (!hierarchyMapped || rows.every((row) => row.hierarchyLevel === null)) {
+      return rows;
+    }
+
+    rows.forEach((row, rowIndex) => {
+      if (row.hierarchyLevel === null) {
+        return;
+      }
+
+      // Smartsheet outline helper columns usually show depth by row order. A row
+      // is treated as a parent only when a later row has a deeper level before
+      // the outline returns to the same or a shallower level. If every row is
+      // level 0, this marks no parent rows.
+      for (let nextIndex = rowIndex + 1; nextIndex < rows.length; nextIndex += 1) {
+        const nextLevel = rows[nextIndex].hierarchyLevel;
+
+        if (nextLevel === null) {
+          continue;
+        }
+
+        if (nextLevel <= row.hierarchyLevel) {
+          break;
+        }
+
+        row.hasChildRows = true;
+        break;
+      }
+    });
+
+    return rows;
   }
 
   function hasAnyMappedDateValue(row) {
@@ -679,11 +840,17 @@
   }
 
   function classifyScheduleRow(row, parsedDates, dateWarnings, mappingValues) {
+    if (row.hasChildRows) {
+      return "likely-summary";
+    }
+
     const summarySignals = getLikelySummarySignals(row, parsedDates, mappingValues);
 
-    // Smartsheet exports in this mapped-column flow do not provide hierarchy metadata.
-    // This is a conservative estimate; a future version may support an explicit
-    // hierarchy, row-type, or parent/child mapping from the workbook.
+    // When hierarchy data is unavailable or inconclusive, this remains an
+    // intentionally conservative estimate.
+    // TODO: A future version may support an optional Row Type or Include in
+    // Critical Path mapping for reporting, spend milestones, and other
+    // non-schedule rows.
     if (isLikelySummaryRow(summarySignals)) {
       return "likely-summary";
     }
@@ -743,11 +910,13 @@
       ...row,
       classification,
       dateWarnings,
-      excludeFromFutureCriticalPath: classification === "likely-summary",
+      excludeFromFutureCriticalPath: classification === "likely-summary" || row.hasChildRows,
       parsedDates,
       parsedPredecessors: [],
       resolvedPredecessors: [],
       dependencyWarnings: [],
+      criticalPathEligible: false,
+      criticalPathExclusionReason: "",
       validForMovement,
       ...movementValues
     };
@@ -904,6 +1073,7 @@
       predecessorTaskId: predecessorRow ? predecessorRow.taskId : "",
       predecessorTaskName: predecessorRow ? predecessorRow.taskName : "",
       predecessorRowClassification: predecessorRow ? predecessorRow.classification : "",
+      predecessorRow,
       issueMessages,
       issueMessage: issueMessages.join(" ")
     };
@@ -950,6 +1120,454 @@
         return link.resolved && link.predecessorRowClassification === "likely-summary";
       }).length,
       rowsWithDependencyWarnings: rows.filter((row) => row.dependencyWarnings.length > 0).length
+    };
+  }
+
+  function hasUsableCriticalPathDates(row) {
+    return (
+      row.parsedDates.baselineStart.isValid &&
+      row.parsedDates.baselineFinish.isValid &&
+      row.parsedDates.currentStart.isValid &&
+      row.parsedDates.currentFinish.isValid
+    );
+  }
+
+  function getCriticalPathExclusionReason(row) {
+    if (row.hasChildRows) {
+      return "Parent/summary row based on hierarchy";
+    }
+
+    if (row.classification === "likely-summary" || row.excludeFromFutureCriticalPath) {
+      return "Likely parent/summary row based on fallback heuristic";
+    }
+
+    if (!row.validForMovement || !hasUsableCriticalPathDates(row)) {
+      return row.dateWarnings.length > 0 ? "Invalid or missing schedule dates" : "Warning/non-calculable row";
+    }
+
+    return "Eligible";
+  }
+
+  function updateCriticalPathEligibility(rows) {
+    rows.forEach((row) => {
+      const exclusionReason = getCriticalPathExclusionReason(row);
+
+      row.criticalPathExclusionReason = exclusionReason;
+      row.criticalPathEligible = exclusionReason === "Eligible";
+    });
+  }
+
+  function isEligibleForCriticalPath(row) {
+    return row.criticalPathEligible === true;
+  }
+
+  function getCriticalPathDate(row, dateKey) {
+    return row.parsedDates[dateKey].date;
+  }
+
+  function getCriticalPathDurationDays(row, datePrefix) {
+    const startDate = getCriticalPathDate(row, `${datePrefix}Start`);
+    const finishDate = getCriticalPathDate(row, `${datePrefix}Finish`);
+
+    return Math.max(calculateCalendarDaysBetween(startDate, finishDate) + 1, 1);
+  }
+
+  function isSameProjectGroup(firstRow, secondRow) {
+    return firstRow.projectName === secondRow.projectName;
+  }
+
+  function getEligibleDependencyLinks(row, eligibleRows) {
+    const supportedRelationshipTypes = new Set(["FS", "SS", "FF", "SF"]);
+
+    return row.resolvedPredecessors.filter((link) => {
+      return (
+        link.resolved &&
+        link.predecessorRow &&
+        eligibleRows.has(row) &&
+        eligibleRows.has(link.predecessorRow) &&
+        isSameProjectGroup(row, link.predecessorRow) &&
+        supportedRelationshipTypes.has(link.relationshipType)
+      );
+    });
+  }
+
+  function buildCriticalPathIncomingLinks(rows, eligibleRows) {
+    const incomingLinksByRow = new Map();
+
+    rows.forEach((row) => {
+      if (eligibleRows.has(row)) {
+        incomingLinksByRow.set(row, getEligibleDependencyLinks(row, eligibleRows));
+      }
+    });
+
+    return incomingLinksByRow;
+  }
+
+  function getCriticalPathInputWarnings(rows, eligibleRows) {
+    const warnings = [];
+    const allLinks = rows.flatMap((row) => row.resolvedPredecessors);
+    const unresolvedLinkCount = allLinks.filter((link) => !link.resolved).length;
+    const crossProjectLinkCount = rows.flatMap((row) => {
+      return row.resolvedPredecessors.filter((link) => {
+        return (
+          link.resolved &&
+          link.predecessorRow &&
+          row.criticalPathEligible &&
+          link.predecessorRow.criticalPathEligible &&
+          !isSameProjectGroup(row, link.predecessorRow)
+        );
+      });
+    }).length;
+    const ineligibleLinkCount = rows.flatMap((row) => {
+      return row.resolvedPredecessors.filter((link) => {
+        return (
+          link.resolved &&
+          link.predecessorRow &&
+          isSameProjectGroup(row, link.predecessorRow) &&
+          (!eligibleRows.has(row) || !eligibleRows.has(link.predecessorRow))
+        );
+      });
+    }).length;
+
+    if (unresolvedLinkCount > 0) {
+      warnings.push(`${unresolvedLinkCount} unresolved predecessor link(s) were omitted from the estimate.`);
+    }
+
+    if (crossProjectLinkCount > 0) {
+      warnings.push(`${crossProjectLinkCount} cross-project predecessor link(s) omitted from estimated critical path.`);
+    }
+
+    if (ineligibleLinkCount > 0) {
+      warnings.push(`${ineligibleLinkCount} resolved predecessor link(s) involved ineligible rows and were omitted.`);
+    }
+
+    return warnings;
+  }
+
+  function getOneRowCriticalPathWarnings(baselinePathRows, currentPathRows) {
+    if (baselinePathRows.length === 1 || currentPathRows.length === 1) {
+      return [
+        "Estimated critical path contains only one eligible row. This may indicate incomplete dependency data, missing hierarchy information, or overly broad summary-row classification."
+      ];
+    }
+
+    return [];
+  }
+
+  function getUniqueWarnings(warnings) {
+    return Array.from(new Set(warnings));
+  }
+
+  function getLatestFinishRows(rows, datePrefix) {
+    const finishKey = `${datePrefix}Finish`;
+    let latestTime = null;
+
+    rows.forEach((row) => {
+      const finishTime = getCriticalPathDate(row, finishKey).getTime();
+
+      if (latestTime === null || finishTime > latestTime) {
+        latestTime = finishTime;
+      }
+    });
+
+    return rows.filter((row) => {
+      return latestTime !== null && getCriticalPathDate(row, finishKey).getTime() === latestTime;
+    });
+  }
+
+  function getCriticalPathRowLabel(row) {
+    return row.taskName || row.taskId || `source row ${row.sourceDataRowNumber}`;
+  }
+
+  function calculateEstimatedPath(eligibleRowsList, incomingLinksByRow, datePrefix) {
+    const memo = new Map();
+    const visitState = new Map();
+    const warnings = [];
+    const cycleWarnings = new Set();
+
+    function calculateBestPathTo(row) {
+      const rowState = visitState.get(row);
+
+      if (rowState === "visiting") {
+        const warningText = `Circular dependency detected near ${getCriticalPathRowLabel(row)}. Cyclic links were skipped for the estimated critical path.`;
+
+        if (!cycleWarnings.has(warningText)) {
+          cycleWarnings.add(warningText);
+          warnings.push(warningText);
+        }
+
+        return null;
+      }
+
+      if (rowState === "done") {
+        return memo.get(row);
+      }
+
+      visitState.set(row, "visiting");
+
+      const rowDuration = getCriticalPathDurationDays(row, datePrefix);
+      let bestResult = {
+        score: rowDuration,
+        path: [row]
+      };
+
+      (incomingLinksByRow.get(row) || []).forEach((link) => {
+        const predecessorResult = calculateBestPathTo(link.predecessorRow);
+
+        if (!predecessorResult) {
+          return;
+        }
+
+        // This is an estimated dependency-based path, not a full CPM engine.
+        // FS, SS, FF, and SF links are treated as ordering links for longest-chain
+        // scoring; lag days adjust the chain score, while actual mapped dates still
+        // determine the latest finish target.
+        const candidateScore = predecessorResult.score + link.lagDays + rowDuration;
+
+        if (candidateScore > bestResult.score) {
+          bestResult = {
+            score: candidateScore,
+            path: [...predecessorResult.path, row]
+          };
+        }
+      });
+
+      visitState.set(row, "done");
+      memo.set(row, bestResult);
+
+      return bestResult;
+    }
+
+    eligibleRowsList.forEach((row) => {
+      calculateBestPathTo(row);
+    });
+
+    const latestFinishRows = getLatestFinishRows(eligibleRowsList, datePrefix);
+    let bestPathResult = null;
+
+    latestFinishRows.forEach((row) => {
+      const pathResult = memo.get(row) || calculateBestPathTo(row);
+
+      if (pathResult && (!bestPathResult || pathResult.score > bestPathResult.score)) {
+        bestPathResult = pathResult;
+      }
+    });
+
+    return {
+      path: bestPathResult ? bestPathResult.path : [],
+      warnings
+    };
+  }
+
+  function clearCriticalPathProperties(rows) {
+    rows.forEach((row) => {
+      row.isOnBaselineCriticalPath = false;
+      row.isOnCurrentCriticalPath = false;
+      row.criticalPathSequenceBaseline = "";
+      row.criticalPathSequenceCurrent = "";
+      row.criticalPathStatus = "Not Critical";
+      row.criticalPathEligible = false;
+      row.criticalPathExclusionReason = "Not evaluated";
+    });
+  }
+
+  function applyCriticalPathSequences(pathRows, pathType) {
+    const isBaseline = pathType === "baseline";
+
+    pathRows.forEach((row, index) => {
+      if (isBaseline) {
+        row.isOnBaselineCriticalPath = true;
+        row.criticalPathSequenceBaseline = index + 1;
+      } else {
+        row.isOnCurrentCriticalPath = true;
+        row.criticalPathSequenceCurrent = index + 1;
+      }
+    });
+  }
+
+  function updateCriticalPathStatuses(rows) {
+    rows.forEach((row) => {
+      if (row.isOnBaselineCriticalPath && row.isOnCurrentCriticalPath) {
+        row.criticalPathStatus = "Both";
+      } else if (row.isOnBaselineCriticalPath) {
+        row.criticalPathStatus = "Baseline Only";
+      } else if (row.isOnCurrentCriticalPath) {
+        row.criticalPathStatus = "Current Only";
+      } else {
+        row.criticalPathStatus = "Not Critical";
+      }
+    });
+  }
+
+  function getCriticalPathProjectGroups(rows) {
+    const groupsByName = new Map();
+
+    rows.forEach((row) => {
+      if (!groupsByName.has(row.projectName)) {
+        groupsByName.set(row.projectName, []);
+      }
+
+      groupsByName.get(row.projectName).push(row);
+    });
+
+    return Array.from(groupsByName.entries()).map(([projectName, projectRows]) => {
+      return {
+        projectName,
+        rows: projectRows
+      };
+    });
+  }
+
+  function getLatestCriticalPathFinishDate(pathRows, finishKey) {
+    return pathRows.reduce((latestDate, row) => {
+      const finishDate = getCriticalPathDate(row, finishKey);
+
+      if (!latestDate || finishDate.getTime() > latestDate.getTime()) {
+        return finishDate;
+      }
+
+      return latestDate;
+    }, null);
+  }
+
+  function buildCriticalPathSummary(projectName, rows, baselinePathRows, currentPathRows, warnings) {
+    const eligibleRows = rows.filter((row) => isEligibleForCriticalPath(row));
+    const excludedLikelySummaryRows = rows.filter((row) => {
+      return row.classification === "likely-summary" || row.excludeFromFutureCriticalPath;
+    }).length;
+    const baselineFinishRow = baselinePathRows[baselinePathRows.length - 1] || null;
+    const currentFinishRow = currentPathRows[currentPathRows.length - 1] || null;
+    const baselineFinishDate = baselineFinishRow ? getCriticalPathDate(baselineFinishRow, "baselineFinish") : null;
+    const currentFinishDate = currentFinishRow ? getCriticalPathDate(currentFinishRow, "currentFinish") : null;
+    const finishShiftCalendarDays =
+      baselineFinishDate && currentFinishDate ? calculateCalendarDaysBetween(baselineFinishDate, currentFinishDate) : "";
+    const finishShiftWorkdays =
+      baselineFinishDate && currentFinishDate ? calculateWorkdaysMoved(baselineFinishDate, currentFinishDate) : "";
+
+    return {
+      projectName,
+      eligibleRowCount: eligibleRows.length,
+      excludedLikelySummaryRows,
+      baselineCriticalPathTaskCount: baselinePathRows.length,
+      currentCriticalPathTaskCount: currentPathRows.length,
+      baselineEstimatedProjectFinish: baselineFinishDate ? formatDateValue(baselineFinishDate) : "Not calculated",
+      currentEstimatedProjectFinish: currentFinishDate ? formatDateValue(currentFinishDate) : "Not calculated",
+      finishShiftCalendarDays,
+      finishShiftWorkdays,
+      tasksOnBothPath: rows.filter((row) => row.isOnBaselineCriticalPath && row.isOnCurrentCriticalPath).length,
+      tasksNewlyOnCurrentPath: rows.filter((row) => !row.isOnBaselineCriticalPath && row.isOnCurrentCriticalPath)
+        .length,
+      tasksNoLongerOnCurrentPath: rows.filter((row) => row.isOnBaselineCriticalPath && !row.isOnCurrentCriticalPath)
+        .length,
+      warnings
+    };
+  }
+
+  function buildProjectCriticalPathResult(projectName, projectRows) {
+    const eligibleRowsList = projectRows.filter((row) => isEligibleForCriticalPath(row));
+    const eligibleRows = new Set(eligibleRowsList);
+    const incomingLinksByRow = buildCriticalPathIncomingLinks(projectRows, eligibleRows);
+    const inputWarnings = getCriticalPathInputWarnings(projectRows, eligibleRows);
+
+    if (eligibleRowsList.length === 0) {
+      return {
+        projectName,
+        rows: projectRows,
+        baselinePathRows: [],
+        currentPathRows: [],
+        summary: buildCriticalPathSummary(
+          projectName,
+          projectRows,
+          [],
+          [],
+          [...inputWarnings, "No eligible rows were available for critical path estimation."]
+        )
+      };
+    }
+
+    const baselineResult = calculateEstimatedPath(eligibleRowsList, incomingLinksByRow, "baseline");
+    const currentResult = calculateEstimatedPath(eligibleRowsList, incomingLinksByRow, "current");
+    const warnings = getUniqueWarnings([
+      ...inputWarnings,
+      ...baselineResult.warnings,
+      ...currentResult.warnings,
+      ...getOneRowCriticalPathWarnings(baselineResult.path, currentResult.path)
+    ]);
+
+    applyCriticalPathSequences(baselineResult.path, "baseline");
+    applyCriticalPathSequences(currentResult.path, "current");
+
+    return {
+      projectName,
+      rows: projectRows,
+      baselinePathRows: baselineResult.path,
+      currentPathRows: currentResult.path,
+      summary: buildCriticalPathSummary(projectName, projectRows, baselineResult.path, currentResult.path, warnings)
+    };
+  }
+
+  function buildOverallCriticalPathSummary(rows, projectResults, mappingValues) {
+    const baselinePathRows = projectResults.flatMap((projectResult) => projectResult.baselinePathRows);
+    const currentPathRows = projectResults.flatMap((projectResult) => projectResult.currentPathRows);
+    const baselineFinishDate = getLatestCriticalPathFinishDate(baselinePathRows, "baselineFinish");
+    const currentFinishDate = getLatestCriticalPathFinishDate(currentPathRows, "currentFinish");
+    const canCalculateOverallFinishShift = projectResults.length <= 1;
+    const finishShiftCalendarDays =
+      canCalculateOverallFinishShift && baselineFinishDate && currentFinishDate
+        ? calculateCalendarDaysBetween(baselineFinishDate, currentFinishDate)
+        : "";
+    const finishShiftWorkdays =
+      canCalculateOverallFinishShift && baselineFinishDate && currentFinishDate
+        ? calculateWorkdaysMoved(baselineFinishDate, currentFinishDate)
+        : "";
+    const eligibleRows = rows.filter((row) => isEligibleForCriticalPath(row));
+    const excludedLikelySummaryRows = rows.filter((row) => {
+      return row.classification === "likely-summary" || row.excludeFromFutureCriticalPath;
+    }).length;
+    const warnings = getUniqueWarnings(projectResults.flatMap((projectResult) => projectResult.summary.warnings));
+
+    return {
+      projectName: "All project groups",
+      projectGroupingMapped: isProjectGroupingMapped(mappingValues),
+      projectGroupCount: projectResults.length,
+      eligibleRowCount: eligibleRows.length,
+      excludedLikelySummaryRows,
+      baselineCriticalPathTaskCount: baselinePathRows.length,
+      currentCriticalPathTaskCount: currentPathRows.length,
+      baselineEstimatedProjectFinish: baselineFinishDate ? formatDateValue(baselineFinishDate) : "Not calculated",
+      currentEstimatedProjectFinish: currentFinishDate ? formatDateValue(currentFinishDate) : "Not calculated",
+      latestCurrentEstimatedProjectFinishAcrossProjectGroups: currentFinishDate
+        ? formatDateValue(currentFinishDate)
+        : "Not calculated",
+      finishShiftCalendarDays,
+      finishShiftWorkdays,
+      tasksOnBothPath: rows.filter((row) => row.isOnBaselineCriticalPath && row.isOnCurrentCriticalPath).length,
+      tasksNewlyOnCurrentPath: rows.filter((row) => !row.isOnBaselineCriticalPath && row.isOnCurrentCriticalPath)
+        .length,
+      tasksNoLongerOnCurrentPath: rows.filter((row) => row.isOnBaselineCriticalPath && !row.isOnCurrentCriticalPath)
+        .length,
+      warnings
+    };
+  }
+
+  function addCriticalPathAnalysis(rows, mappingValues) {
+    clearCriticalPathProperties(rows);
+    updateCriticalPathEligibility(rows);
+
+    // When a project grouping column is mapped, each group gets its own graph so
+    // row-number predecessor links cannot accidentally chain separate projects.
+    const projectResults = getCriticalPathProjectGroups(rows).map((projectGroup) => {
+      return buildProjectCriticalPathResult(projectGroup.projectName, projectGroup.rows);
+    });
+
+    updateCriticalPathStatuses(rows);
+
+    return {
+      baselinePathRows: projectResults.flatMap((projectResult) => projectResult.baselinePathRows),
+      currentPathRows: projectResults.flatMap((projectResult) => projectResult.currentPathRows),
+      projectResults,
+      projectSummaries: projectResults.map((projectResult) => projectResult.summary),
+      summary: buildOverallCriticalPathSummary(rows, projectResults, mappingValues)
     };
   }
 
@@ -1300,6 +1918,191 @@
     renderDependencyWarningTable(getDependencyIssueLinks(result.analyzedRows));
   }
 
+  function formatCriticalPathFinishShift(summary) {
+    if (summary.finishShiftWorkdays === "" || summary.finishShiftCalendarDays === "") {
+      return "Not calculated";
+    }
+
+    return `${summary.finishShiftWorkdays} workdays (${summary.finishShiftCalendarDays} calendar days)`;
+  }
+
+  function formatCriticalPathWarnings(warnings) {
+    return warnings.length > 0 ? warnings.join(" ") : "None";
+  }
+
+  function appendCriticalPathProjectSummary(criticalPathSummary, summary) {
+    appendDescriptionItem(criticalPathSummary, "Project Name", summary.projectName);
+    appendDescriptionItem(criticalPathSummary, "Eligible rows considered", String(summary.eligibleRowCount));
+    appendDescriptionItem(
+      criticalPathSummary,
+      "Rows excluded as likely parent/summary rows",
+      String(summary.excludedLikelySummaryRows)
+    );
+    appendDescriptionItem(
+      criticalPathSummary,
+      "Baseline critical path task count",
+      String(summary.baselineCriticalPathTaskCount)
+    );
+    appendDescriptionItem(
+      criticalPathSummary,
+      "Current critical path task count",
+      String(summary.currentCriticalPathTaskCount)
+    );
+    appendDescriptionItem(
+      criticalPathSummary,
+      "Baseline estimated project finish",
+      summary.baselineEstimatedProjectFinish
+    );
+    appendDescriptionItem(criticalPathSummary, "Current estimated project finish", summary.currentEstimatedProjectFinish);
+    appendDescriptionItem(criticalPathSummary, "Estimated finish shift", formatCriticalPathFinishShift(summary));
+    appendDescriptionItem(
+      criticalPathSummary,
+      "Critical path calculation warnings",
+      formatCriticalPathWarnings(summary.warnings)
+    );
+  }
+
+  function renderCriticalPathSummary(criticalPathResult) {
+    const criticalPathSummary = getScheduleAnalyzerElement("scheduleCriticalPathSummary");
+
+    if (!criticalPathSummary) {
+      return;
+    }
+
+    criticalPathSummary.replaceChildren();
+
+    const summary = criticalPathResult.summary;
+
+    appendDescriptionItem(
+      criticalPathSummary,
+      "Project grouping column mapped",
+      formatYesNo(summary.projectGroupingMapped)
+    );
+    appendDescriptionItem(criticalPathSummary, "Project groups analyzed", String(summary.projectGroupCount));
+    appendDescriptionItem(
+      criticalPathSummary,
+      "Latest current estimated finish across project groups",
+      summary.latestCurrentEstimatedProjectFinishAcrossProjectGroups
+    );
+    appendDescriptionItem(criticalPathSummary, "Eligible rows considered", String(summary.eligibleRowCount));
+    appendDescriptionItem(
+      criticalPathSummary,
+      "Rows excluded as likely parent/summary rows",
+      String(summary.excludedLikelySummaryRows)
+    );
+    appendDescriptionItem(
+      criticalPathSummary,
+      "Baseline critical path task count",
+      String(summary.baselineCriticalPathTaskCount)
+    );
+    appendDescriptionItem(
+      criticalPathSummary,
+      "Current critical path task count",
+      String(summary.currentCriticalPathTaskCount)
+    );
+    appendDescriptionItem(
+      criticalPathSummary,
+      "Baseline estimated project finish",
+      summary.baselineEstimatedProjectFinish
+    );
+    appendDescriptionItem(criticalPathSummary, "Current estimated project finish", summary.currentEstimatedProjectFinish);
+    appendDescriptionItem(
+      criticalPathSummary,
+      "Estimated critical path finish shift",
+      formatCriticalPathFinishShift(summary)
+    );
+    appendDescriptionItem(criticalPathSummary, "Tasks on both baseline and current path", String(summary.tasksOnBothPath));
+    appendDescriptionItem(criticalPathSummary, "Tasks newly on current path", String(summary.tasksNewlyOnCurrentPath));
+    appendDescriptionItem(criticalPathSummary, "Tasks no longer on current path", String(summary.tasksNoLongerOnCurrentPath));
+    appendDescriptionItem(
+      criticalPathSummary,
+      "Critical path calculation warnings",
+      formatCriticalPathWarnings(summary.warnings)
+    );
+
+    appendDescriptionItem(
+      criticalPathSummary,
+      "Critical path grouping note",
+      "When a Project Name / Project Grouping column is mapped, estimated critical paths are calculated separately for each project group."
+    );
+
+    criticalPathResult.projectSummaries.forEach((projectSummary) => {
+      appendCriticalPathProjectSummary(criticalPathSummary, projectSummary);
+    });
+  }
+
+  function getCriticalPathDetailValue(row, columnKey) {
+    if (
+      columnKey === "baselineStart" ||
+      columnKey === "baselineFinish" ||
+      columnKey === "currentStart" ||
+      columnKey === "currentFinish"
+    ) {
+      return formatDateForDetail(row, columnKey);
+    }
+
+    if (columnKey === "finishWorkdayMovement") {
+      return formatMovementValue(row, columnKey);
+    }
+
+    return row[columnKey] === undefined ? "" : String(row[columnKey]);
+  }
+
+  function renderCriticalPathDetailTable(rows) {
+    const criticalPathDetailHeader = getScheduleAnalyzerElement("scheduleCriticalPathDetailHeader");
+    const criticalPathDetailBody = getScheduleAnalyzerElement("scheduleCriticalPathDetailBody");
+
+    if (!criticalPathDetailHeader || !criticalPathDetailBody) {
+      return;
+    }
+
+    criticalPathDetailHeader.replaceChildren();
+    criticalPathDetailBody.replaceChildren();
+
+    criticalPathDetailColumns.forEach((column) => {
+      const headerCell = document.createElement("th");
+      headerCell.textContent = column.label;
+      criticalPathDetailHeader.appendChild(headerCell);
+    });
+
+    if (rows.length === 0) {
+      const emptyRow = document.createElement("tr");
+      const emptyCell = document.createElement("td");
+
+      emptyCell.colSpan = criticalPathDetailColumns.length;
+      emptyCell.textContent = "No current estimated critical path rows were available.";
+      emptyRow.appendChild(emptyCell);
+      criticalPathDetailBody.appendChild(emptyRow);
+      return;
+    }
+
+    rows
+      .slice()
+      .sort((firstRow, secondRow) => {
+        const projectCompare = firstRow.projectName.localeCompare(secondRow.projectName);
+
+        if (projectCompare !== 0) {
+          return projectCompare;
+        }
+
+        return firstRow.criticalPathSequenceCurrent - secondRow.criticalPathSequenceCurrent;
+      })
+      .forEach((row) => {
+        const tableRow = document.createElement("tr");
+
+        criticalPathDetailColumns.forEach((column) => {
+          appendTableCell(tableRow, getCriticalPathDetailValue(row, column.key));
+        });
+
+        criticalPathDetailBody.appendChild(tableRow);
+      });
+  }
+
+  function renderCriticalPathAnalysis(result) {
+    renderCriticalPathSummary(result.criticalPathResult);
+    renderCriticalPathDetailTable(result.criticalPathResult.currentPathRows);
+  }
+
   function renderMovementAnalysis(result) {
     const resultsPanel = getScheduleAnalyzerElement("schedulePhase3Results");
 
@@ -1310,6 +2113,7 @@
     renderMovementSummary(result.movementSummary, result.dependencySummary);
     renderMovementDetailTable(getDisplayedMovementRows(result.analyzedRows));
     renderDependencyValidation(result);
+    renderCriticalPathAnalysis(result);
   }
 
   function formatReportTimestamp(date) {
@@ -1332,11 +2136,20 @@
     return row.validForMovement ? row[key] : "";
   }
 
+  function getReportHierarchyLevel(row) {
+    return row.hierarchyLevel === null || row.hierarchyLevel === undefined ? "" : row.hierarchyLevel;
+  }
+
   function buildScheduleReportRow(row) {
     return {
+      "Project Name": row.projectName,
       "Task ID": row.taskId,
       "Task / Milestone": row.taskName,
       "Row Classification": row.classification,
+      "Hierarchy Level": getReportHierarchyLevel(row),
+      "Has Child Rows": formatYesNo(row.hasChildRows),
+      "Critical Path Eligible": formatYesNo(row.criticalPathEligible),
+      "Critical Path Exclusion Reason": row.criticalPathExclusionReason,
       "Baseline Start": formatDateForDetail(row, "baselineStart"),
       "Current Start": formatDateForDetail(row, "currentStart"),
       "Start Calendar Movement": getReportMovementValue(row, "startCalendarMovement"),
@@ -1355,9 +2168,14 @@
 
   function buildWarningReportRow(row) {
     return {
+      "Project Name": row.projectName,
       "Task ID": row.taskId,
       "Task / Milestone": row.taskName,
       "Row Classification": row.classification,
+      "Hierarchy Level": getReportHierarchyLevel(row),
+      "Has Child Rows": formatYesNo(row.hasChildRows),
+      "Critical Path Eligible": formatYesNo(row.criticalPathEligible),
+      "Critical Path Exclusion Reason": row.criticalPathExclusionReason,
       "Baseline Start": formatDateForDetail(row, "baselineStart"),
       "Baseline Finish": formatDateForDetail(row, "baselineFinish"),
       "Current Start": formatDateForDetail(row, "currentStart"),
@@ -1390,12 +2208,53 @@
     };
   }
 
+  function buildCriticalPathReportRow(row, pathType, sequence) {
+    return {
+      "Project Name": row.projectName,
+      "Path Type": pathType,
+      Sequence: sequence,
+      "Task ID": row.taskId,
+      "Task / Milestone": row.taskName,
+      "Row Classification": row.classification,
+      "Hierarchy Level": getReportHierarchyLevel(row),
+      "Has Child Rows": formatYesNo(row.hasChildRows),
+      "Critical Path Eligible": formatYesNo(row.criticalPathEligible),
+      "Critical Path Exclusion Reason": row.criticalPathExclusionReason,
+      "Baseline Start": formatDateForDetail(row, "baselineStart"),
+      "Baseline Finish": formatDateForDetail(row, "baselineFinish"),
+      "Current Start": formatDateForDetail(row, "currentStart"),
+      "Current Finish": formatDateForDetail(row, "currentFinish"),
+      "Finish Calendar Movement": getReportMovementValue(row, "finishCalendarMovement"),
+      "Finish Workday Movement": getReportMovementValue(row, "finishWorkdayMovement"),
+      "Movement Status": row.movementDirection,
+      "Critical Path Status": row.criticalPathStatus,
+      "Baseline Critical Path Sequence": row.criticalPathSequenceBaseline,
+      "Current Critical Path Sequence": row.criticalPathSequenceCurrent,
+      Predecessors: row.predecessors,
+      "Excluded From Future Critical Path": formatYesNo(row.excludeFromFutureCriticalPath)
+    };
+  }
+
+  function buildCriticalPathReportRows(result) {
+    return result.criticalPathResult.projectResults.flatMap((projectResult) => {
+      const baselineRows = projectResult.baselinePathRows.map((row) => {
+        return buildCriticalPathReportRow(row, "Baseline", row.criticalPathSequenceBaseline);
+      });
+      const currentRows = projectResult.currentPathRows.map((row) => {
+        return buildCriticalPathReportRow(row, "Current", row.criticalPathSequenceCurrent);
+      });
+
+      return [...baselineRows, ...currentRows];
+    });
+  }
+
   function getWarningReportRows(rows) {
     return rows.filter((row) => row.dateWarnings.length > 0 || !row.validForMovement);
   }
 
   function buildExecutiveSummaryRows(result) {
     const summary = result.movementSummary;
+    const criticalPathSummary = result.criticalPathResult.summary;
 
     return [
       ["Source workbook file", result.fileName],
@@ -1416,13 +2275,36 @@
       ["Resolved predecessor links", result.dependencySummary.resolvedPredecessorLinks],
       ["Unresolved predecessor links", result.dependencySummary.unresolvedPredecessorLinks],
       ["Rows with dependency warnings", result.dependencySummary.rowsWithDependencyWarnings],
+      ["Project grouping column mapped", formatYesNo(criticalPathSummary.projectGroupingMapped)],
+      ["Number of project groups analyzed", criticalPathSummary.projectGroupCount],
+      [
+        "Latest current estimated project finish across project groups",
+        criticalPathSummary.latestCurrentEstimatedProjectFinishAcrossProjectGroups
+      ],
+      ["Eligible critical path rows considered", criticalPathSummary.eligibleRowCount],
+      ["Rows excluded as likely parent/summary rows", criticalPathSummary.excludedLikelySummaryRows],
+      ["Baseline critical path task count", criticalPathSummary.baselineCriticalPathTaskCount],
+      ["Current critical path task count", criticalPathSummary.currentCriticalPathTaskCount],
+      ["Baseline estimated project finish", criticalPathSummary.baselineEstimatedProjectFinish],
+      ["Current estimated project finish", criticalPathSummary.currentEstimatedProjectFinish],
+      ["Estimated critical path finish shift", formatCriticalPathFinishShift(criticalPathSummary)],
+      ["Tasks on both baseline and current path", criticalPathSummary.tasksOnBothPath],
+      ["Tasks newly on current path", criticalPathSummary.tasksNewlyOnCurrentPath],
+      ["Tasks no longer on current path", criticalPathSummary.tasksNoLongerOnCurrentPath],
+      ["Critical path calculation warnings", formatCriticalPathWarnings(criticalPathSummary.warnings)],
       ["Largest finish delay", formatMovementSummaryRow(summary.largestFinishDelay)],
       ["Largest finish acceleration", formatMovementSummaryRow(summary.largestFinishAcceleration)],
       [
         "Note",
-        "Likely parent/summary rows are excluded from future critical path analysis by default."
+        "Parent/summary rows are excluded from estimated critical path analysis when hierarchy data or fallback heuristics identify them."
       ],
-      ["Note", "Critical path analysis has not been added yet."]
+      [
+        "Note",
+        "When a Project Name / Project Grouping column is mapped, estimated critical paths are calculated separately for each project group."
+      ],
+      ["Note", "The analyzer works best when a Row Hierarchy / Outline Level helper column is mapped."],
+      ["Note", "Estimated critical path logic does not yet apply project-specific holiday calendars."],
+      ["Note", "This is not a full replacement for Smartsheet, P6, or MS Project CPM calculations."]
     ];
   }
 
@@ -1460,6 +2342,7 @@
     const changedRows = result.analyzedRows.filter((row) => row.hasScheduleMovement);
     const warningRows = getWarningReportRows(result.analyzedRows);
     const dependencyIssueLinks = getDependencyIssueLinks(result.analyzedRows);
+    const criticalPathRows = buildCriticalPathReportRows(result);
 
     addAoaWorksheet(reportWorkbook, reportSheetNames.executiveSummary, buildExecutiveSummaryRows(result), [36, 80]);
     addJsonWorksheet(
@@ -1467,21 +2350,21 @@
       reportSheetNames.changedItems,
       changedRows.map((row) => buildScheduleReportRow(row)),
       scheduleReportHeaders,
-      [16, 34, 22, 16, 16, 22, 22, 16, 16, 22, 22, 26, 18, 20, 46, 30]
+      [26, 16, 34, 22, 16, 16, 22, 38, 16, 16, 22, 22, 16, 16, 22, 22, 26, 18, 20, 46, 30]
     );
     addJsonWorksheet(
       reportWorkbook,
       reportSheetNames.allItems,
       result.analyzedRows.map((row) => buildScheduleReportRow(row)),
       scheduleReportHeaders,
-      [16, 34, 22, 16, 16, 22, 22, 16, 16, 22, 22, 26, 18, 20, 46, 30]
+      [26, 16, 34, 22, 16, 16, 22, 38, 16, 16, 22, 22, 16, 16, 22, 22, 26, 18, 20, 46, 30]
     );
     addJsonWorksheet(
       reportWorkbook,
       reportSheetNames.warnings,
       warningRows.map((row) => buildWarningReportRow(row)),
       warningReportHeaders,
-      [16, 34, 22, 16, 16, 16, 16, 26, 52, 34, 30]
+      [26, 16, 34, 22, 16, 16, 22, 38, 16, 16, 16, 16, 26, 52, 34, 30]
     );
     addJsonWorksheet(
       reportWorkbook,
@@ -1489,6 +2372,13 @@
       dependencyIssueLinks.map((issueLink) => buildDependencyReportRow(issueLink)),
       dependencyReportHeaders,
       [18, 16, 16, 34, 22, 24, 18, 18, 12, 12, 18, 34, 52]
+    );
+    addJsonWorksheet(
+      reportWorkbook,
+      reportSheetNames.estimatedCriticalPath,
+      criticalPathRows,
+      criticalPathReportHeaders,
+      [26, 14, 12, 16, 34, 22, 16, 16, 22, 38, 16, 16, 16, 16, 22, 22, 26, 22, 28, 28, 20, 30]
     );
     addAoaWorksheet(
       reportWorkbook,
@@ -1658,8 +2548,12 @@
     const detectedColumnCount = headerNames.filter((headerName) => headerName !== "").length;
     const mappedWorkbookColumnNames = new Set(mappedColumns.map((mapping) => mappingValues[mapping.key]));
     const unmappedColumnCount = Math.max(detectedColumnCount - mappedWorkbookColumnNames.size, 0);
-    const normalizedRows = buildNormalizedRows(dataRows, mappedColumns, headerIndexByName, mappingValues);
+    const normalizedRows = addHierarchyAnalysis(
+      addProjectGroupingAnalysis(buildNormalizedRows(dataRows, mappedColumns, headerIndexByName, mappingValues), mappingValues),
+      mappingValues
+    );
     const analyzedRows = addDependencyAnalysis(analyzeNormalizedRows(normalizedRows, mappingValues));
+    const criticalPathResult = addCriticalPathAnalysis(analyzedRows, mappingValues);
     const movementSummary = buildMovementSummary(analyzedRows);
     const dependencySummary = buildDependencySummary(analyzedRows);
 
@@ -1677,6 +2571,7 @@
       analyzedRows,
       movementSummary,
       dependencySummary,
+      criticalPathResult,
       mappedColumns,
       mappingValues
     };
