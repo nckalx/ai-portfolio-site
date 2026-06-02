@@ -86,6 +86,7 @@ The analyzer:
 - Supports Project Name / Project Grouping mapping when one export contains multiple projects, properties, or schedules
 - Supports optional Row Type and Include in Critical Path? mappings for estimated critical path eligibility
 - Generates a downloadable Excel report using the SheetJS browser library
+- Produces an AI-ready Excel audit workbook for deeper project review, reporting, and translation/import planning workflows
 
 ### Required Column Mappings
 
@@ -117,7 +118,7 @@ Row Type and Include in Critical Path? affect estimated critical path eligibilit
 
 ## Generated Excel Report
 
-The web output focuses on changed schedule rows so the browser view stays readable. The downloadable Excel report includes a fuller audit trail, including dependency warnings and all parsed dependency links.
+The web output focuses on changed schedule rows so the browser view stays readable. The downloadable Excel report is structured as an AI-ready audit workbook with changed rows, all analyzed rows, dependency warnings, all parsed dependency links, estimated critical path output, and the column mapping used.
 
 Report tabs:
 
@@ -131,6 +132,8 @@ Report tabs:
 - Column Mapping Used
 
 Dependency Validation focuses on warning/problem links. All Dependency Links provides a full audit trail of every parsed predecessor relationship.
+
+The structured workbook can support AI-assisted project review, Excel/Power BI reporting, and preparation for translation or import planning into other scheduling and project-management tools. It does not directly export to P6, Microsoft Project, Smartsheet, Power BI, or other systems.
 
 ## Sample Files
 
