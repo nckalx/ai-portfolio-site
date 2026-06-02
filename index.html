@@ -299,8 +299,8 @@
           <p class="eyebrow">Phase 3 Output</p>
           <h3>Task Movement Detail</h3>
           <p class="detail-note">
-            Showing changed schedule rows only. Unchanged rows and warning-only rows will be included in the
-            future downloadable Excel report.
+            Showing changed schedule rows only. Unchanged rows and warning-only rows are included in the
+            downloadable Excel report.
           </p>
           <p class="detail-note">
             Rows with invalid mapped dates stay in the table, but their movement values are not calculated.
@@ -315,12 +315,23 @@
           </div>
         </article>
 
+        <article class="result-panel report-download-panel">
+          <p class="eyebrow">Excel Report</p>
+          <h3>Download Summary Workbook</h3>
+          <p>
+            The Excel report includes changed rows, all analyzed rows, warning rows, and the column mapping used.
+          </p>
+          <button id="downloadScheduleReportButton" class="button primary" type="button" disabled>
+            Download Excel Summary
+          </button>
+        </article>
+
         <article class="result-panel future-phase-panel">
           <p class="eyebrow">Future Phase</p>
           <h3>Not included in Phase 3</h3>
           <p>
-            Predecessor parsing, critical path calculation, holiday calendars, and downloadable
-            <code>.xlsx</code> report generation are intentionally reserved for later phases.
+            Predecessor parsing, critical path calculation, and holiday calendars are intentionally reserved
+            for later phases.
           </p>
         </article>
       </div>

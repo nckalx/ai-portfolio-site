@@ -537,6 +537,10 @@ h3 {
   background: #f7f8fa;
 }
 
+.report-download-panel .button {
+  margin-top: 18px;
+}
+
 .download-placeholder {
   grid-column: 1 / -1;
 }

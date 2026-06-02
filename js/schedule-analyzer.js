@@ -2,8 +2,7 @@
 //
 // Later phases can add:
 // - predecessor parsing and dependency/data-quality warnings,
-// - estimated critical path logic,
-// - generated Excel summary export logic.
+// - estimated critical path logic.
 //
 // This file intentionally does not call the Smartsheet API. It parses exported
 // workbooks in the browser, validates only mapped columns, and ignores unrelated
@@ -53,7 +52,49 @@
     { key: "warnings", label: "Warnings" }
   ];
 
+  const reportSheetNames = {
+    executiveSummary: "Executive Summary",
+    changedItems: "Changed Schedule Items",
+    allItems: "All Schedule Items",
+    warnings: "Warnings - Data Quality",
+    columnMapping: "Column Mapping Used"
+  };
+
+  const scheduleReportHeaders = [
+    "Task ID",
+    "Task / Milestone",
+    "Row Classification",
+    "Baseline Start",
+    "Current Start",
+    "Start Calendar Movement",
+    "Start Workday Movement",
+    "Baseline Finish",
+    "Current Finish",
+    "Finish Calendar Movement",
+    "Finish Workday Movement",
+    "Movement Status",
+    "Predecessors",
+    "Status / % Complete",
+    "Warnings",
+    "Excluded From Future Critical Path"
+  ];
+
+  const warningReportHeaders = [
+    "Task ID",
+    "Task / Milestone",
+    "Row Classification",
+    "Baseline Start",
+    "Baseline Finish",
+    "Current Start",
+    "Current Finish",
+    "Movement Status",
+    "Warnings",
+    "Excluded From Movement Calculations",
+    "Excluded From Future Critical Path"
+  ];
+
   let normalizedScheduleRows = [];
+  let latestAnalysisResult = null;
 
   function getScheduleAnalyzerElement(id) {
     return document.getElementById(id);
@@ -71,6 +112,14 @@
     statusMessage.textContent = message;
   }
 
+  function setReportDownloadReady(isReady) {
+    const downloadButton = getScheduleAnalyzerElement("downloadScheduleReportButton");
+
+    if (downloadButton) {
+      downloadButton.disabled = !isReady;
+    }
+  }
+
   function clearSchedulePreview() {
     const previewPanel = getScheduleAnalyzerElement("scheduleAnalyzerPreview");
     const resultsPanel = getScheduleAnalyzerElement("schedulePhase3Results");
@@ -81,6 +130,9 @@
     const movementSummary = getScheduleAnalyzerElement("scheduleMovementSummary");
     const movementDetailHeader = getScheduleAnalyzerElement("scheduleMovementDetailHeader");
     const movementDetailBody = getScheduleAnalyzerElement("scheduleMovementDetailBody");
+
+    latestAnalysisResult = null;
+    setReportDownloadReady(false);
 
     if (previewPanel) {
       previewPanel.hidden = true;
@@ -850,7 +902,7 @@
 
       emptyCell.colSpan = movementDetailColumns.length;
       emptyCell.textContent =
-        "No changed schedule rows were found. Unchanged rows and warning-only rows will be included in the future downloadable Excel report.";
+        "No changed schedule rows were found. Unchanged rows and warning-only rows are included in the downloadable Excel report.";
       emptyRow.appendChild(emptyCell);
       movementDetailBody.appendChild(emptyRow);
       return;
@@ -887,6 +939,204 @@
 
     renderMovementSummary(result.movementSummary);
     renderMovementDetailTable(getDisplayedMovementRows(result.analyzedRows));
+  }
+
+  function formatReportTimestamp(date) {
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+      return "";
+    }
+
+    return date.toLocaleString();
+  }
+
+  function formatYesNo(value) {
+    return value ? "Yes" : "No";
+  }
+
+  function getWarningsText(row) {
+    return row.dateWarnings.length > 0 ? row.dateWarnings.join(" ") : "";
+  }
+
+  function getReportMovementValue(row, key) {
+    return row.validForMovement ? row[key] : "";
+  }
+
+  function buildScheduleReportRow(row) {
+    return {
+      "Task ID": row.taskId,
+      "Task / Milestone": row.taskName,
+      "Row Classification": row.classification,
+      "Baseline Start": formatDateForDetail(row, "baselineStart"),
+      "Current Start": formatDateForDetail(row, "currentStart"),
+      "Start Calendar Movement": getReportMovementValue(row, "startCalendarMovement"),
+      "Start Workday Movement": getReportMovementValue(row, "startWorkdayMovement"),
+      "Baseline Finish": formatDateForDetail(row, "baselineFinish"),
+      "Current Finish": formatDateForDetail(row, "currentFinish"),
+      "Finish Calendar Movement": getReportMovementValue(row, "finishCalendarMovement"),
+      "Finish Workday Movement": getReportMovementValue(row, "finishWorkdayMovement"),
+      "Movement Status": row.movementDirection,
+      Predecessors: row.predecessors,
+      "Status / % Complete": row.status,
+      Warnings: getWarningsText(row),
+      "Excluded From Future Critical Path": formatYesNo(row.excludeFromFutureCriticalPath)
+    };
+  }
+
+  function buildWarningReportRow(row) {
+    return {
+      "Task ID": row.taskId,
+      "Task / Milestone": row.taskName,
+      "Row Classification": row.classification,
+      "Baseline Start": formatDateForDetail(row, "baselineStart"),
+      "Baseline Finish": formatDateForDetail(row, "baselineFinish"),
+      "Current Start": formatDateForDetail(row, "currentStart"),
+      "Current Finish": formatDateForDetail(row, "currentFinish"),
+      "Movement Status": row.movementDirection,
+      Warnings: getWarningsText(row),
+      "Excluded From Movement Calculations": formatYesNo(!row.validForMovement),
+      "Excluded From Future Critical Path": formatYesNo(row.excludeFromFutureCriticalPath)
+    };
+  }
+
+  function getWarningReportRows(rows) {
+    return rows.filter((row) => row.dateWarnings.length > 0 || !row.validForMovement);
+  }
+
+  function buildExecutiveSummaryRows(result) {
+    const summary = result.movementSummary;
+
+    return [
+      ["Source workbook file", result.fileName],
+      ["Worksheet used", result.worksheetName],
+      ["Analysis generated timestamp", formatReportTimestamp(result.analysisGeneratedAt)],
+      ["Total normalized rows", summary.totalRows],
+      ["Detail rows", summary.detailRows],
+      ["Likely parent/summary rows", summary.likelySummaryRows],
+      ["Rows with date warnings", summary.dateWarningRows],
+      ["Rows excluded from movement calculations", summary.excludedMovementRows],
+      ["Rows with any schedule movement", summary.changedRows],
+      ["Unchanged rows", summary.unchangedRows],
+      ["Delayed rows", summary.delayedRows],
+      ["Accelerated rows", summary.acceleratedRows],
+      ["Start-only movement rows", summary.startOnlyMovementRows],
+      ["Largest finish delay", formatMovementSummaryRow(summary.largestFinishDelay)],
+      ["Largest finish acceleration", formatMovementSummaryRow(summary.largestFinishAcceleration)],
+      [
+        "Note",
+        "Likely parent/summary rows are excluded from future critical path analysis by default."
+      ],
+      ["Note", "Critical path analysis has not been added yet."]
+    ];
+  }
+
+  function buildColumnMappingRows(result) {
+    return scheduleMappings.map((mapping) => {
+      return [mapping.label, result.mappingValues[mapping.key] || ""];
+    });
+  }
+
+  function setWorksheetColumnWidths(worksheet, widths) {
+    worksheet["!cols"] = widths.map((width) => {
+      return { wch: width };
+    });
+  }
+
+  function addAoaWorksheet(reportWorkbook, sheetName, rows, widths) {
+    const worksheet = window.XLSX.utils.aoa_to_sheet(rows);
+
+    setWorksheetColumnWidths(worksheet, widths);
+    window.XLSX.utils.book_append_sheet(reportWorkbook, worksheet, sheetName);
+  }
+
+  function addJsonWorksheet(reportWorkbook, sheetName, rows, headers, widths) {
+    const worksheet =
+      rows.length > 0
+        ? window.XLSX.utils.json_to_sheet(rows, { header: headers })
+        : window.XLSX.utils.aoa_to_sheet([headers]);
+
+    setWorksheetColumnWidths(worksheet, widths);
+    window.XLSX.utils.book_append_sheet(reportWorkbook, worksheet, sheetName);
+  }
+
+  function createScheduleReportWorkbook(result) {
+    const reportWorkbook = window.XLSX.utils.book_new();
+    const changedRows = result.analyzedRows.filter((row) => row.hasScheduleMovement);
+    const warningRows = getWarningReportRows(result.analyzedRows);
+
+    addAoaWorksheet(reportWorkbook, reportSheetNames.executiveSummary, buildExecutiveSummaryRows(result), [36, 80]);
+    addJsonWorksheet(
+      reportWorkbook,
+      reportSheetNames.changedItems,
+      changedRows.map((row) => buildScheduleReportRow(row)),
+      scheduleReportHeaders,
+      [16, 34, 22, 16, 16, 22, 22, 16, 16, 22, 22, 26, 18, 20, 46, 30]
+    );
+    addJsonWorksheet(
+      reportWorkbook,
+      reportSheetNames.allItems,
+      result.analyzedRows.map((row) => buildScheduleReportRow(row)),
+      scheduleReportHeaders,
+      [16, 34, 22, 16, 16, 22, 22, 16, 16, 22, 22, 26, 18, 20, 46, 30]
+    );
+    addJsonWorksheet(
+      reportWorkbook,
+      reportSheetNames.warnings,
+      warningRows.map((row) => buildWarningReportRow(row)),
+      warningReportHeaders,
+      [16, 34, 22, 16, 16, 16, 16, 26, 52, 34, 30]
+    );
+    addAoaWorksheet(
+      reportWorkbook,
+      reportSheetNames.columnMapping,
+      [["Mapped Column Category", "Workbook Column Name"], ...buildColumnMappingRows(result)],
+      [36, 40]
+    );
+
+    return reportWorkbook;
+  }
+
+  function getFileNameWithoutExtension(fileName) {
+    return fileName.replace(/\.[^.]*$/, "");
+  }
+
+  function getSafeReportFileName(result) {
+    const baseName = getFileNameWithoutExtension(result.fileName)
+      .replace(/[\\/:*?"<>|]+/g, "-")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+
+    return `schedule-movement-analysis-${baseName || "uploaded-schedule"}.xlsx`;
+  }
+
+  function handleDownloadScheduleReport() {
+    if (!latestAnalysisResult) {
+      setScheduleAnalyzerStatus(
+        "Please analyze an uploaded schedule before downloading the Excel summary.",
+        "is-info"
+      );
+      return;
+    }
+
+    if (!window.XLSX || !window.XLSX.utils || !window.XLSX.writeFile) {
+      setScheduleAnalyzerStatus(
+        "The Excel report generator could not load. Please check your connection and try again.",
+        "is-error"
+      );
+      return;
+    }
+
+    try {
+      const reportWorkbook = createScheduleReportWorkbook(latestAnalysisResult);
+
+      window.XLSX.writeFile(reportWorkbook, getSafeReportFileName(latestAnalysisResult));
+      setScheduleAnalyzerStatus("Excel summary report generated from the latest analysis.", "is-ready");
+    } catch (error) {
+      setScheduleAnalyzerStatus(
+        "The Excel summary report could not be generated. Please rerun the analysis and try again.",
+        "is-error"
+      );
+    }
   }
 
   function renderMappedColumns(mappedColumns, mappingValues) {
@@ -1013,6 +1263,7 @@
       ok: true,
       fileName: selectedFile.name,
       worksheetName: firstWorksheet.name,
+      analysisGeneratedAt: new Date(),
       detectedColumnCount,
       unmappedColumnCount,
       dataRowCount: dataRows.length,
@@ -1082,12 +1333,16 @@
 
       renderWorkbookPreview(parseResult);
       renderMovementAnalysis(parseResult);
+      latestAnalysisResult = parseResult;
+      setReportDownloadReady(true);
       setScheduleAnalyzerStatus(
-        "Workbook analyzed successfully. Mapped columns were validated, unrelated columns were ignored, and Phase 3 movement results are ready below.",
+        "Workbook analyzed successfully. Mapped columns were validated, unrelated columns were ignored, and movement results are ready below.",
         "is-ready"
       );
     } catch (error) {
       normalizedScheduleRows = [];
+      latestAnalysisResult = null;
+      setReportDownloadReady(false);
       clearSchedulePreview();
       setScheduleAnalyzerStatus(
         "The workbook could not be parsed. Please confirm this is a valid .xlsx export from Smartsheet.",
@@ -1114,6 +1369,7 @@
 
   function wireScheduleAnalyzerEvents() {
     const analyzeButton = getScheduleAnalyzerElement("analyzeUploadedScheduleButton");
+    const downloadButton = getScheduleAnalyzerElement("downloadScheduleReportButton");
     const analyzerForm = getScheduleAnalyzerElement("scheduleAnalyzerForm");
 
     if (analyzerForm) {
@@ -1124,6 +1380,11 @@
 
     if (analyzeButton) {
       analyzeButton.addEventListener("click", handleAnalyzeUploadedSchedule);
+    }
+
+    if (downloadButton) {
+      downloadButton.addEventListener("click", handleDownloadScheduleReport);
+      setReportDownloadReady(false);
     }
 
     wirePreviewResetEvents();
