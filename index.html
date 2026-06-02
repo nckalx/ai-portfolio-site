@@ -289,8 +289,8 @@
           </p>
           <p class="summary-note">
             Likely parent/summary rows are counted separately and will be excluded from future critical path
-            analysis by default. When they appear in the changed/warning detail output, they remain visible
-            so schedule reviewers can inspect the source rows.
+            analysis by default. When they appear in changed-row or dependency output, they remain visible so
+            schedule reviewers can inspect the source rows.
           </p>
           <dl id="scheduleMovementSummary" class="movement-summary-list"></dl>
         </article>
@@ -315,11 +315,30 @@
           </div>
         </article>
 
+        <article class="result-panel dependency-validation-panel">
+          <p class="eyebrow">Dependency Check</p>
+          <h3>Dependency / Predecessor Validation</h3>
+          <p>
+            Predecessor values are parsed for dependency quality checks only. Critical path calculation has not
+            been added yet.
+          </p>
+          <dl id="scheduleDependencySummary" class="dependency-summary-list"></dl>
+          <div class="table-wrapper dependency-table-wrapper">
+            <table class="dependency-table">
+              <thead>
+                <tr id="scheduleDependencyWarningHeader"></tr>
+              </thead>
+              <tbody id="scheduleDependencyWarningBody"></tbody>
+            </table>
+          </div>
+        </article>
+
         <article class="result-panel report-download-panel">
           <p class="eyebrow">Excel Report</p>
           <h3>Download Summary Workbook</h3>
           <p>
-            The Excel report includes changed rows, all analyzed rows, warning rows, and the column mapping used.
+            The Excel report includes changed rows, all analyzed rows, warning rows, dependency validation,
+            and the column mapping used.
           </p>
           <button id="downloadScheduleReportButton" class="button primary" type="button" disabled>
             Download Excel Summary
@@ -330,8 +349,7 @@
           <p class="eyebrow">Future Phase</p>
           <h3>Not included in Phase 3</h3>
           <p>
-            Predecessor parsing, critical path calculation, and holiday calendars are intentionally reserved
-            for later phases.
+            Full critical path calculation and holiday calendars are intentionally reserved for later phases.
           </p>
         </article>
       </div>

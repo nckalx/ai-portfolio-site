@@ -1,7 +1,6 @@
 // Phase 3 implementation for the uploaded Smartsheet .xlsx schedule analyzer.
 //
 // Later phases can add:
-// - predecessor parsing and dependency/data-quality warnings,
 // - estimated critical path logic.
 //
 // This file intentionally does not call the Smartsheet API. It parses exported
@@ -57,6 +56,7 @@
     changedItems: "Changed Schedule Items",
     allItems: "All Schedule Items",
     warnings: "Warnings - Data Quality",
+    dependencyValidation: "Dependency Validation",
     columnMapping: "Column Mapping Used"
   };
 
@@ -91,6 +91,34 @@
     "Warnings",
     "Excluded From Movement Calculations",
     "Excluded From Future Critical Path"
+  ];
+
+  const dependencyReportHeaders = [
+    "Source Row Number",
+    "Excel Row Number",
+    "Task ID",
+    "Task / Milestone",
+    "Row Classification",
+    "Predecessor Value",
+    "Parsed Reference",
+    "Relationship Type",
+    "Lag Days",
+    "Resolved?",
+    "Resolved Task ID",
+    "Resolved Task / Milestone",
+    "Issue / Warning"
+  ];
+
+  const dependencyWarningColumns = [
+    { key: "sourceDataRowNumber", label: "Source Row" },
+    { key: "excelRowNumber", label: "Excel Row" },
+    { key: "taskName", label: "Task / Milestone" },
+    { key: "predecessorValue", label: "Predecessor Value" },
+    { key: "parsedReference", label: "Parsed Reference" },
+    { key: "relationshipType", label: "Relationship" },
+    { key: "lagDays", label: "Lag Days" },
+    { key: "resolved", label: "Resolved?" },
+    { key: "issueMessage", label: "Issue / Warning" }
   ];
 
   let normalizedScheduleRows = [];
@@ -130,6 +158,9 @@
     const movementSummary = getScheduleAnalyzerElement("scheduleMovementSummary");
     const movementDetailHeader = getScheduleAnalyzerElement("scheduleMovementDetailHeader");
     const movementDetailBody = getScheduleAnalyzerElement("scheduleMovementDetailBody");
+    const dependencySummary = getScheduleAnalyzerElement("scheduleDependencySummary");
+    const dependencyWarningHeader = getScheduleAnalyzerElement("scheduleDependencyWarningHeader");
+    const dependencyWarningBody = getScheduleAnalyzerElement("scheduleDependencyWarningBody");
 
     latestAnalysisResult = null;
     setReportDownloadReady(false);
@@ -149,7 +180,10 @@
       previewBody,
       movementSummary,
       movementDetailHeader,
-      movementDetailBody
+      movementDetailBody,
+      dependencySummary,
+      dependencyWarningHeader,
+      dependencyWarningBody
     ].forEach((element) => {
       if (element) {
         element.replaceChildren();
@@ -175,6 +209,10 @@
     }
 
     return String(value).trim();
+  }
+
+  function getRowCells(row) {
+    return Array.isArray(row) ? row : row.cells;
   }
 
   function getDateOnly(date) {
@@ -393,7 +431,9 @@
   }
 
   function isBlankRow(row) {
-    return !row || row.every((cell) => normalizeCellValue(cell) === "");
+    const cells = row ? getRowCells(row) : null;
+
+    return !cells || cells.every((cell) => normalizeCellValue(cell) === "");
   }
 
   function getMappingValues() {
@@ -459,14 +499,26 @@
   }
 
   function getWorksheetRows(worksheet) {
+    if (!worksheet["!ref"]) {
+      return [];
+    }
+
+    const worksheetRange = window.XLSX.utils.decode_range(worksheet["!ref"]);
     const rawRows = window.XLSX.utils.sheet_to_json(worksheet, {
       header: 1,
       defval: "",
-      blankrows: false,
+      blankrows: true,
       raw: false
     });
 
-    return rawRows.filter((row) => !isBlankRow(row));
+    return rawRows
+      .map((row, index) => {
+        return {
+          cells: row,
+          excelRowNumber: worksheetRange.s.r + index + 1
+        };
+      })
+      .filter((row) => !isBlankRow(row));
   }
 
   function findHeaderRowIndex(rows) {
@@ -474,7 +526,7 @@
   }
 
   function getHeaderNames(headerRow) {
-    return headerRow.map((cell) => normalizeCellValue(cell));
+    return getRowCells(headerRow).map((cell) => normalizeCellValue(cell));
   }
 
   function getHeaderIndexByName(headerNames) {
@@ -501,8 +553,11 @@
 
   function buildNormalizedRows(dataRows, mappedColumns, headerIndexByName, mappingValues) {
     return dataRows
-      .map((row) => {
+      .map((row, index) => {
+        const rowCells = getRowCells(row);
         const normalizedRow = {
+          sourceDataRowNumber: index + 1,
+          excelRowNumber: row.excelRowNumber || "",
           taskId: "",
           taskName: "",
           baselineStart: "",
@@ -515,13 +570,13 @@
 
         mappedColumns.forEach((mapping) => {
           const columnIndex = headerIndexByName.get(mappingValues[mapping.key]);
-          normalizedRow[mapping.key] = normalizeCellValue(row[columnIndex]);
+          normalizedRow[mapping.key] = normalizeCellValue(rowCells[columnIndex]);
         });
 
         return normalizedRow;
       })
       .filter((row) => {
-        return Object.values(row).some((value) => value !== "");
+        return previewColumns.some((column) => row[column.key] !== "");
       });
   }
 
@@ -690,6 +745,9 @@
       dateWarnings,
       excludeFromFutureCriticalPath: classification === "likely-summary",
       parsedDates,
+      parsedPredecessors: [],
+      resolvedPredecessors: [],
+      dependencyWarnings: [],
       validForMovement,
       ...movementValues
     };
@@ -697,6 +755,202 @@
 
   function analyzeNormalizedRows(rows, mappingValues) {
     return rows.map((row) => analyzeNormalizedRow(row, mappingValues));
+  }
+
+  function splitPredecessorTokens(predecessorValue) {
+    return predecessorValue
+      .split(",")
+      .map((token) => token.trim())
+      .filter((token) => token !== "");
+  }
+
+  function parsePredecessorToken(token) {
+    let workingText = token.trim();
+    let relationshipType = "FS";
+    let lagDays = 0;
+    let isMalformed = false;
+    let issueMessage = "";
+
+    const lagMatch = workingText.match(/([+-])\s*(\d+)\s*(?:d|day|days)?\s*$/i);
+
+    if (lagMatch) {
+      const lagSign = lagMatch[1] === "-" ? -1 : 1;
+      lagDays = lagSign * Number(lagMatch[2]);
+      workingText = workingText.slice(0, lagMatch.index).trim();
+    }
+
+    const relationshipMatch = workingText.match(/(FS|SS|FF|SF)\s*$/i);
+
+    if (relationshipMatch) {
+      relationshipType = relationshipMatch[1].toUpperCase();
+      workingText = workingText.slice(0, relationshipMatch.index).trim();
+    } else {
+      const unsupportedRelationshipMatch = workingText.match(/^(\d+)\s*([A-Za-z]{2})$/);
+
+      if (unsupportedRelationshipMatch) {
+        workingText = unsupportedRelationshipMatch[1];
+        relationshipType = unsupportedRelationshipMatch[2].toUpperCase();
+        isMalformed = true;
+        issueMessage = `Unsupported predecessor relationship type: ${relationshipType}.`;
+      }
+    }
+
+    if (workingText === "") {
+      isMalformed = true;
+      issueMessage = issueMessage || "Malformed predecessor token.";
+    }
+
+    return {
+      originalText: token,
+      referenceText: workingText,
+      relationshipType,
+      lagDays,
+      isMalformed,
+      issueMessage
+    };
+  }
+
+  function parsePredecessorValue(predecessorValue) {
+    if (predecessorValue === "") {
+      return [];
+    }
+
+    return splitPredecessorTokens(predecessorValue).map((token) => parsePredecessorToken(token));
+  }
+
+  function buildPredecessorResolutionIndex(rows) {
+    const sourceDataRowByNumber = new Map();
+    const excelRowByNumber = new Map();
+    const rowByTaskId = new Map();
+
+    rows.forEach((row) => {
+      sourceDataRowByNumber.set(String(row.sourceDataRowNumber), row);
+
+      if (row.excelRowNumber !== "") {
+        excelRowByNumber.set(String(row.excelRowNumber), row);
+      }
+
+      if (row.taskId !== "" && !rowByTaskId.has(row.taskId)) {
+        rowByTaskId.set(row.taskId, row);
+      }
+    });
+
+    return {
+      sourceDataRowByNumber,
+      excelRowByNumber,
+      rowByTaskId
+    };
+  }
+
+  function isNumericPredecessorReference(referenceText) {
+    return /^\d+$/.test(referenceText);
+  }
+
+  function findPredecessorRow(parsedPredecessor, resolutionIndex) {
+    const referenceText = parsedPredecessor.referenceText;
+
+    // Smartsheet predecessor numbers commonly refer to visible row positions,
+    // not a mapped Milestone ID. Treat the 1-based source data row number as
+    // the primary numeric match, then fall back to Excel row number and Task ID.
+    if (isNumericPredecessorReference(referenceText)) {
+      return (
+        resolutionIndex.sourceDataRowByNumber.get(referenceText) ||
+        resolutionIndex.excelRowByNumber.get(referenceText) ||
+        resolutionIndex.rowByTaskId.get(referenceText) ||
+        null
+      );
+    }
+
+    return resolutionIndex.rowByTaskId.get(referenceText) || null;
+  }
+
+  function buildResolvedPredecessorLink(row, parsedPredecessor, resolutionIndex) {
+    const issueMessages = [];
+    let predecessorRow = null;
+    let resolved = false;
+
+    if (parsedPredecessor.isMalformed) {
+      issueMessages.push(parsedPredecessor.issueMessage);
+    } else {
+      predecessorRow = findPredecessorRow(parsedPredecessor, resolutionIndex);
+      resolved = predecessorRow !== null;
+
+      if (!resolved) {
+        issueMessages.push("Predecessor reference could not be resolved.");
+      }
+    }
+
+    if (predecessorRow) {
+      if (predecessorRow === row) {
+        issueMessages.push("Predecessor points to itself.");
+      }
+
+      if (predecessorRow.classification === "likely-summary") {
+        issueMessages.push("Predecessor points to a likely parent/summary row.");
+      }
+
+      if (!predecessorRow.validForMovement) {
+        issueMessages.push("Predecessor points to a row with invalid or missing dates.");
+      }
+    }
+
+    return {
+      predecessorValue: row.predecessors,
+      parsedReference: parsedPredecessor.referenceText || parsedPredecessor.originalText,
+      originalText: parsedPredecessor.originalText,
+      relationshipType: parsedPredecessor.relationshipType,
+      lagDays: parsedPredecessor.lagDays,
+      resolved,
+      predecessorTaskId: predecessorRow ? predecessorRow.taskId : "",
+      predecessorTaskName: predecessorRow ? predecessorRow.taskName : "",
+      predecessorRowClassification: predecessorRow ? predecessorRow.classification : "",
+      issueMessages,
+      issueMessage: issueMessages.join(" ")
+    };
+  }
+
+  function addDependencyAnalysis(rows) {
+    const resolutionIndex = buildPredecessorResolutionIndex(rows);
+
+    rows.forEach((row) => {
+      row.parsedPredecessors = parsePredecessorValue(row.predecessors);
+      row.resolvedPredecessors = row.parsedPredecessors.map((parsedPredecessor) => {
+        return buildResolvedPredecessorLink(row, parsedPredecessor, resolutionIndex);
+      });
+      row.dependencyWarnings = row.resolvedPredecessors
+        .filter((link) => link.issueMessages.length > 0)
+        .map((link) => link.issueMessage);
+    });
+
+    return rows;
+  }
+
+  function getDependencyIssueLinks(rows) {
+    return rows.flatMap((row) => {
+      return row.resolvedPredecessors
+        .filter((link) => link.issueMessages.length > 0 || !link.resolved)
+        .map((link) => {
+          return {
+            row,
+            link
+          };
+        });
+    });
+  }
+
+  function buildDependencySummary(rows) {
+    const predecessorLinks = rows.flatMap((row) => row.resolvedPredecessors);
+
+    return {
+      rowsWithPredecessorValues: rows.filter((row) => row.predecessors !== "").length,
+      totalPredecessorReferences: predecessorLinks.length,
+      resolvedPredecessorLinks: predecessorLinks.filter((link) => link.resolved).length,
+      unresolvedPredecessorLinks: predecessorLinks.filter((link) => !link.resolved).length,
+      summaryPredecessorLinks: predecessorLinks.filter((link) => {
+        return link.resolved && link.predecessorRowClassification === "likely-summary";
+      }).length,
+      rowsWithDependencyWarnings: rows.filter((row) => row.dependencyWarnings.length > 0).length
+    };
   }
 
   function getLargestFinishDelay(rows) {
@@ -770,7 +1024,7 @@
     return `${row.finishWorkdayMovement} workdays (${row.finishCalendarMovement} calendar days) - ${taskLabel}`;
   }
 
-  function renderMovementSummary(summary) {
+  function renderMovementSummary(summary, dependencySummary) {
     const movementSummary = getScheduleAnalyzerElement("scheduleMovementSummary");
 
     if (!movementSummary) {
@@ -793,6 +1047,31 @@
     appendDescriptionItem(movementSummary, "Delayed rows", String(summary.delayedRows));
     appendDescriptionItem(movementSummary, "Accelerated rows", String(summary.acceleratedRows));
     appendDescriptionItem(movementSummary, "Start-only movement rows", String(summary.startOnlyMovementRows));
+    appendDescriptionItem(
+      movementSummary,
+      "Rows with predecessor values",
+      String(dependencySummary.rowsWithPredecessorValues)
+    );
+    appendDescriptionItem(
+      movementSummary,
+      "Total predecessor references parsed",
+      String(dependencySummary.totalPredecessorReferences)
+    );
+    appendDescriptionItem(
+      movementSummary,
+      "Resolved predecessor links",
+      String(dependencySummary.resolvedPredecessorLinks)
+    );
+    appendDescriptionItem(
+      movementSummary,
+      "Unresolved predecessor links",
+      String(dependencySummary.unresolvedPredecessorLinks)
+    );
+    appendDescriptionItem(
+      movementSummary,
+      "Rows with dependency warnings",
+      String(dependencySummary.rowsWithDependencyWarnings)
+    );
     appendDescriptionItem(
       movementSummary,
       "Largest finish delay",
@@ -930,6 +1209,97 @@
     });
   }
 
+  function renderDependencySummary(summary) {
+    const dependencySummary = getScheduleAnalyzerElement("scheduleDependencySummary");
+
+    if (!dependencySummary) {
+      return;
+    }
+
+    dependencySummary.replaceChildren();
+
+    appendDescriptionItem(dependencySummary, "Rows with predecessor values", String(summary.rowsWithPredecessorValues));
+    appendDescriptionItem(
+      dependencySummary,
+      "Total predecessor references parsed",
+      String(summary.totalPredecessorReferences)
+    );
+    appendDescriptionItem(dependencySummary, "Resolved predecessor links", String(summary.resolvedPredecessorLinks));
+    appendDescriptionItem(
+      dependencySummary,
+      "Unresolved predecessor links",
+      String(summary.unresolvedPredecessorLinks)
+    );
+    appendDescriptionItem(
+      dependencySummary,
+      "Predecessor links to likely-summary rows",
+      String(summary.summaryPredecessorLinks)
+    );
+    appendDescriptionItem(dependencySummary, "Rows with dependency warnings", String(summary.rowsWithDependencyWarnings));
+  }
+
+  function buildDependencyWarningTableRow(issueLink) {
+    const row = issueLink.row;
+    const link = issueLink.link;
+
+    return {
+      sourceDataRowNumber: String(row.sourceDataRowNumber),
+      excelRowNumber: String(row.excelRowNumber || ""),
+      taskName: row.taskName,
+      predecessorValue: link.predecessorValue,
+      parsedReference: link.parsedReference,
+      relationshipType: link.relationshipType,
+      lagDays: String(link.lagDays),
+      resolved: formatYesNo(link.resolved),
+      issueMessage: link.issueMessage
+    };
+  }
+
+  function renderDependencyWarningTable(issueLinks) {
+    const dependencyWarningHeader = getScheduleAnalyzerElement("scheduleDependencyWarningHeader");
+    const dependencyWarningBody = getScheduleAnalyzerElement("scheduleDependencyWarningBody");
+
+    if (!dependencyWarningHeader || !dependencyWarningBody) {
+      return;
+    }
+
+    dependencyWarningHeader.replaceChildren();
+    dependencyWarningBody.replaceChildren();
+
+    dependencyWarningColumns.forEach((column) => {
+      const headerCell = document.createElement("th");
+      headerCell.textContent = column.label;
+      dependencyWarningHeader.appendChild(headerCell);
+    });
+
+    if (issueLinks.length === 0) {
+      const emptyRow = document.createElement("tr");
+      const emptyCell = document.createElement("td");
+
+      emptyCell.colSpan = dependencyWarningColumns.length;
+      emptyCell.textContent = "No dependency warnings were found in the parsed predecessor values.";
+      emptyRow.appendChild(emptyCell);
+      dependencyWarningBody.appendChild(emptyRow);
+      return;
+    }
+
+    issueLinks.forEach((issueLink) => {
+      const tableRow = document.createElement("tr");
+      const rowValues = buildDependencyWarningTableRow(issueLink);
+
+      dependencyWarningColumns.forEach((column) => {
+        appendTableCell(tableRow, rowValues[column.key]);
+      });
+
+      dependencyWarningBody.appendChild(tableRow);
+    });
+  }
+
+  function renderDependencyValidation(result) {
+    renderDependencySummary(result.dependencySummary);
+    renderDependencyWarningTable(getDependencyIssueLinks(result.analyzedRows));
+  }
+
   function renderMovementAnalysis(result) {
     const resultsPanel = getScheduleAnalyzerElement("schedulePhase3Results");
 
@@ -937,8 +1307,9 @@
       resultsPanel.hidden = false;
     }
 
-    renderMovementSummary(result.movementSummary);
+    renderMovementSummary(result.movementSummary, result.dependencySummary);
     renderMovementDetailTable(getDisplayedMovementRows(result.analyzedRows));
+    renderDependencyValidation(result);
   }
 
   function formatReportTimestamp(date) {
@@ -998,6 +1369,27 @@
     };
   }
 
+  function buildDependencyReportRow(issueLink) {
+    const row = issueLink.row;
+    const link = issueLink.link;
+
+    return {
+      "Source Row Number": row.sourceDataRowNumber,
+      "Excel Row Number": row.excelRowNumber,
+      "Task ID": row.taskId,
+      "Task / Milestone": row.taskName,
+      "Row Classification": row.classification,
+      "Predecessor Value": link.predecessorValue,
+      "Parsed Reference": link.parsedReference,
+      "Relationship Type": link.relationshipType,
+      "Lag Days": link.lagDays,
+      "Resolved?": formatYesNo(link.resolved),
+      "Resolved Task ID": link.predecessorTaskId,
+      "Resolved Task / Milestone": link.predecessorTaskName,
+      "Issue / Warning": link.issueMessage
+    };
+  }
+
   function getWarningReportRows(rows) {
     return rows.filter((row) => row.dateWarnings.length > 0 || !row.validForMovement);
   }
@@ -1019,6 +1411,11 @@
       ["Delayed rows", summary.delayedRows],
       ["Accelerated rows", summary.acceleratedRows],
       ["Start-only movement rows", summary.startOnlyMovementRows],
+      ["Rows with predecessor values", result.dependencySummary.rowsWithPredecessorValues],
+      ["Total predecessor references parsed", result.dependencySummary.totalPredecessorReferences],
+      ["Resolved predecessor links", result.dependencySummary.resolvedPredecessorLinks],
+      ["Unresolved predecessor links", result.dependencySummary.unresolvedPredecessorLinks],
+      ["Rows with dependency warnings", result.dependencySummary.rowsWithDependencyWarnings],
       ["Largest finish delay", formatMovementSummaryRow(summary.largestFinishDelay)],
       ["Largest finish acceleration", formatMovementSummaryRow(summary.largestFinishAcceleration)],
       [
@@ -1062,6 +1459,7 @@
     const reportWorkbook = window.XLSX.utils.book_new();
     const changedRows = result.analyzedRows.filter((row) => row.hasScheduleMovement);
     const warningRows = getWarningReportRows(result.analyzedRows);
+    const dependencyIssueLinks = getDependencyIssueLinks(result.analyzedRows);
 
     addAoaWorksheet(reportWorkbook, reportSheetNames.executiveSummary, buildExecutiveSummaryRows(result), [36, 80]);
     addJsonWorksheet(
@@ -1084,6 +1482,13 @@
       warningRows.map((row) => buildWarningReportRow(row)),
       warningReportHeaders,
       [16, 34, 22, 16, 16, 16, 16, 26, 52, 34, 30]
+    );
+    addJsonWorksheet(
+      reportWorkbook,
+      reportSheetNames.dependencyValidation,
+      dependencyIssueLinks.map((issueLink) => buildDependencyReportRow(issueLink)),
+      dependencyReportHeaders,
+      [18, 16, 16, 34, 22, 24, 18, 18, 12, 12, 18, 34, 52]
     );
     addAoaWorksheet(
       reportWorkbook,
@@ -1254,8 +1659,9 @@
     const mappedWorkbookColumnNames = new Set(mappedColumns.map((mapping) => mappingValues[mapping.key]));
     const unmappedColumnCount = Math.max(detectedColumnCount - mappedWorkbookColumnNames.size, 0);
     const normalizedRows = buildNormalizedRows(dataRows, mappedColumns, headerIndexByName, mappingValues);
-    const analyzedRows = analyzeNormalizedRows(normalizedRows, mappingValues);
+    const analyzedRows = addDependencyAnalysis(analyzeNormalizedRows(normalizedRows, mappingValues));
     const movementSummary = buildMovementSummary(analyzedRows);
+    const dependencySummary = buildDependencySummary(analyzedRows);
 
     normalizedScheduleRows = normalizedRows;
 
@@ -1270,6 +1676,7 @@
       normalizedRows,
       analyzedRows,
       movementSummary,
+      dependencySummary,
       mappedColumns,
       mappingValues
     };
