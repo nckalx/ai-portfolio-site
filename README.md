@@ -119,6 +119,19 @@ Report tabs:
 - Estimated Critical Path
 - Column Mapping Used
 
+## Sample Files
+
+The repository includes fake, sanitized sample workbooks that can be used to test and review the browser analyzer:
+
+- `assets/data/sample-smartsheet-schedule-input.xlsx`
+- `assets/data/sample-schedule-analysis-output.xlsx`
+
+The sample input workbook uses generic demo project names only. It includes parent/summary rows, child/detail rows, mapped hierarchy levels, baseline/current date movement, predecessor examples, and two project groups for grouped estimated critical path testing.
+
+The sample output report was generated from the sample input workbook using the browser analyzer. Visitors can download the input workbook, upload it into the tool, and compare their generated report against the sample output.
+
+These files are fake and sanitized. They contain no real company, property, project, employee, vendor, or internal data.
+
 ## Privacy And Browser-Only Processing
 
 Uploaded schedule exports are processed client-side in the browser. The analyzer does not call the Smartsheet API, does not require a server, and does not upload workbook contents from the page.
@@ -152,7 +165,7 @@ Planned screenshot/sample-output placeholders:
 - Estimated Critical Path output
 - Downloaded Excel report tab examples
 
-No screenshot or sample workbook files are included in this pass.
+No screenshot files are included in this pass.
 
 ## Technology
 
@@ -169,7 +182,6 @@ The goal is to keep the site easy to understand, easy to maintain, and easy to d
 
 Planned improvements include:
 
-- Add sample downloadable files
 - Add optional Row Type / Include in Critical Path mapping
 - Add holiday calendar support
 - Add an All Dependency Links Excel report tab

@@ -275,6 +275,36 @@ h3 {
   margin-top: 6px;
 }
 
+.sample-file-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  margin-bottom: 28px;
+  padding: 18px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.sample-file-panel h4 {
+  margin-bottom: 8px;
+  font-size: 1rem;
+}
+
+.sample-file-panel p:not(.eyebrow) {
+  margin: 0;
+  max-width: 820px;
+  color: var(--muted);
+}
+
+.sample-file-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
 .schedule-analyzer-form,
 .upload-field,
 .mapping-section,
@@ -888,8 +918,17 @@ select {
   .analyzer-guidance-panel,
   .mapping-grid,
   .schedule-placeholder-grid,
+  .sample-file-panel,
   .mapped-column-list {
     grid-template-columns: 1fr;
+  }
+
+  .sample-file-actions {
+    justify-content: flex-start;
+  }
+
+  .sample-file-actions .button {
+    justify-self: start;
   }
 
   .workbook-summary-list,
