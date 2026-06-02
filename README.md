@@ -117,7 +117,7 @@ Row Type and Include in Critical Path? affect estimated critical path eligibilit
 
 ## Generated Excel Report
 
-The web output focuses on changed schedule rows so the browser view stays readable. The downloadable Excel report includes a fuller audit trail.
+The web output focuses on changed schedule rows so the browser view stays readable. The downloadable Excel report includes a fuller audit trail, including dependency warnings and all parsed dependency links.
 
 Report tabs:
 
@@ -126,8 +126,11 @@ Report tabs:
 - All Schedule Items
 - Warnings - Data Quality
 - Dependency Validation
+- All Dependency Links
 - Estimated Critical Path
 - Column Mapping Used
+
+Dependency Validation focuses on warning/problem links. All Dependency Links provides a full audit trail of every parsed predecessor relationship.
 
 ## Sample Files
 
@@ -195,7 +198,6 @@ The goal is to keep the site easy to understand, easy to maintain, and easy to d
 Planned improvements include:
 
 - Add deeper multi-calendar CPM refinement
-- Add an All Dependency Links Excel report tab
 - Refactor schedule analyzer JavaScript into smaller modules
 - Add automated tests
 - Add dedicated project detail pages

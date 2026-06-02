@@ -86,6 +86,7 @@
     allItems: "All Schedule Items",
     warnings: "Warnings - Data Quality",
     dependencyValidation: "Dependency Validation",
+    allDependencyLinks: "All Dependency Links",
     estimatedCriticalPath: "Estimated Critical Path",
     columnMapping: "Column Mapping Used"
   };
@@ -151,6 +152,28 @@
     "Resolved Task ID",
     "Resolved Task / Milestone",
     "Issue / Warning"
+  ];
+
+  const allDependencyLinkReportHeaders = [
+    "Project Name",
+    "Successor Row Number",
+    "Successor Task ID",
+    "Successor Task Name",
+    "Successor Row Type",
+    "Successor Critical Path Eligible",
+    "Successor Critical Path Exclusion Reason",
+    "Predecessor Reference",
+    "Relationship Type",
+    "Lag Days",
+    "Resolved Predecessor Row Number",
+    "Resolved Predecessor Task ID",
+    "Resolved Predecessor Task Name",
+    "Predecessor Row Type",
+    "Predecessor Critical Path Eligible",
+    "Predecessor Critical Path Exclusion Reason",
+    "Is Cross-Project Link?",
+    "Link Included in Critical Path Logic?",
+    "Warning / Issue"
   ];
 
   const dependencyWarningColumns = [
@@ -1465,9 +1488,11 @@
     return firstRow.projectName === secondRow.projectName;
   }
 
-  function getEligibleDependencyLinks(row, eligibleRows) {
-    const supportedRelationshipTypes = new Set(["FS", "SS", "FF", "SF"]);
+  function isSupportedCriticalPathRelationship(relationshipType) {
+    return new Set(["FS", "SS", "FF", "SF"]).has(relationshipType);
+  }
 
+  function getEligibleDependencyLinks(row, eligibleRows) {
     return row.resolvedPredecessors.filter((link) => {
       return (
         link.resolved &&
@@ -1475,7 +1500,7 @@
         eligibleRows.has(row) &&
         eligibleRows.has(link.predecessorRow) &&
         isSameProjectGroup(row, link.predecessorRow) &&
-        supportedRelationshipTypes.has(link.relationshipType)
+        isSupportedCriticalPathRelationship(link.relationshipType)
       );
     });
   }
@@ -2590,6 +2615,85 @@
     };
   }
 
+  function getAllDependencyLinks(rows) {
+    return rows.flatMap((row) => {
+      return row.resolvedPredecessors.map((link) => {
+        return {
+          row,
+          link
+        };
+      });
+    });
+  }
+
+  function isDependencyLinkIncludedInCriticalPathLogic(row, link) {
+    return (
+      link.resolved &&
+      link.predecessorRow &&
+      row.criticalPathEligible &&
+      link.predecessorRow.criticalPathEligible &&
+      isSameProjectGroup(row, link.predecessorRow) &&
+      isSupportedCriticalPathRelationship(link.relationshipType) &&
+      link.issueMessages.length === 0
+    );
+  }
+
+  function getAllDependencyLinkIssueText(row, link) {
+    const issues = [...link.issueMessages];
+
+    if (link.resolved && link.predecessorRow) {
+      if (!isSameProjectGroup(row, link.predecessorRow)) {
+        issues.push("Cross-project predecessor link omitted from estimated critical path.");
+      }
+
+      if (!row.criticalPathEligible) {
+        issues.push(`Successor is not eligible for estimated critical path: ${row.criticalPathExclusionReason}.`);
+      }
+
+      if (!link.predecessorRow.criticalPathEligible) {
+        issues.push(
+          `Predecessor is not eligible for estimated critical path: ${link.predecessorRow.criticalPathExclusionReason}.`
+        );
+      }
+    }
+
+    if (!isSupportedCriticalPathRelationship(link.relationshipType)) {
+      issues.push("Relationship type is not supported by estimated critical path logic.");
+    }
+
+    return Array.from(new Set(issues.filter((issue) => issue !== ""))).join(" ");
+  }
+
+  function buildAllDependencyLinkReportRow(dependencyLink) {
+    const row = dependencyLink.row;
+    const link = dependencyLink.link;
+    const predecessorRow = link.predecessorRow || null;
+
+    return {
+      "Project Name": row.projectName,
+      "Successor Row Number": row.sourceDataRowNumber,
+      "Successor Task ID": row.taskId,
+      "Successor Task Name": row.taskName,
+      "Successor Row Type": row.rowType,
+      "Successor Critical Path Eligible": formatYesNo(row.criticalPathEligible),
+      "Successor Critical Path Exclusion Reason": row.criticalPathExclusionReason,
+      "Predecessor Reference": link.originalText || link.parsedReference,
+      "Relationship Type": link.relationshipType,
+      "Lag Days": link.lagDays,
+      "Resolved Predecessor Row Number": predecessorRow ? predecessorRow.sourceDataRowNumber : "",
+      "Resolved Predecessor Task ID": predecessorRow ? predecessorRow.taskId : "",
+      "Resolved Predecessor Task Name": predecessorRow ? predecessorRow.taskName : "",
+      "Predecessor Row Type": predecessorRow ? predecessorRow.rowType : "",
+      "Predecessor Critical Path Eligible": predecessorRow ? formatYesNo(predecessorRow.criticalPathEligible) : "",
+      "Predecessor Critical Path Exclusion Reason": predecessorRow
+        ? predecessorRow.criticalPathExclusionReason
+        : "",
+      "Is Cross-Project Link?": predecessorRow ? formatYesNo(!isSameProjectGroup(row, predecessorRow)) : "",
+      "Link Included in Critical Path Logic?": formatYesNo(isDependencyLinkIncludedInCriticalPathLogic(row, link)),
+      "Warning / Issue": getAllDependencyLinkIssueText(row, link)
+    };
+  }
+
   function buildCriticalPathReportRow(row, pathType, sequence) {
     return {
       "Project Name": row.projectName,
@@ -2738,6 +2842,7 @@
     const changedRows = result.analyzedRows.filter((row) => row.hasScheduleMovement);
     const warningRows = getWarningReportRows(result.analyzedRows);
     const dependencyIssueLinks = getDependencyIssueLinks(result.analyzedRows);
+    const allDependencyLinks = getAllDependencyLinks(result.analyzedRows);
     const criticalPathRows = buildCriticalPathReportRows(result);
 
     addAoaWorksheet(reportWorkbook, reportSheetNames.executiveSummary, buildExecutiveSummaryRows(result), [36, 80]);
@@ -2768,6 +2873,13 @@
       dependencyIssueLinks.map((issueLink) => buildDependencyReportRow(issueLink)),
       dependencyReportHeaders,
       [18, 16, 16, 34, 22, 24, 18, 18, 12, 12, 18, 34, 52]
+    );
+    addJsonWorksheet(
+      reportWorkbook,
+      reportSheetNames.allDependencyLinks,
+      allDependencyLinks.map((dependencyLink) => buildAllDependencyLinkReportRow(dependencyLink)),
+      allDependencyLinkReportHeaders,
+      [26, 18, 18, 34, 18, 22, 36, 22, 18, 12, 26, 22, 34, 18, 24, 38, 20, 28, 58]
     );
     addJsonWorksheet(
       reportWorkbook,
