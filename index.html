@@ -108,7 +108,7 @@
         <h2>Sample schedule movement analysis</h2>
         <p>
           This tool is being expanded into a browser-based analyzer for exported Smartsheet
-          <code>.xlsx</code> schedules. It will use only the columns mapped below and ignore
+          <code>.xlsx</code> schedules. It uses only the columns mapped below and ignores
           unrelated columns that may exist in the export.
         </p>
         <p>
@@ -119,7 +119,7 @@
 
       <div class="demo-card schedule-upload-card">
         <div class="demo-card-heading">
-          <p class="eyebrow">Phase 2 Workbook Preview</p>
+          <p class="eyebrow">Phase 3 Workbook Analysis</p>
           <h3>Uploaded Smartsheet schedule analyzer</h3>
           <p>
             Choose a Smartsheet <code>.xlsx</code> schedule export and map the columns the analyzer should use.
@@ -135,7 +135,9 @@
               type="file"
               accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             />
-            <p class="field-help">Phase 2 validates mapped columns and previews normalized rows only.</p>
+            <p class="field-help">
+              Phase 3 validates mapped columns and compares baseline dates to current dates for schedule movement.
+            </p>
           </div>
 
           <div class="mapping-section">
@@ -251,7 +253,7 @@
 
         <section id="scheduleAnalyzerPreview" class="schedule-preview-panel" hidden>
           <div class="preview-heading">
-            <p class="eyebrow">Validation Preview</p>
+            <p class="eyebrow">Workbook Validation</p>
             <h4>Workbook parsing summary</h4>
             <p>
               These results show the workbook structure and first normalized rows using only mapped columns.
@@ -276,35 +278,50 @@
         </section>
       </div>
 
-      <div class="schedule-placeholder-grid">
-        <article class="result-placeholder">
-          <p class="eyebrow">Placeholder</p>
+      <div id="schedulePhase3Results" class="schedule-results-grid" hidden>
+        <article class="result-panel schedule-summary-panel">
+          <p class="eyebrow">Phase 3 Output</p>
           <h3>Executive Summary</h3>
-          <p>Future high-level counts, date movement totals, and schedule health indicators will appear here.</p>
+          <p class="summary-note">
+            Movement is calculated by comparing each mapped baseline start/finish date to the mapped current
+            start/finish date. A task can have a multi-day duration and still be Unchanged if its baseline
+            and current dates are the same.
+          </p>
+          <p class="summary-note">
+            Likely parent/summary rows are counted separately and will be excluded from future critical path
+            analysis by default. When they appear in the changed/warning detail output, they remain visible
+            so schedule reviewers can inspect the source rows.
+          </p>
+          <dl id="scheduleMovementSummary" class="movement-summary-list"></dl>
         </article>
 
-        <article class="result-placeholder">
-          <p class="eyebrow">Placeholder</p>
+        <article class="result-panel schedule-detail-panel">
+          <p class="eyebrow">Phase 3 Output</p>
           <h3>Task Movement Detail</h3>
-          <p>Future task-by-task baseline versus current start and finish movement results will appear here.</p>
+          <p class="detail-note">
+            Showing changed schedule rows only. Unchanged rows and warning-only rows will be included in the
+            future downloadable Excel report.
+          </p>
+          <p class="detail-note">
+            Rows with invalid mapped dates stay in the table, but their movement values are not calculated.
+          </p>
+          <div class="table-wrapper movement-table-wrapper">
+            <table class="movement-table">
+              <thead>
+                <tr id="scheduleMovementDetailHeader"></tr>
+              </thead>
+              <tbody id="scheduleMovementDetailBody"></tbody>
+            </table>
+          </div>
         </article>
 
-        <article class="result-placeholder">
-          <p class="eyebrow">Placeholder</p>
-          <h3>Estimated Critical Path</h3>
-          <p>Future predecessor-based critical path estimates and driving task notes will appear here.</p>
-        </article>
-
-        <article class="result-placeholder">
-          <p class="eyebrow">Placeholder</p>
-          <h3>Dependency / Data Quality Warnings</h3>
-          <p>Future missing dates, unmapped required fields, broken predecessor links, and other data issues will appear here.</p>
-        </article>
-
-        <article class="result-placeholder download-placeholder">
-          <p class="eyebrow">Future Option</p>
-          <h3>Future Download .xlsx Summary</h3>
-          <p>A later phase can add a generated workbook summary for sharing the schedule movement analysis.</p>
+        <article class="result-panel future-phase-panel">
+          <p class="eyebrow">Future Phase</p>
+          <h3>Not included in Phase 3</h3>
+          <p>
+            Predecessor parsing, critical path calculation, holiday calendars, and downloadable
+            <code>.xlsx</code> report generation are intentionally reserved for later phases.
+          </p>
         </article>
       </div>
 
@@ -313,7 +330,7 @@
           <p class="eyebrow">Sample Demo</p>
           <h3>Hardcoded schedule movement sample</h3>
           <p>
-            This small sample keeps the original demo logic available until uploaded workbook parsing is added.
+            This small sample keeps the original demo logic available alongside the uploaded workbook analyzer.
           </p>
         </div>
 

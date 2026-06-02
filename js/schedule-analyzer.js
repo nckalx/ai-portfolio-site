@@ -1,7 +1,6 @@
-// Phase 2 shell for the uploaded Smartsheet .xlsx schedule analyzer.
+// Phase 3 implementation for the uploaded Smartsheet .xlsx schedule analyzer.
 //
 // Later phases can add:
-// - schedule movement calculations using the normalized mapped rows,
 // - predecessor parsing and dependency/data-quality warnings,
 // - estimated critical path logic,
 // - generated Excel summary export logic.
@@ -33,6 +32,27 @@
     { key: "status", label: "Status / % Complete" }
   ];
 
+  const dateColumns = [
+    { key: "baselineStart", label: "baseline start" },
+    { key: "baselineFinish", label: "baseline finish" },
+    { key: "currentStart", label: "current start" },
+    { key: "currentFinish", label: "current finish" }
+  ];
+
+  const movementDetailColumns = [
+    { key: "taskId", label: "Task ID" },
+    { key: "taskName", label: "Task / Milestone" },
+    { key: "classification", label: "Row Classification" },
+    { key: "baselineStart", label: "Baseline Start" },
+    { key: "currentStart", label: "Current Start" },
+    { key: "startWorkdayMovement", label: "Start Workday Movement" },
+    { key: "baselineFinish", label: "Baseline Finish" },
+    { key: "currentFinish", label: "Current Finish" },
+    { key: "finishWorkdayMovement", label: "Finish Workday Movement" },
+    { key: "movementDirection", label: "Movement Status" },
+    { key: "warnings", label: "Warnings" }
+  ];
+
   let normalizedScheduleRows = [];
 
   function getScheduleAnalyzerElement(id) {
@@ -53,16 +73,32 @@
 
   function clearSchedulePreview() {
     const previewPanel = getScheduleAnalyzerElement("scheduleAnalyzerPreview");
+    const resultsPanel = getScheduleAnalyzerElement("schedulePhase3Results");
     const summaryList = getScheduleAnalyzerElement("scheduleWorkbookSummary");
     const mappedColumnsList = getScheduleAnalyzerElement("scheduleMappedColumns");
     const previewHeader = getScheduleAnalyzerElement("schedulePreviewHeader");
     const previewBody = getScheduleAnalyzerElement("schedulePreviewBody");
+    const movementSummary = getScheduleAnalyzerElement("scheduleMovementSummary");
+    const movementDetailHeader = getScheduleAnalyzerElement("scheduleMovementDetailHeader");
+    const movementDetailBody = getScheduleAnalyzerElement("scheduleMovementDetailBody");
 
     if (previewPanel) {
       previewPanel.hidden = true;
     }
 
-    [summaryList, mappedColumnsList, previewHeader, previewBody].forEach((element) => {
+    if (resultsPanel) {
+      resultsPanel.hidden = true;
+    }
+
+    [
+      summaryList,
+      mappedColumnsList,
+      previewHeader,
+      previewBody,
+      movementSummary,
+      movementDetailHeader,
+      movementDetailBody
+    ].forEach((element) => {
       if (element) {
         element.replaceChildren();
       }
@@ -87,6 +123,221 @@
     }
 
     return String(value).trim();
+  }
+
+  function getDateOnly(date) {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  }
+
+  function isValidDateObject(value) {
+    return value instanceof Date && !Number.isNaN(value.getTime());
+  }
+
+  function createDateFromParts(year, month, day) {
+    const date = new Date(year, month - 1, day);
+
+    if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+      return null;
+    }
+
+    return date;
+  }
+
+  function normalizeTwoDigitYear(year) {
+    if (year >= 100) {
+      return year;
+    }
+
+    return year < 50 ? 2000 + year : 1900 + year;
+  }
+
+  function parseExcelSerialDate(value) {
+    const serialDate = Number(value);
+
+    if (!Number.isFinite(serialDate) || serialDate < 20000 || serialDate > 60000) {
+      return null;
+    }
+
+    const excelEpoch = new Date(1899, 11, 30);
+    const date = new Date(excelEpoch);
+    date.setDate(excelEpoch.getDate() + Math.floor(serialDate));
+
+    return getDateOnly(date);
+  }
+
+  function parseDateString(value) {
+    const trimmedValue = value.trim();
+    const numericDateMatch = trimmedValue.match(/^\d+(\.\d+)?$/);
+
+    if (numericDateMatch) {
+      if (/^(19|20)\d{6}$/.test(trimmedValue)) {
+        const year = Number(trimmedValue.slice(0, 4));
+        const month = Number(trimmedValue.slice(4, 6));
+        const day = Number(trimmedValue.slice(6, 8));
+        return createDateFromParts(year, month, day);
+      }
+
+      return parseExcelSerialDate(trimmedValue);
+    }
+
+    const yearFirstMatch = trimmedValue.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})(?:[ T].*)?$/);
+
+    if (yearFirstMatch) {
+      const year = Number(yearFirstMatch[1]);
+      const month = Number(yearFirstMatch[2]);
+      const day = Number(yearFirstMatch[3]);
+      return createDateFromParts(year, month, day);
+    }
+
+    const monthFirstMatch = trimmedValue.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})(?:\s+.*)?$/);
+
+    if (monthFirstMatch) {
+      const month = Number(monthFirstMatch[1]);
+      const day = Number(monthFirstMatch[2]);
+      const year = normalizeTwoDigitYear(Number(monthFirstMatch[3]));
+      return createDateFromParts(year, month, day);
+    }
+
+    const fallbackDate = new Date(trimmedValue);
+
+    if (isValidDateObject(fallbackDate)) {
+      return getDateOnly(fallbackDate);
+    }
+
+    return null;
+  }
+
+  function parseMappedScheduleDate(value) {
+    const displayValue = normalizeCellValue(value);
+
+    if (displayValue === "") {
+      return {
+        date: null,
+        displayValue,
+        isMissing: true,
+        isValid: false
+      };
+    }
+
+    if (isValidDateObject(value)) {
+      return {
+        date: getDateOnly(value),
+        displayValue,
+        isMissing: false,
+        isValid: true
+      };
+    }
+
+    if (typeof value === "number") {
+      const excelDate = parseExcelSerialDate(value);
+
+      return {
+        date: excelDate,
+        displayValue,
+        isMissing: false,
+        isValid: excelDate !== null
+      };
+    }
+
+    const parsedDate = parseDateString(displayValue);
+
+    return {
+      date: parsedDate,
+      displayValue,
+      isMissing: false,
+      isValid: parsedDate !== null
+    };
+  }
+
+  function getUtcDayValue(date) {
+    return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  }
+
+  function calculateCalendarDaysBetween(startDate, endDate) {
+    const millisecondsPerDay = 24 * 60 * 60 * 1000;
+    return Math.round((getUtcDayValue(endDate) - getUtcDayValue(startDate)) / millisecondsPerDay);
+  }
+
+  function isWeekday(date) {
+    const dayOfWeek = date.getDay();
+    return dayOfWeek !== 0 && dayOfWeek !== 6;
+  }
+
+  function countWeekdaysInclusive(startDate, endDate) {
+    const currentDate = new Date(startDate);
+    let weekdayCount = 0;
+
+    while (currentDate <= endDate) {
+      if (isWeekday(currentDate)) {
+        weekdayCount += 1;
+      }
+
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    return weekdayCount;
+  }
+
+  function calculateWorkdaysMoved(baselineDate, currentDate) {
+    if (currentDate.getTime() === baselineDate.getTime()) {
+      return 0;
+    }
+
+    if (currentDate > baselineDate) {
+      return countWeekdaysInclusive(baselineDate, currentDate) - 1;
+    }
+
+    return -(countWeekdaysInclusive(currentDate, baselineDate) - 1);
+  }
+
+  function getMovementSign(calendarMovement, workdayMovement) {
+    const movementValue = calendarMovement !== 0 ? calendarMovement : workdayMovement;
+
+    if (movementValue > 0) {
+      return 1;
+    }
+
+    if (movementValue < 0) {
+      return -1;
+    }
+
+    return 0;
+  }
+
+  function hasAnyScheduleMovement(movementValues) {
+    return (
+      movementValues.startCalendarMovement !== 0 ||
+      movementValues.startWorkdayMovement !== 0 ||
+      movementValues.finishCalendarMovement !== 0 ||
+      movementValues.finishWorkdayMovement !== 0
+    );
+  }
+
+  function getMovementDirection(movementValues) {
+    const startSign = getMovementSign(movementValues.startCalendarMovement, movementValues.startWorkdayMovement);
+    const finishSign = getMovementSign(movementValues.finishCalendarMovement, movementValues.finishWorkdayMovement);
+
+    if (startSign !== 0 && finishSign !== 0 && startSign !== finishSign) {
+      return "Mixed Movement";
+    }
+
+    if (finishSign > 0) {
+      return "Delayed";
+    }
+
+    if (finishSign < 0) {
+      return "Accelerated";
+    }
+
+    if (startSign > 0) {
+      return "Start Delayed / Finish Unchanged";
+    }
+
+    if (startSign < 0) {
+      return "Start Accelerated / Finish Unchanged";
+    }
+
+    return "Unchanged";
   }
 
   function isBlankRow(row) {
@@ -222,6 +473,232 @@
       });
   }
 
+  function hasAnyMappedDateValue(row) {
+    return dateColumns.some((column) => row[column.key] !== "");
+  }
+
+  function getParsedRowDates(row) {
+    const parsedDates = {};
+
+    dateColumns.forEach((column) => {
+      parsedDates[column.key] = parseMappedScheduleDate(row[column.key]);
+    });
+
+    return parsedDates;
+  }
+
+  function getDateWarnings(parsedDates) {
+    const warnings = [];
+
+    dateColumns.forEach((column) => {
+      const parsedDate = parsedDates[column.key];
+
+      if (parsedDate.isMissing) {
+        warnings.push(`Missing ${column.label}.`);
+      } else if (!parsedDate.isValid) {
+        warnings.push(`Invalid ${column.label}: ${parsedDate.displayValue}.`);
+      }
+    });
+
+    if (
+      parsedDates.baselineStart.isValid &&
+      parsedDates.baselineFinish.isValid &&
+      parsedDates.baselineFinish.date < parsedDates.baselineStart.date
+    ) {
+      warnings.push("Baseline finish is earlier than baseline start.");
+    }
+
+    if (
+      parsedDates.currentStart.isValid &&
+      parsedDates.currentFinish.isValid &&
+      parsedDates.currentFinish.date < parsedDates.currentStart.date
+    ) {
+      warnings.push("Current finish is earlier than current start.");
+    }
+
+    return warnings;
+  }
+
+  function hasLongDateSpan(parsedDates) {
+    const minimumSummarySpanDays = 20;
+    const baselineSpan =
+      parsedDates.baselineStart.isValid && parsedDates.baselineFinish.isValid
+        ? calculateCalendarDaysBetween(parsedDates.baselineStart.date, parsedDates.baselineFinish.date)
+        : 0;
+    const currentSpan =
+      parsedDates.currentStart.isValid && parsedDates.currentFinish.isValid
+        ? calculateCalendarDaysBetween(parsedDates.currentStart.date, parsedDates.currentFinish.date)
+        : 0;
+
+    return baselineSpan >= minimumSummarySpanDays || currentSpan >= minimumSummarySpanDays;
+  }
+
+  function hasSummaryLikeText(row) {
+    const combinedText = `${row.taskName} ${row.status}`.toLowerCase();
+
+    return (
+      /\b(summary|rollup|parent|subtotal|total|overall|program|workstream)\b/.test(combinedText) ||
+      /\b(phase|stage|section|area|package)\s+\d*[a-z]?\b/.test(combinedText) ||
+      /\b(project|schedule)\s+(summary|total|rollup)\b/.test(combinedText)
+    );
+  }
+
+  function getLikelySummarySignals(row, parsedDates, mappingValues) {
+    const signals = {
+      hasDateValues: hasAnyMappedDateValue(row),
+      hasBlankMappedTaskId: mappingValues.taskId !== "" && row.taskId === "",
+      hasBlankPredecessors: row.predecessors === "",
+      hasBlankMappedStatus: mappingValues.status !== "" && row.status === "",
+      hasLongDateSpan: hasLongDateSpan(parsedDates),
+      hasSummaryLikeText: hasSummaryLikeText(row)
+    };
+
+    return signals;
+  }
+
+  function isLikelySummaryRow(signals) {
+    if (!signals.hasDateValues) {
+      return false;
+    }
+
+    return (
+      (signals.hasSummaryLikeText &&
+        (signals.hasBlankPredecessors || signals.hasBlankMappedTaskId || signals.hasBlankMappedStatus)) ||
+      (signals.hasBlankMappedTaskId &&
+        signals.hasBlankPredecessors &&
+        (signals.hasLongDateSpan || signals.hasBlankMappedStatus)) ||
+      (signals.hasBlankPredecessors && signals.hasLongDateSpan && signals.hasBlankMappedStatus)
+    );
+  }
+
+  function classifyScheduleRow(row, parsedDates, dateWarnings, mappingValues) {
+    const summarySignals = getLikelySummarySignals(row, parsedDates, mappingValues);
+
+    // Smartsheet exports in this mapped-column flow do not provide hierarchy metadata.
+    // This is a conservative estimate; a future version may support an explicit
+    // hierarchy, row-type, or parent/child mapping from the workbook.
+    if (isLikelySummaryRow(summarySignals)) {
+      return "likely-summary";
+    }
+
+    if (dateWarnings.length > 0) {
+      return "warning";
+    }
+
+    return "detail";
+  }
+
+  function buildMovementValues(parsedDates) {
+    const startCalendarMovement = calculateCalendarDaysBetween(
+      parsedDates.baselineStart.date,
+      parsedDates.currentStart.date
+    );
+    const finishCalendarMovement = calculateCalendarDaysBetween(
+      parsedDates.baselineFinish.date,
+      parsedDates.currentFinish.date
+    );
+    const startWorkdayMovement = calculateWorkdaysMoved(parsedDates.baselineStart.date, parsedDates.currentStart.date);
+    const finishWorkdayMovement = calculateWorkdaysMoved(
+      parsedDates.baselineFinish.date,
+      parsedDates.currentFinish.date
+    );
+    const movementValues = {
+      startCalendarMovement,
+      finishCalendarMovement,
+      startWorkdayMovement,
+      finishWorkdayMovement
+    };
+
+    return {
+      ...movementValues,
+      hasScheduleMovement: hasAnyScheduleMovement(movementValues),
+      movementDirection: getMovementDirection(movementValues)
+    };
+  }
+
+  function analyzeNormalizedRow(row, mappingValues) {
+    const parsedDates = getParsedRowDates(row);
+    const dateWarnings = getDateWarnings(parsedDates);
+    const validForMovement = dateWarnings.length === 0;
+    const classification = classifyScheduleRow(row, parsedDates, dateWarnings, mappingValues);
+    const movementValues = validForMovement
+      ? buildMovementValues(parsedDates)
+      : {
+          startCalendarMovement: null,
+          finishCalendarMovement: null,
+          startWorkdayMovement: null,
+          finishWorkdayMovement: null,
+          hasScheduleMovement: false,
+          movementDirection: "Not calculated"
+        };
+
+    return {
+      ...row,
+      classification,
+      dateWarnings,
+      excludeFromFutureCriticalPath: classification === "likely-summary",
+      parsedDates,
+      validForMovement,
+      ...movementValues
+    };
+  }
+
+  function analyzeNormalizedRows(rows, mappingValues) {
+    return rows.map((row) => analyzeNormalizedRow(row, mappingValues));
+  }
+
+  function getLargestFinishDelay(rows) {
+    return rows
+      .filter((row) => row.validForMovement && row.finishCalendarMovement > 0)
+      .reduce((largestRow, row) => {
+        if (!largestRow || row.finishCalendarMovement > largestRow.finishCalendarMovement) {
+          return row;
+        }
+
+        return largestRow;
+      }, null);
+  }
+
+  function getLargestFinishAcceleration(rows) {
+    return rows
+      .filter((row) => row.validForMovement && row.finishCalendarMovement < 0)
+      .reduce((largestRow, row) => {
+        if (!largestRow || row.finishCalendarMovement < largestRow.finishCalendarMovement) {
+          return row;
+        }
+
+        return largestRow;
+      }, null);
+  }
+
+  function buildMovementSummary(rows) {
+    const validRows = rows.filter((row) => row.validForMovement);
+
+    return {
+      totalRows: rows.length,
+      detailRows: rows.filter((row) => row.classification === "detail").length,
+      likelySummaryRows: rows.filter((row) => row.classification === "likely-summary").length,
+      dateWarningRows: rows.filter((row) => row.dateWarnings.length > 0).length,
+      excludedMovementRows: rows.filter((row) => !row.validForMovement).length,
+      changedRows: validRows.filter((row) => row.hasScheduleMovement).length,
+      unchangedRows: validRows.filter((row) => !row.hasScheduleMovement).length,
+      delayedRows: validRows.filter((row) => {
+        return getMovementSign(row.finishCalendarMovement, row.finishWorkdayMovement) > 0;
+      }).length,
+      acceleratedRows: validRows.filter((row) => {
+        return getMovementSign(row.finishCalendarMovement, row.finishWorkdayMovement) < 0;
+      }).length,
+      startOnlyMovementRows: validRows.filter((row) => {
+        return (
+          getMovementSign(row.finishCalendarMovement, row.finishWorkdayMovement) === 0 &&
+          getMovementSign(row.startCalendarMovement, row.startWorkdayMovement) !== 0
+        );
+      }).length,
+      largestFinishDelay: getLargestFinishDelay(rows),
+      largestFinishAcceleration: getLargestFinishAcceleration(rows)
+    };
+  }
+
   function appendDescriptionItem(list, term, description) {
     const termElement = document.createElement("dt");
     const descriptionElement = document.createElement("dd");
@@ -230,6 +707,186 @@
     descriptionElement.textContent = description;
     list.appendChild(termElement);
     list.appendChild(descriptionElement);
+  }
+
+  function formatMovementSummaryRow(row) {
+    if (!row) {
+      return "None";
+    }
+
+    const taskLabel = row.taskName || row.taskId || "Unnamed row";
+    return `${row.finishWorkdayMovement} workdays (${row.finishCalendarMovement} calendar days) - ${taskLabel}`;
+  }
+
+  function renderMovementSummary(summary) {
+    const movementSummary = getScheduleAnalyzerElement("scheduleMovementSummary");
+
+    if (!movementSummary) {
+      return;
+    }
+
+    movementSummary.replaceChildren();
+
+    appendDescriptionItem(movementSummary, "Total normalized rows", String(summary.totalRows));
+    appendDescriptionItem(movementSummary, "Detail rows", String(summary.detailRows));
+    appendDescriptionItem(movementSummary, "Likely parent/summary rows", String(summary.likelySummaryRows));
+    appendDescriptionItem(movementSummary, "Rows with date warnings", String(summary.dateWarningRows));
+    appendDescriptionItem(
+      movementSummary,
+      "Rows excluded from movement calculations",
+      String(summary.excludedMovementRows)
+    );
+    appendDescriptionItem(movementSummary, "Rows with any schedule movement", String(summary.changedRows));
+    appendDescriptionItem(movementSummary, "Unchanged rows", String(summary.unchangedRows));
+    appendDescriptionItem(movementSummary, "Delayed rows", String(summary.delayedRows));
+    appendDescriptionItem(movementSummary, "Accelerated rows", String(summary.acceleratedRows));
+    appendDescriptionItem(movementSummary, "Start-only movement rows", String(summary.startOnlyMovementRows));
+    appendDescriptionItem(
+      movementSummary,
+      "Largest finish delay",
+      formatMovementSummaryRow(summary.largestFinishDelay)
+    );
+    appendDescriptionItem(
+      movementSummary,
+      "Largest finish acceleration",
+      formatMovementSummaryRow(summary.largestFinishAcceleration)
+    );
+  }
+
+  function formatDateForDetail(row, key) {
+    const parsedDate = row.parsedDates[key];
+
+    if (parsedDate.isValid) {
+      return formatDateValue(parsedDate.date);
+    }
+
+    return parsedDate.displayValue || "Missing";
+  }
+
+  function formatMovementValue(row, key) {
+    if (!row.validForMovement) {
+      return "Not calculated";
+    }
+
+    return String(row[key]);
+  }
+
+  function appendTableCell(tableRow, value, className) {
+    const tableCell = document.createElement("td");
+
+    if (className) {
+      tableCell.className = className;
+    }
+
+    tableCell.textContent = value;
+    tableRow.appendChild(tableCell);
+
+    return tableCell;
+  }
+
+  function appendClassificationCell(tableRow, classification) {
+    const tableCell = document.createElement("td");
+    const classificationBadge = document.createElement("span");
+
+    classificationBadge.className = `classification-badge is-${classification}`;
+    classificationBadge.textContent = classification;
+    tableCell.appendChild(classificationBadge);
+    tableRow.appendChild(tableCell);
+  }
+
+  function getMovementDetailValue(row, columnKey) {
+    if (
+      columnKey === "baselineStart" ||
+      columnKey === "baselineFinish" ||
+      columnKey === "currentStart" ||
+      columnKey === "currentFinish"
+    ) {
+      return formatDateForDetail(row, columnKey);
+    }
+
+    if (columnKey === "startWorkdayMovement" || columnKey === "finishWorkdayMovement") {
+      return formatMovementValue(row, columnKey);
+    }
+
+    if (columnKey === "movementDirection") {
+      return row.movementDirection;
+    }
+
+    if (columnKey === "warnings") {
+      return row.dateWarnings.length > 0 ? row.dateWarnings.join(" ") : "None";
+    }
+
+    return row[columnKey] || "";
+  }
+
+  function shouldShowMovementDetailRow(row) {
+    return row.hasScheduleMovement;
+  }
+
+  function getDisplayedMovementRows(rows) {
+    return rows.filter((row) => shouldShowMovementDetailRow(row));
+  }
+
+  function renderMovementDetailTable(rows) {
+    const movementDetailHeader = getScheduleAnalyzerElement("scheduleMovementDetailHeader");
+    const movementDetailBody = getScheduleAnalyzerElement("scheduleMovementDetailBody");
+
+    if (!movementDetailHeader || !movementDetailBody) {
+      return;
+    }
+
+    movementDetailHeader.replaceChildren();
+    movementDetailBody.replaceChildren();
+
+    movementDetailColumns.forEach((column) => {
+      const headerCell = document.createElement("th");
+      headerCell.textContent = column.label;
+      movementDetailHeader.appendChild(headerCell);
+    });
+
+    if (rows.length === 0) {
+      const emptyRow = document.createElement("tr");
+      const emptyCell = document.createElement("td");
+
+      emptyCell.colSpan = movementDetailColumns.length;
+      emptyCell.textContent =
+        "No changed schedule rows were found. Unchanged rows and warning-only rows will be included in the future downloadable Excel report.";
+      emptyRow.appendChild(emptyCell);
+      movementDetailBody.appendChild(emptyRow);
+      return;
+    }
+
+    rows.forEach((row) => {
+      const tableRow = document.createElement("tr");
+
+      tableRow.classList.add(`is-${row.classification}`);
+
+      if (row.dateWarnings.length > 0) {
+        tableRow.classList.add("has-date-warning");
+      }
+
+      movementDetailColumns.forEach((column) => {
+        if (column.key === "classification") {
+          appendClassificationCell(tableRow, row.classification);
+          return;
+        }
+
+        appendTableCell(tableRow, getMovementDetailValue(row, column.key));
+      });
+
+      movementDetailBody.appendChild(tableRow);
+    });
+  }
+
+  function renderMovementAnalysis(result) {
+    const resultsPanel = getScheduleAnalyzerElement("schedulePhase3Results");
+
+    if (resultsPanel) {
+      resultsPanel.hidden = false;
+    }
+
+    renderMovementSummary(result.movementSummary);
+    renderMovementDetailTable(getDisplayedMovementRows(result.analyzedRows));
   }
 
   function renderMappedColumns(mappedColumns, mappingValues) {
@@ -347,6 +1004,8 @@
     const mappedWorkbookColumnNames = new Set(mappedColumns.map((mapping) => mappingValues[mapping.key]));
     const unmappedColumnCount = Math.max(detectedColumnCount - mappedWorkbookColumnNames.size, 0);
     const normalizedRows = buildNormalizedRows(dataRows, mappedColumns, headerIndexByName, mappingValues);
+    const analyzedRows = analyzeNormalizedRows(normalizedRows, mappingValues);
+    const movementSummary = buildMovementSummary(analyzedRows);
 
     normalizedScheduleRows = normalizedRows;
 
@@ -358,6 +1017,8 @@
       unmappedColumnCount,
       dataRowCount: dataRows.length,
       normalizedRows,
+      analyzedRows,
+      movementSummary,
       mappedColumns,
       mappingValues
     };
@@ -420,8 +1081,9 @@
       }
 
       renderWorkbookPreview(parseResult);
+      renderMovementAnalysis(parseResult);
       setScheduleAnalyzerStatus(
-        "Workbook parsed successfully. Mapped columns were validated and unrelated columns were ignored. Movement calculations will be added in Phase 3.",
+        "Workbook analyzed successfully. Mapped columns were validated, unrelated columns were ignored, and Phase 3 movement results are ready below.",
         "is-ready"
       );
     } catch (error) {
