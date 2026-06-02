@@ -45,13 +45,13 @@
           <p class="project-number">Project #1</p>
           <h3>Schedule Movement Analyzer</h3>
           <p>
-            A Python tool that compares original and updated milestone dates, calculates schedule movement,
-            and produces a variance report for project controls review.
+            A project controls toolset that started as a Python/CSV schedule movement analyzer and now also
+            includes a browser-based Smartsheet <code>.xlsx</code> analyzer on this portfolio site.
           </p>
           <ul>
-            <li><strong>Business problem:</strong> Schedule changes are hard to summarize consistently across milestones.</li>
-            <li><strong>Automation solution:</strong> Read a schedule CSV and calculate calendar-day and workday movement.</li>
-            <li><strong>Skills shown:</strong> Python, CSV processing, date logic, validation, testing, GitHub documentation.</li>
+            <li><strong>Business problem:</strong> Schedule changes, dependency issues, and summary rows are hard to review consistently from exported schedules.</li>
+            <li><strong>Automation solution:</strong> Compare baseline and current dates, validate mapped schedule data, and generate a downloadable Excel audit report.</li>
+            <li><strong>Skills shown:</strong> Python, JavaScript, SheetJS, date logic, dependency parsing, validation, reporting, and GitHub documentation.</li>
           </ul>
           <a href="https://github.com/nckalx/schedule-movement-analyzer" target="_blank" rel="noopener noreferrer">
             View Repository
@@ -105,26 +105,61 @@
     <section id="demos" class="section alt-section">
       <div class="section-heading">
         <p class="eyebrow">Interactive Demo</p>
-        <h2>Sample schedule movement analysis</h2>
+        <h2>Smartsheet schedule movement analysis</h2>
         <p>
-          This tool is being expanded into a browser-based analyzer for exported Smartsheet
-          <code>.xlsx</code> schedules. It uses only the columns mapped below and ignores
-          unrelated columns that may exist in the export.
+          Upload an exported Smartsheet <code>.xlsx</code> schedule, map the columns to analyze, and review
+          schedule movement, data-quality warnings, dependency validation, and an estimated dependency-based
+          critical path.
         </p>
         <p>
-          Files are intended to be processed locally in the browser from a Smartsheet export,
-          not through a Smartsheet API integration.
+          Files are processed locally in the browser from a Smartsheet export. This is not a Smartsheet API
+          integration.
         </p>
       </div>
 
       <div class="demo-card schedule-upload-card">
         <div class="demo-card-heading">
-          <p class="eyebrow">Phase 3 Workbook Analysis</p>
-          <h3>Uploaded Smartsheet schedule analyzer</h3>
+          <p class="eyebrow">Smartsheet Schedule Analysis</p>
+          <h3>Exported .xlsx schedule analyzer</h3>
           <p>
             Choose a Smartsheet <code>.xlsx</code> schedule export and map the columns the analyzer should use.
             Extra columns in the file will be ignored.
           </p>
+        </div>
+
+        <div class="analyzer-guidance-panel">
+          <div>
+            <h4>What the analyzer does</h4>
+            <ul>
+              <li>Works with exported Smartsheet <code>.xlsx</code> schedule files.</li>
+              <li>Processes files locally in the browser and uses mapped columns instead of fixed names.</li>
+              <li>Compares baseline dates to actual/current dates for calendar-day and workday movement.</li>
+              <li>Validates predecessor/dependency data and flags unresolved or risky links.</li>
+              <li>Excludes detected parent/summary rows from estimated critical path logic.</li>
+              <li>Supports grouped analysis when one workbook contains multiple projects, properties, or schedules.</li>
+              <li>Generates a downloadable Excel report for a fuller audit trail.</li>
+            </ul>
+          </div>
+          <div>
+            <h4>Column mapping guidance</h4>
+            <p>
+              <strong>Required:</strong> Task or Milestone Name, Baseline Start, Baseline Finish,
+              Actual / Current Start, Actual / Current Finish, and Predecessors.
+            </p>
+            <p>
+              <strong>Optional:</strong> Task ID / Row ID, Status / % Complete, Row Hierarchy / Outline Level,
+              and Project Name / Project Grouping.
+            </p>
+            <p>
+              Row Hierarchy / Outline Level is recommended for Smartsheet parent/child schedules so parent
+              and summary rows can be excluded from estimated critical path logic. If your sheet does not
+              already have one, use the Smartsheet Formula Builder's Hierarchy Level Helper before exporting.
+            </p>
+            <p>
+              Project Name / Project Grouping is recommended when one workbook contains multiple projects,
+              properties, or schedules.
+            </p>
+          </div>
         </div>
 
         <form id="scheduleAnalyzerForm" class="schedule-analyzer-form" novalidate>
@@ -136,7 +171,8 @@
               accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             />
             <p class="field-help">
-              Phase 3 validates mapped columns and compares baseline dates to current dates for schedule movement.
+              The analyzer validates mapped columns, compares schedule dates, checks dependencies, estimates
+              grouped dependency-based critical paths, and prepares an Excel report.
             </p>
           </div>
 
@@ -315,7 +351,7 @@
 
       <div id="schedulePhase3Results" class="schedule-results-grid" hidden>
         <article class="result-panel schedule-summary-panel">
-          <p class="eyebrow">Phase 3 Output</p>
+          <p class="eyebrow">Analysis Results</p>
           <h3>Executive Summary</h3>
           <p class="summary-note">
             Movement is calculated by comparing each mapped baseline start/finish date to the mapped current
@@ -331,11 +367,11 @@
         </article>
 
         <article class="result-panel schedule-detail-panel">
-          <p class="eyebrow">Phase 3 Output</p>
+          <p class="eyebrow">Schedule Analysis Output</p>
           <h3>Task Movement Detail</h3>
           <p class="detail-note">
-            Showing changed schedule rows only. Unchanged rows and warning-only rows are included in the
-            downloadable Excel report.
+            The web output focuses on changed schedule rows. Unchanged rows and warning-only rows are included
+            in the downloadable Excel report for a fuller audit trail.
           </p>
           <p class="detail-note">
             Rows with invalid mapped dates are counted in the summary and included in the downloadable
@@ -378,6 +414,11 @@
             When a Project Name / Project Grouping column is mapped, estimated critical paths are calculated
             separately for each project group.
           </p>
+          <p>
+            The estimate is intended for schedule movement review and reporting support. It is not a full
+            replacement for Smartsheet project settings, Primavera P6, Microsoft Project, or a formal CPM
+            scheduling engine.
+          </p>
           <dl id="scheduleCriticalPathSummary" class="critical-path-summary-list"></dl>
           <div class="table-wrapper critical-path-table-wrapper">
             <table class="critical-path-table">
@@ -396,16 +437,27 @@
             The Excel report includes changed rows, all analyzed rows, warning rows, dependency validation,
             estimated critical path output, and the column mapping used.
           </p>
+          <p class="report-tabs-heading">Report includes:</p>
+          <ul class="report-tab-list">
+            <li>Executive Summary</li>
+            <li>Changed Schedule Items</li>
+            <li>All Schedule Items</li>
+            <li>Warnings - Data Quality</li>
+            <li>Dependency Validation</li>
+            <li>Estimated Critical Path</li>
+            <li>Column Mapping Used</li>
+          </ul>
           <button id="downloadScheduleReportButton" class="button primary" type="button" disabled>
             Download Excel Summary
           </button>
         </article>
 
         <article class="result-panel future-phase-panel">
-          <p class="eyebrow">Future Phase</p>
-          <h3>Not included in Phase 3</h3>
+          <p class="eyebrow">Roadmap</p>
+          <h3>Future refinements</h3>
           <p>
-            Full CPM refinement and holiday calendars are intentionally reserved for later phases.
+            Holiday calendars, optional row-type controls, and deeper CPM refinement are intentionally
+            reserved for later versions.
           </p>
         </article>
       </div>

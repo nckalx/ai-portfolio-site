@@ -237,6 +237,44 @@ h3 {
   color: var(--muted);
 }
 
+.analyzer-guidance-panel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin-bottom: 28px;
+  padding: 20px;
+  background: #f7f8fa;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.analyzer-guidance-panel h4 {
+  margin-bottom: 10px;
+  font-size: 1rem;
+}
+
+.analyzer-guidance-panel p,
+.analyzer-guidance-panel li {
+  color: var(--muted);
+}
+
+.analyzer-guidance-panel p {
+  margin: 0 0 10px;
+}
+
+.analyzer-guidance-panel p:last-child {
+  margin-bottom: 0;
+}
+
+.analyzer-guidance-panel ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.analyzer-guidance-panel li + li {
+  margin-top: 6px;
+}
+
 .schedule-analyzer-form,
 .upload-field,
 .mapping-section,
@@ -622,6 +660,20 @@ h3 {
   margin-top: 18px;
 }
 
+.report-tabs-heading {
+  margin-top: 16px;
+  font-weight: 800;
+}
+
+.report-tab-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 18px;
+  margin: 8px 0 0;
+  padding-left: 20px;
+  color: var(--muted);
+}
+
 .download-placeholder {
   grid-column: 1 / -1;
 }
@@ -833,6 +885,7 @@ select {
     grid-template-columns: 1fr;
   }
 
+  .analyzer-guidance-panel,
   .mapping-grid,
   .schedule-placeholder-grid,
   .mapped-column-list {
