@@ -322,8 +322,26 @@ h3 {
 }
 
 .upload-field input,
-.mapping-field input {
+.mapping-field input,
+.holiday-field textarea {
   max-width: none;
+}
+
+.holiday-field {
+  display: grid;
+  gap: 8px;
+}
+
+.holiday-field textarea {
+  width: 100%;
+  min-height: 220px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  font: inherit;
+  line-height: 1.5;
+  resize: vertical;
 }
 
 .mapping-section {

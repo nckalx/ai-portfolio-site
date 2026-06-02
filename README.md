@@ -78,6 +78,7 @@ The analyzer:
 - Uses user-entered column mappings instead of fixed column names
 - Compares baseline start/finish dates to actual/current start/finish dates
 - Calculates calendar-day and weekday-only movement
+- Supports editable holiday/non-working dates for workday movement and estimated finish-shift metrics
 - Validates missing, invalid, or inconsistent mapped dates
 - Parses and validates Smartsheet-style predecessor references
 - Identifies likely parent/summary rows and excludes them from estimated critical path logic by default
@@ -158,7 +159,8 @@ It is not a full replacement for:
 
 Current limitations:
 
-- Holiday calendars are not yet applied
+- Optional holiday/non-working dates apply to workday movement and estimated finish-shift workday metrics
+- Full multi-calendar CPM scheduling behavior is still out of scope
 - Parent/summary rows are excluded only where hierarchy data or fallback heuristics identify them
 - Optional Row Type and Include in Critical Path? mappings help refine eligibility, but they do not replace scheduler review
 - Dependency validation focuses on parsed predecessor references, not full scheduling-engine behavior
@@ -192,7 +194,7 @@ The goal is to keep the site easy to understand, easy to maintain, and easy to d
 
 Planned improvements include:
 
-- Add holiday calendar support
+- Add deeper multi-calendar CPM refinement
 - Add an All Dependency Links Excel report tab
 - Refactor schedule analyzer JavaScript into smaller modules
 - Add automated tests

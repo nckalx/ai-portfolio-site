@@ -311,6 +311,13 @@
     return new Date(date.getFullYear(), date.getMonth(), date.getDate());
   }
 
+  function getDateKey(date) {
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${date.getFullYear()}-${month}-${day}`;
+  }
+
   function isValidDateObject(value) {
     return value instanceof Date && !Number.isNaN(value.getTime());
   }
@@ -431,6 +438,194 @@
     };
   }
 
+  function addDays(date, dayCount) {
+    const nextDate = new Date(date);
+    nextDate.setDate(nextDate.getDate() + dayCount);
+    return getDateOnly(nextDate);
+  }
+
+  function getNthWeekdayOfMonth(year, monthIndex, dayOfWeek, occurrence) {
+    const date = new Date(year, monthIndex, 1);
+    let matchingDayCount = 0;
+
+    while (date.getMonth() === monthIndex) {
+      if (date.getDay() === dayOfWeek) {
+        matchingDayCount += 1;
+
+        if (matchingDayCount === occurrence) {
+          return getDateOnly(date);
+        }
+      }
+
+      date.setDate(date.getDate() + 1);
+    }
+
+    return null;
+  }
+
+  function getLastWeekdayOfMonth(year, monthIndex, dayOfWeek) {
+    const date = new Date(year, monthIndex + 1, 0);
+
+    while (date.getMonth() === monthIndex) {
+      if (date.getDay() === dayOfWeek) {
+        return getDateOnly(date);
+      }
+
+      date.setDate(date.getDate() - 1);
+    }
+
+    return null;
+  }
+
+  function getObservedFixedHoliday(year, monthIndex, day, label) {
+    const actualDate = new Date(year, monthIndex, day);
+    const observedDate = getDateOnly(actualDate);
+
+    if (actualDate.getDay() === 6) {
+      return {
+        date: addDays(actualDate, -1),
+        label: `${label} (observed)`
+      };
+    }
+
+    if (actualDate.getDay() === 0) {
+      return {
+        date: addDays(actualDate, 1),
+        label: `${label} (observed)`
+      };
+    }
+
+    return {
+      date: observedDate,
+      label
+    };
+  }
+
+  function addHolidayToMap(holidayMap, holiday) {
+    if (!holiday || !holiday.date) {
+      return;
+    }
+
+    const dateKey = getDateKey(holiday.date);
+    const labels = holidayMap.get(dateKey) || [];
+
+    if (!labels.includes(holiday.label)) {
+      labels.push(holiday.label);
+    }
+
+    holidayMap.set(dateKey, labels);
+  }
+
+  function getCommonUsHolidayEntriesForYear(year) {
+    const thanksgivingDate = getNthWeekdayOfMonth(year, 10, 4, 4);
+
+    return [
+      getObservedFixedHoliday(year, 0, 1, "New Year's Day"),
+      { date: getNthWeekdayOfMonth(year, 0, 1, 3), label: "MLK Day" },
+      { date: getNthWeekdayOfMonth(year, 1, 1, 3), label: "Presidents' Day" },
+      { date: getLastWeekdayOfMonth(year, 4, 1), label: "Memorial Day" },
+      getObservedFixedHoliday(year, 6, 4, "Independence Day / July 4th"),
+      { date: getNthWeekdayOfMonth(year, 8, 1, 1), label: "Labor Day" },
+      { date: thanksgivingDate, label: "Thanksgiving" },
+      { date: thanksgivingDate ? addDays(thanksgivingDate, 1) : null, label: "Day after Thanksgiving" },
+      getObservedFixedHoliday(year, 11, 24, "Christmas Eve"),
+      getObservedFixedHoliday(year, 11, 25, "Christmas Day")
+    ];
+  }
+
+  function getDefaultHolidayText() {
+    const currentYear = new Date().getFullYear();
+    const holidayMap = new Map();
+
+    [currentYear, currentYear + 1].forEach((year) => {
+      getCommonUsHolidayEntriesForYear(year).forEach((holiday) => {
+        addHolidayToMap(holidayMap, holiday);
+      });
+    });
+
+    return Array.from(holidayMap.entries())
+      .sort((firstEntry, secondEntry) => firstEntry[0].localeCompare(secondEntry[0]))
+      .map(([dateKey, labels]) => {
+        const [year, month, day] = dateKey.split("-");
+        return `${month}/${day}/${year} - ${labels.join("; ")}`;
+      })
+      .join("\n");
+  }
+
+  function getHolidayDateCandidates(text) {
+    const datePattern =
+      /\b(?:\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4}|\d{4}[\/.-]\d{1,2}[\/.-]\d{1,2}|[2-5]\d{4}(?:\.\d+)?|(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Sept|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+\d{1,2},?\s+\d{4})\b/gi;
+
+    return text.match(datePattern) || [];
+  }
+
+  function parseHolidayDateText(holidayText) {
+    const dateSet = new Set();
+    const invalidEntries = [];
+    const normalizedText = normalizeCellValue(holidayText);
+
+    if (normalizedText === "") {
+      return {
+        dateSet,
+        invalidEntries
+      };
+    }
+
+    getHolidayDateCandidates(normalizedText).forEach((candidate) => {
+      const parsedDate = parseDateString(candidate);
+
+      if (parsedDate) {
+        dateSet.add(getDateKey(parsedDate));
+      } else {
+        invalidEntries.push(candidate);
+      }
+    });
+
+    normalizedText
+      .split(/[\n;]+/)
+      .map((entry) => entry.trim())
+      .filter((entry) => entry !== "")
+      .forEach((entry) => {
+        if (/\d/.test(entry) && getHolidayDateCandidates(entry).length === 0) {
+          invalidEntries.push(entry);
+        }
+      });
+
+    return {
+      dateSet,
+      invalidEntries: Array.from(new Set(invalidEntries))
+    };
+  }
+
+  function getHolidaySettings() {
+    const holidayInput = getScheduleAnalyzerElement("scheduleHolidayDates");
+    const holidayText = holidayInput ? holidayInput.value : "";
+    const parsedHolidayDates = parseHolidayDateText(holidayText);
+    const holidayDates = Array.from(parsedHolidayDates.dateSet).sort();
+
+    return {
+      holidayText,
+      holidayDateSet: parsedHolidayDates.dateSet,
+      holidayDates,
+      invalidHolidayEntries: parsedHolidayDates.invalidEntries,
+      holidayCalendarUsed: holidayDates.length > 0
+    };
+  }
+
+  function getHolidayDateSet(analyzerOptions) {
+    return analyzerOptions && analyzerOptions.holidayDateSet instanceof Set
+      ? analyzerOptions.holidayDateSet
+      : new Set();
+  }
+
+  function initializeDefaultHolidayInput() {
+    const holidayInput = getScheduleAnalyzerElement("scheduleHolidayDates");
+
+    if (holidayInput && holidayInput.value.trim() === "") {
+      holidayInput.value = getDefaultHolidayText();
+    }
+  }
+
   function getUtcDayValue(date) {
     return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
   }
@@ -445,12 +640,20 @@
     return dayOfWeek !== 0 && dayOfWeek !== 6;
   }
 
-  function countWeekdaysInclusive(startDate, endDate) {
+  function isHoliday(date, holidayDateSet) {
+    return holidayDateSet instanceof Set && holidayDateSet.has(getDateKey(date));
+  }
+
+  function isWorkingDay(date, holidayDateSet) {
+    return isWeekday(date) && !isHoliday(date, holidayDateSet);
+  }
+
+  function countWeekdaysInclusive(startDate, endDate, holidayDateSet) {
     const currentDate = new Date(startDate);
     let weekdayCount = 0;
 
     while (currentDate <= endDate) {
-      if (isWeekday(currentDate)) {
+      if (isWorkingDay(currentDate, holidayDateSet)) {
         weekdayCount += 1;
       }
 
@@ -460,16 +663,16 @@
     return weekdayCount;
   }
 
-  function calculateWorkdaysMoved(baselineDate, currentDate) {
+  function calculateWorkdaysMoved(baselineDate, currentDate, holidayDateSet) {
     if (currentDate.getTime() === baselineDate.getTime()) {
       return 0;
     }
 
     if (currentDate > baselineDate) {
-      return countWeekdaysInclusive(baselineDate, currentDate) - 1;
+      return countWeekdaysInclusive(baselineDate, currentDate, holidayDateSet) - 1;
     }
 
-    return -(countWeekdaysInclusive(currentDate, baselineDate) - 1);
+    return -(countWeekdaysInclusive(currentDate, baselineDate, holidayDateSet) - 1);
   }
 
   function getMovementSign(calendarMovement, workdayMovement) {
@@ -927,7 +1130,8 @@
     return "detail";
   }
 
-  function buildMovementValues(parsedDates) {
+  function buildMovementValues(parsedDates, analyzerOptions) {
+    const holidayDateSet = getHolidayDateSet(analyzerOptions);
     const startCalendarMovement = calculateCalendarDaysBetween(
       parsedDates.baselineStart.date,
       parsedDates.currentStart.date
@@ -936,10 +1140,15 @@
       parsedDates.baselineFinish.date,
       parsedDates.currentFinish.date
     );
-    const startWorkdayMovement = calculateWorkdaysMoved(parsedDates.baselineStart.date, parsedDates.currentStart.date);
+    const startWorkdayMovement = calculateWorkdaysMoved(
+      parsedDates.baselineStart.date,
+      parsedDates.currentStart.date,
+      holidayDateSet
+    );
     const finishWorkdayMovement = calculateWorkdaysMoved(
       parsedDates.baselineFinish.date,
-      parsedDates.currentFinish.date
+      parsedDates.currentFinish.date,
+      holidayDateSet
     );
     const movementValues = {
       startCalendarMovement,
@@ -955,7 +1164,7 @@
     };
   }
 
-  function analyzeNormalizedRow(row, mappingValues) {
+  function analyzeNormalizedRow(row, mappingValues, analyzerOptions) {
     const parsedDates = getParsedRowDates(row);
     const dateWarnings = getDateWarnings(parsedDates);
     const validForMovement = dateWarnings.length === 0;
@@ -963,7 +1172,7 @@
     const rowType = normalizeRowType(row.rowTypeRaw);
     const includeInCriticalPathOverride = parseIncludeInCriticalPathOverride(row.includeInCriticalPathRaw);
     const movementValues = validForMovement
-      ? buildMovementValues(parsedDates)
+      ? buildMovementValues(parsedDates, analyzerOptions)
       : {
           startCalendarMovement: null,
           finishCalendarMovement: null,
@@ -991,8 +1200,8 @@
     };
   }
 
-  function analyzeNormalizedRows(rows, mappingValues) {
-    return rows.map((row) => analyzeNormalizedRow(row, mappingValues));
+  function analyzeNormalizedRows(rows, mappingValues, analyzerOptions) {
+    return rows.map((row) => analyzeNormalizedRow(row, mappingValues, analyzerOptions));
   }
 
   function splitPredecessorTokens(predecessorValue) {
@@ -1514,7 +1723,8 @@
     return rows.filter((row) => row.criticalPathExclusionReason === reason).length;
   }
 
-  function buildCriticalPathSummary(projectName, rows, baselinePathRows, currentPathRows, warnings) {
+  function buildCriticalPathSummary(projectName, rows, baselinePathRows, currentPathRows, warnings, analyzerOptions) {
+    const holidayDateSet = getHolidayDateSet(analyzerOptions);
     const eligibleRows = rows.filter((row) => isEligibleForCriticalPath(row));
     const excludedLikelySummaryRows = rows.filter((row) => {
       return row.classification === "likely-summary" || row.excludeFromFutureCriticalPath;
@@ -1531,7 +1741,9 @@
     const finishShiftCalendarDays =
       baselineFinishDate && currentFinishDate ? calculateCalendarDaysBetween(baselineFinishDate, currentFinishDate) : "";
     const finishShiftWorkdays =
-      baselineFinishDate && currentFinishDate ? calculateWorkdaysMoved(baselineFinishDate, currentFinishDate) : "";
+      baselineFinishDate && currentFinishDate
+        ? calculateWorkdaysMoved(baselineFinishDate, currentFinishDate, holidayDateSet)
+        : "";
 
     return {
       projectName,
@@ -1554,7 +1766,7 @@
     };
   }
 
-  function buildProjectCriticalPathResult(projectName, projectRows) {
+  function buildProjectCriticalPathResult(projectName, projectRows, analyzerOptions) {
     const eligibleRowsList = projectRows.filter((row) => isEligibleForCriticalPath(row));
     const eligibleRows = new Set(eligibleRowsList);
     const incomingLinksByRow = buildCriticalPathIncomingLinks(projectRows, eligibleRows);
@@ -1571,7 +1783,8 @@
           projectRows,
           [],
           [],
-          [...inputWarnings, "No eligible rows were available for critical path estimation."]
+          [...inputWarnings, "No eligible rows were available for critical path estimation."],
+          analyzerOptions
         )
       };
     }
@@ -1593,11 +1806,19 @@
       rows: projectRows,
       baselinePathRows: baselineResult.path,
       currentPathRows: currentResult.path,
-      summary: buildCriticalPathSummary(projectName, projectRows, baselineResult.path, currentResult.path, warnings)
+      summary: buildCriticalPathSummary(
+        projectName,
+        projectRows,
+        baselineResult.path,
+        currentResult.path,
+        warnings,
+        analyzerOptions
+      )
     };
   }
 
-  function buildOverallCriticalPathSummary(rows, projectResults, mappingValues) {
+  function buildOverallCriticalPathSummary(rows, projectResults, mappingValues, analyzerOptions) {
+    const holidayDateSet = getHolidayDateSet(analyzerOptions);
     const baselinePathRows = projectResults.flatMap((projectResult) => projectResult.baselinePathRows);
     const currentPathRows = projectResults.flatMap((projectResult) => projectResult.currentPathRows);
     const baselineFinishDate = getLatestCriticalPathFinishDate(baselinePathRows, "baselineFinish");
@@ -1609,7 +1830,7 @@
         : "";
     const finishShiftWorkdays =
       canCalculateOverallFinishShift && baselineFinishDate && currentFinishDate
-        ? calculateWorkdaysMoved(baselineFinishDate, currentFinishDate)
+        ? calculateWorkdaysMoved(baselineFinishDate, currentFinishDate, holidayDateSet)
         : "";
     const eligibleRows = rows.filter((row) => isEligibleForCriticalPath(row));
     const excludedLikelySummaryRows = rows.filter((row) => {
@@ -1648,14 +1869,14 @@
     };
   }
 
-  function addCriticalPathAnalysis(rows, mappingValues) {
+  function addCriticalPathAnalysis(rows, mappingValues, analyzerOptions) {
     clearCriticalPathProperties(rows);
     updateCriticalPathEligibility(rows);
 
     // When a project grouping column is mapped, each group gets its own graph so
     // row-number predecessor links cannot accidentally chain separate projects.
     const projectResults = getCriticalPathProjectGroups(rows).map((projectGroup) => {
-      return buildProjectCriticalPathResult(projectGroup.projectName, projectGroup.rows);
+      return buildProjectCriticalPathResult(projectGroup.projectName, projectGroup.rows, analyzerOptions);
     });
 
     updateCriticalPathStatuses(rows);
@@ -1665,7 +1886,7 @@
       currentPathRows: projectResults.flatMap((projectResult) => projectResult.currentPathRows),
       projectResults,
       projectSummaries: projectResults.map((projectResult) => projectResult.summary),
-      summary: buildOverallCriticalPathSummary(rows, projectResults, mappingValues)
+      summary: buildOverallCriticalPathSummary(rows, projectResults, mappingValues, analyzerOptions)
     };
   }
 
@@ -1740,12 +1961,28 @@
     return `${row.finishWorkdayMovement} workdays (${row.finishCalendarMovement} calendar days) - ${taskLabel}`;
   }
 
-  function renderMovementSummary(summary, dependencySummary) {
+  function getHolidayReportSummary(analyzerOptions) {
+    const holidayDates = analyzerOptions && Array.isArray(analyzerOptions.holidayDates) ? analyzerOptions.holidayDates : [];
+    const invalidHolidayEntries =
+      analyzerOptions && Array.isArray(analyzerOptions.invalidHolidayEntries)
+        ? analyzerOptions.invalidHolidayEntries
+        : [];
+
+    return {
+      calendarUsed: holidayDates.length > 0,
+      holidayDateCount: holidayDates.length,
+      invalidHolidayEntryCount: invalidHolidayEntries.length
+    };
+  }
+
+  function renderMovementSummary(summary, dependencySummary, analyzerOptions) {
     const movementSummary = getScheduleAnalyzerElement("scheduleMovementSummary");
 
     if (!movementSummary) {
       return;
     }
+
+    const holidaySummary = getHolidayReportSummary(analyzerOptions);
 
     movementSummary.replaceChildren();
 
@@ -1763,6 +2000,17 @@
     appendDescriptionItem(movementSummary, "Delayed rows", String(summary.delayedRows));
     appendDescriptionItem(movementSummary, "Accelerated rows", String(summary.acceleratedRows));
     appendDescriptionItem(movementSummary, "Start-only movement rows", String(summary.startOnlyMovementRows));
+    appendDescriptionItem(movementSummary, "Holiday calendar used", formatYesNo(holidaySummary.calendarUsed));
+    appendDescriptionItem(
+      movementSummary,
+      "Unique holiday/non-working dates parsed",
+      String(holidaySummary.holidayDateCount)
+    );
+    appendDescriptionItem(
+      movementSummary,
+      "Invalid holiday entries ignored",
+      String(holidaySummary.invalidHolidayEntryCount)
+    );
     appendDescriptionItem(
       movementSummary,
       "Rows with predecessor values",
@@ -2228,7 +2476,7 @@
       resultsPanel.hidden = false;
     }
 
-    renderMovementSummary(result.movementSummary, result.dependencySummary);
+    renderMovementSummary(result.movementSummary, result.dependencySummary, result.analyzerOptions);
     renderMovementDetailTable(getDisplayedMovementRows(result.analyzedRows));
     renderDependencyValidation(result);
     renderCriticalPathAnalysis(result);
@@ -2391,11 +2639,15 @@
   function buildExecutiveSummaryRows(result) {
     const summary = result.movementSummary;
     const criticalPathSummary = result.criticalPathResult.summary;
+    const holidaySummary = getHolidayReportSummary(result.analyzerOptions);
 
     return [
       ["Source workbook file", result.fileName],
       ["Worksheet used", result.worksheetName],
       ["Analysis generated timestamp", formatReportTimestamp(result.analysisGeneratedAt)],
+      ["Holiday/non-working calendar used", formatYesNo(holidaySummary.calendarUsed)],
+      ["Unique holiday/non-working dates parsed", holidaySummary.holidayDateCount],
+      ["Invalid holiday entries ignored", holidaySummary.invalidHolidayEntryCount],
       ["Total normalized rows", summary.totalRows],
       ["Detail rows", summary.detailRows],
       ["Likely parent/summary rows", summary.likelySummaryRows],
@@ -2444,7 +2696,10 @@
         "When a Project Name / Project Grouping column is mapped, estimated critical paths are calculated separately for each project group."
       ],
       ["Note", "The analyzer works best when a Row Hierarchy / Outline Level helper column is mapped."],
-      ["Note", "Estimated critical path logic does not yet apply project-specific holiday calendars."],
+      [
+        "Note",
+        "Holiday/non-working dates are excluded from workday movement and estimated finish-shift workday metrics in addition to weekends."
+      ],
       ["Note", "This is not a full replacement for Smartsheet, P6, or MS Project CPM calculations."]
     ];
   }
@@ -2659,7 +2914,7 @@
     previewPanel.hidden = false;
   }
 
-  function parseWorkbookRows(workbook, selectedFile, mappingValues) {
+  function parseWorkbookRows(workbook, selectedFile, mappingValues, analyzerOptions) {
     const firstWorksheet = getFirstWorksheet(workbook);
 
     if (!firstWorksheet) {
@@ -2693,8 +2948,8 @@
       addProjectGroupingAnalysis(buildNormalizedRows(dataRows, mappedColumns, headerIndexByName, mappingValues), mappingValues),
       mappingValues
     );
-    const analyzedRows = addDependencyAnalysis(analyzeNormalizedRows(normalizedRows, mappingValues));
-    const criticalPathResult = addCriticalPathAnalysis(analyzedRows, mappingValues);
+    const analyzedRows = addDependencyAnalysis(analyzeNormalizedRows(normalizedRows, mappingValues, analyzerOptions));
+    const criticalPathResult = addCriticalPathAnalysis(analyzedRows, mappingValues, analyzerOptions);
     const movementSummary = buildMovementSummary(analyzedRows);
     const dependencySummary = buildDependencySummary(analyzedRows);
 
@@ -2714,7 +2969,8 @@
       dependencySummary,
       criticalPathResult,
       mappedColumns,
-      mappingValues
+      mappingValues,
+      analyzerOptions
     };
   }
 
@@ -2762,9 +3018,10 @@
 
     try {
       const mappingValues = getMappingValues();
+      const analyzerOptions = getHolidaySettings();
       const fileContents = await readFileAsArrayBuffer(selectedFile);
       const workbook = window.XLSX.read(fileContents, { type: "array", cellDates: true });
-      const parseResult = parseWorkbookRows(workbook, selectedFile, mappingValues);
+      const parseResult = parseWorkbookRows(workbook, selectedFile, mappingValues, analyzerOptions);
 
       if (!parseResult.ok) {
         setScheduleAnalyzerStatus(
@@ -2796,9 +3053,14 @@
 
   function wirePreviewResetEvents() {
     const fileInput = getScheduleAnalyzerElement("scheduleAnalyzerFile");
+    const holidayInput = getScheduleAnalyzerElement("scheduleHolidayDates");
 
     if (fileInput) {
       fileInput.addEventListener("change", clearSchedulePreview);
+    }
+
+    if (holidayInput) {
+      holidayInput.addEventListener("input", clearSchedulePreview);
     }
 
     scheduleMappings.forEach((mapping) => {
@@ -2814,6 +3076,8 @@
     const analyzeButton = getScheduleAnalyzerElement("analyzeUploadedScheduleButton");
     const downloadButton = getScheduleAnalyzerElement("downloadScheduleReportButton");
     const analyzerForm = getScheduleAnalyzerElement("scheduleAnalyzerForm");
+
+    initializeDefaultHolidayInput();
 
     if (analyzerForm) {
       analyzerForm.addEventListener("submit", (event) => {

@@ -134,6 +134,7 @@
               <li>Works with exported Smartsheet <code>.xlsx</code> schedule files.</li>
               <li>Processes files locally in the browser and uses mapped columns instead of fixed names.</li>
               <li>Compares baseline dates to actual/current dates for calendar-day and workday movement.</li>
+              <li>Supports editable holiday/non-working dates for workday movement metrics.</li>
               <li>Validates predecessor/dependency data and flags unresolved or risky links.</li>
               <li>Excludes detected parent/summary rows from estimated critical path logic.</li>
               <li>Supports optional Row Type and Include in Critical Path controls for non-schedule rows.</li>
@@ -380,6 +381,23 @@
             </div>
           </div>
 
+          <div class="holiday-field">
+            <label for="scheduleHolidayDates">
+              Holiday / Non-Working Dates <span class="field-requirement">Optional</span>
+            </label>
+            <textarea
+              id="scheduleHolidayDates"
+              rows="12"
+              spellcheck="false"
+              aria-describedby="scheduleHolidayDatesHelp"
+            ></textarea>
+            <p id="scheduleHolidayDatesHelp" class="field-help">
+              Review and edit the default dates to match your organization's calendar. One date per line is
+              recommended; labels after the date are allowed. Holidays are excluded in addition to weekends
+              for workday movement calculations. Delete all dates to use weekend-only workday logic.
+            </p>
+          </div>
+
           <div class="schedule-actions">
             <button id="analyzeUploadedScheduleButton" class="button primary" type="button">
               Analyze Uploaded Schedule
@@ -479,7 +497,8 @@
             This is an estimated dependency-based critical path. Parent/summary rows are excluded by
             default when hierarchy data or fallback heuristics identify them. The analyzer works best when
             you map a Row Hierarchy / Outline Level helper column. Optional Row Type and Include in Critical
-            Path mappings can further exclude non-schedule rows. Holiday calendars are not yet applied.
+            Path mappings can further exclude non-schedule rows. Optional holiday/non-working dates are
+            applied to workday finish-shift metrics when provided.
             When a Project Name / Project Grouping column is mapped, estimated critical paths are calculated
             separately for each project group.
           </p>
@@ -525,8 +544,8 @@
           <p class="eyebrow">Roadmap</p>
           <h3>Future refinements</h3>
           <p>
-            Holiday calendars, optional row-type controls, and deeper CPM refinement are intentionally
-            reserved for later versions.
+            Full multi-calendar CPM behavior, an all-dependency-links report tab, and deeper CPM refinement
+            are intentionally reserved for later versions.
           </p>
         </article>
       </div>
