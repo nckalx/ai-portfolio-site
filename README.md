@@ -196,12 +196,20 @@ No screenshot files are included in this pass.
 
 The goal is to keep the site easy to understand, easy to maintain, and easy to deploy.
 
+## Running JavaScript Tests
+
+The lightweight JavaScript regression tests use Node's built-in test runner and require no external dependencies.
+
+```powershell
+npm.cmd test
+```
+
 ## Future Roadmap
 
 Planned improvements include:
 
 - Add deeper multi-calendar CPM refinement
 - Refactor schedule analyzer JavaScript into smaller modules
-- Add automated tests
+- Expand automated test coverage
 - Add dedicated project detail pages
 - Continue refining the portfolio as the broader AI project portfolio grows
