@@ -1,5 +1,7 @@
 # AI Portfolio Site
 
+[![JavaScript Tests](https://github.com/nckalx/ai-portfolio-site/actions/workflows/javascript-tests.yml/badge.svg)](https://github.com/nckalx/ai-portfolio-site/actions/workflows/javascript-tests.yml)
+
 This is Nick Alexander's AI project controls portfolio website.
 
 The site showcases practical, business-facing automation projects focused on:
@@ -144,9 +146,9 @@ The repository includes fake, sanitized sample workbooks that can be used to tes
 
 The sample input workbook uses generic demo project names only. It includes parent/summary rows, child/detail rows, mapped hierarchy levels, baseline/current date movement, predecessor examples, and two project groups for grouped estimated critical path testing. It also demonstrates Row Type and Include in Critical Path? examples.
 
-A matching sample output report will be refreshed after the updated sample input workbook is run through the browser analyzer.
+The matching sample output workbook was generated from the sanitized sample input using the browser analyzer and reflects the current report structure.
 
-These files are fake and sanitized. They contain no real company, property, project, employee, vendor, or internal data.
+Both sample files are fake and sanitized. They contain no real company, property, project, employee, vendor, or internal data.
 
 ## Privacy And Browser-Only Processing
 
@@ -172,19 +174,6 @@ Current limitations:
 - Dependency validation focuses on parsed predecessor references, not full scheduling-engine behavior
 - The estimated path should be reviewed by a scheduler or project controls professional before being used for formal schedule decisions
 
-## Screenshots And Sample Output
-
-Planned screenshot/sample-output placeholders:
-
-- Workbook upload and column mapping
-- Executive Summary after analysis
-- Changed Schedule Items web output
-- Dependency / Predecessor Validation output
-- Estimated Critical Path output
-- Downloaded Excel report tab examples
-
-No screenshot files are included in this pass.
-
 ## Technology
 
 - HTML
@@ -198,20 +187,21 @@ The goal is to keep the site easy to understand, easy to maintain, and easy to d
 
 ## Running JavaScript Tests
 
-The lightweight JavaScript regression tests cover schedule date, dependency, and critical-path utilities, plus combined module integration, using Node's built-in test runner and require no external dependencies.
+The project uses Node's built-in test runner. The regression tests cover date/workday utilities, dependency analysis, estimated critical-path analysis, and combined module integration. No external test framework is required.
 
-GitHub Actions runs the JavaScript test suite automatically on pushes and pull requests to `main`.
+GitHub Actions runs the JavaScript test suite on pushes to `main`, pull requests targeting `main`, and manual workflow dispatch.
 
 ```powershell
 npm.cmd test
 ```
 
-## Future Roadmap
+## Optional Future Enhancements
 
-Planned improvements include:
+The Schedule Analyzer is portfolio-complete. The remaining ideas are optional future phases rather than unfinished requirements.
 
-- Add deeper multi-calendar CPM refinement
-- Refactor schedule analyzer JavaScript into smaller modules
-- Expand automated test coverage
-- Add dedicated project detail pages
-- Continue refining the portfolio as the broader AI project portfolio grows
+- Saved column-mapping profiles in browser local storage
+- Additional fixture-based workbook and report tests
+- Optional browser-level smoke testing
+- Dedicated portfolio case-study or project-detail pages
+- Deeper CPM, constraint, calendar, duration, and float functionality as a separate major phase
+- Continued expansion of the broader AI project portfolio
