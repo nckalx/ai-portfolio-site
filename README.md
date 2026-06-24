@@ -198,7 +198,7 @@ The goal is to keep the site easy to understand, easy to maintain, and easy to d
 
 ## Running JavaScript Tests
 
-The lightweight JavaScript regression tests cover schedule date and dependency utilities using Node's built-in test runner and require no external dependencies.
+The lightweight JavaScript regression tests cover schedule date, dependency, and critical-path utilities using Node's built-in test runner and require no external dependencies.
 
 ```powershell
 npm.cmd test
