@@ -200,6 +200,8 @@ The goal is to keep the site easy to understand, easy to maintain, and easy to d
 
 The lightweight JavaScript regression tests cover schedule date, dependency, and critical-path utilities, plus combined module integration, using Node's built-in test runner and require no external dependencies.
 
+GitHub Actions runs the JavaScript test suite automatically on pushes and pull requests to `main`.
+
 ```powershell
 npm.cmd test
 ```
