@@ -601,34 +601,7 @@
           <form id="formulaBuilderForm" class="formula-builder-form">
             <div class="builder-field">
               <label for="formulaType">Formula type:</label>
-              <select id="formulaType">
-                <option value="appendFinishDateLabel">Append Finish Date to Milestone Label</option>
-                <option value="scheduleMovedWorkdays">Schedule Moved in Workdays</option>
-                <option value="twoCriteriaLookup">Cross-Sheet Two-Criteria Lookup</option>
-                <option value="checkboxMatch">Checkbox Based on Cross-Sheet Match</option>
-                <option value="rioIdLookup">RIO ID Lookup</option>
-                <option value="buildMilestoneId">Build Milestone ID</option>
-                <option value="shortenLocationName">Shorten Location Name</option>
-                <option value="countCheckboxValues">Count Checkbox Values</option>
-                <option value="monthNameSortNumber">Convert Month Name to Sort Number</option>
-                <option value="statusIndicator">Build Status Indicator</option>
-                <option value="multiLineReportLabel">Build Multi-Line Milestone Report Label</option>
-                <option value="spendDateAttribute">Build Spend Date Attribute</option>
-                <option value="singleCriteriaLookup">Single-Criteria Cross-Sheet Lookup</option>
-                <option value="joinMatchingValues">Join Matching Values</option>
-                <option value="countRowsMultipleCriteria">Count Rows with Multiple Criteria</option>
-                <option value="sumValuesMultipleCriteria">Sum Values with Multiple Criteria</option>
-                <option value="averageValuesMultipleCriteria">Average Values with Multiple Criteria</option>
-                <option value="matchingDateExtremes">Latest or Earliest Matching Date</option>
-                <option value="uniqueCountCriteria">Unique Count with Criteria</option>
-                <option value="parentChildRollup">Parent/Child Rollup Summary</option>
-                <option value="hierarchyLevelHelper">Hierarchy Level Helper</option>
-                <option value="showParentValue">Show Parent Value</option>
-                <option value="multiSelectHasCheck">Multi-Select Contains / HAS Check</option>
-                <option value="textBeforeAfterDelimiter">Text Before / After Delimiter</option>
-                <option value="readyToStartBasedOnPredecessors">Ready to Start Based on Predecessors</option>
-                <option value="rankedValue">Top N / Nth Highest or Lowest Value</option>
-              </select>
+              <select id="formulaType"></select>
             </div>
 
             <div id="formulaInputFields" class="builder-fields"></div>
@@ -670,6 +643,12 @@
   </footer>
 
   <script src="js/app.js"></script>
+  <script src="js/formula-builder/formula-catalog.js"></script>
+  <script src="js/formula-builder/formula-utils.js"></script>
+  <script src="js/formula-builder/formula-validation.js"></script>
+  <script src="js/formula-builder/formula-guidance.js"></script>
+  <script src="js/formula-builder/formula-engine.js"></script>
+  <script src="js/formula-builder/formula-builder-ui.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="js/schedule-date-utils.js"></script>
   <script src="js/schedule-dependencies.js"></script>
