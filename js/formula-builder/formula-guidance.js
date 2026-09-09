@@ -10,7 +10,7 @@
       },
       getInstructions(values) {
         return [
-          `Add this formula to the helper column where you want the combined label to appear.`,
+          `Add this formula to the helper column where you want the combined text and date to appear.`,
           `Confirm the column names match ${values.milestoneLabelColumn} and ${values.finishDateColumn}.`,
           `Use a Text/Number column for the formula output.`
         ];
@@ -24,7 +24,7 @@
         return [
           `Add this formula to a Text/Number column on the same sheet as the date columns.`,
           `Positive values mean ${values.updatedDateColumn} is later than ${values.originalDateColumn}.`,
-          `Negative values mean the milestone moved earlier. NETWORKDAYS excludes Saturdays and Sundays.`
+          `Negative values mean the revised date moved earlier. This formula excludes Saturdays and Sundays and does not supply a holiday calendar.`
         ];
       }
     },
@@ -93,7 +93,8 @@
         return [
           `Create both cross-sheet references from ${values.rioSourceSheetName}.`,
           `Use ${values.rioSourceIdColumn} as the return range and ${values.rioSourceMatchColumn} as the match range.`,
-          `Paste the formula into the current sheet where the related RIO ID should appear.`
+          `Keep the return and match ranges aligned so they describe the same source rows.`,
+          `Paste the formula into the current sheet where the first matching source value should appear.`
         ];
       }
     },
@@ -101,29 +102,29 @@
       getSetupNotes() {
         return [
           "This formula only uses columns from the current sheet.",
-          "If you want a shortened location name, create a helper column with the Shorten Location Name formula first, then point this formula's Location field to that helper column."
+          "The fixed output pattern is Prefix - Middle Final. A blank prefix cell returns blank."
         ];
       },
       getInstructions(values) {
         return [
-          `Add this formula to the helper column that stores your report-ready milestone ID.`,
+          `Add this formula to a Text/Number helper column for the combined text.`,
           `Confirm ${values.milestoneNumberColumn}, ${values.locationColumn}, and ${values.taskNameColumn} match your sheet exactly.`,
-          `Use the generated ID in reports, dashboards, automations, or cross-sheet matching workflows.`
+          `Use the combined text in labels, reports, or matching workflows. This formula does not create or guarantee unique IDs.`
         ];
       }
     },
     shortenLocationName: {
       getSetupNotes() {
         return [
-          `This formula is intended for common location names and evaluates the first ${maxLocationWordsToCheck} words in the location name.`,
-          "For very long names, simplify the source text or customize the formula to evaluate more words."
+          `This formula returns the longest of the first ${maxLocationWordsToCheck} space-separated words. Later words are not evaluated.`,
+          "When words tie for the longest length, the earliest matching word is returned. This is word extraction, not abbreviation."
         ];
       },
       getInstructions(values) {
         return [
-          `Add this formula to a helper column that stores the shortened location name.`,
-          `Confirm ${values.locationNameColumn} contains the full location name for each row.`,
-          `Use the shortened result in milestone IDs, report grouping, dashboard labels, or other helper formulas.`
+          `Add this formula to a Text/Number helper column for the longest-word result.`,
+          `Confirm ${values.locationNameColumn} contains the source text whose first ${maxLocationWordsToCheck} words should be inspected.`,
+          `Use the extracted longest word only where the first-${maxLocationWordsToCheck}-words limit fits your text. Blank source text returns blank.`
         ];
       }
     },
@@ -141,7 +142,7 @@
         return [
           `Create ${sheetReference(values.checkboxCountReference)} as a cross-sheet reference to the checkbox column you want to summarize.`,
           `Place the formula in a summary sheet, dashboard source sheet, or sheet summary field.`,
-          `Use the selected count type to track completed, incomplete, or total checklist items.`
+          `Choose checked, unchecked, or both states to match what the checkbox represents in your sheet.`
         ];
       }
     },
@@ -149,12 +150,18 @@
       getInstructions(values) {
         return [
           `Add this formula to a Text/Number helper column.`,
-          `Confirm ${values.monthNameColumn} stores full month names like January, February, or March.`,
+          `Confirm ${values.monthNameColumn} stores full English month names like January, February, or March.`,
           `Sort reports and dashboard source data by this helper column instead of the month name text.`
         ];
       }
     },
     statusIndicator: {
+      getSetupNotes() {
+        return [
+          "This formula only uses columns from the current sheet.",
+          "Completed status takes precedence and returns Green. Otherwise, a past finish date or a past start date with not-started status returns Red; all other cases return Yellow."
+        ];
+      },
       getInstructions(values) {
         return [
           `Add this formula to a Symbol or Text/Number column used for schedule health reporting.`,
@@ -167,23 +174,31 @@
       getSetupNotes() {
         return [
           "This formula only uses columns from the current sheet.",
-          "Enable wrap text in Smartsheet if you want the CHAR(10) line breaks to display cleanly."
+          "Enable wrap text in Smartsheet if you want the CHAR(10) line breaks to display cleanly.",
+          "All five column names are required. Blank second or third assignee cells omit their lines; the output labels remain Task Lead:, Task Second:, and Task Third:."
         ];
       },
       getInstructions(values) {
         return [
           `Add this formula to a Text/Number helper column used by reports or dashboards.`,
           `Confirm ${values.reportTaskColumn}, ${values.reportLocationColumn}, and task assignment columns are available on the sheet.`,
-          `Use the result anywhere a compact task, location, and assignment summary is useful.`
+          `Use this fixed task, location, and three-assignee template where its output labels fit your sheet.`
         ];
       }
     },
     spendDateAttribute: {
+      getSetupNotes() {
+        return [
+          "This formula only uses columns from the current sheet.",
+          "Only checked rows return a date attribute. The preferred date takes priority over the fallback date.",
+          "Quarter output uses calendar quarters Q1-Q4, not a custom fiscal calendar."
+        ];
+      },
       getInstructions(values) {
         return [
-          `Add this formula to a helper column for spend reporting attributes.`,
-          `Confirm ${values.spendingMilestoneColumn} is checked only for rows that should feed spend timing reports.`,
-          `Use the selected attribute for budget timing analysis, grouping, filtering, or dashboard rollups.`
+          `Add this formula to a helper column for the selected date attribute.`,
+          `Use ${values.spendingMilestoneColumn} to identify the rows to include.`,
+          `Use ${values.spendFinishColumn} as the preferred date and ${values.spendStartColumn} when the preferred date is blank.`
         ];
       }
     },
@@ -265,7 +280,7 @@
       getSetupNotes() {
         return [
           "Create one cross-sheet reference for each criteria column.",
-          "Criteria values are treated as exact text matches by default."
+          "Both criteria must match. Enter text values to match; the builder quotes them as text rather than accepting comparison expressions."
         ];
       },
       getInstructions() {
@@ -299,7 +314,7 @@
       getSetupNotes() {
         return [
           "The source value reference should point to a numeric column.",
-          "Criteria references should point to the source columns used for filtering."
+          "Both criteria must match. Criteria values are quoted as text; comparison expressions are not a builder option."
         ];
       },
       getInstructions() {
@@ -333,7 +348,7 @@
       getSetupNotes() {
         return [
           "The source value reference should point to a numeric column.",
-          "Uses COLLECT because Smartsheet does not use an AVGIFS-style formula in the same way as spreadsheet tools like Excel."
+          "Averages the values collected from rows where both criteria match. Criteria values are quoted as text; comparison expressions are not a builder option."
         ];
       },
       getInstructions() {
@@ -397,12 +412,12 @@
       getSetupNotes() {
         return [
           "The unique value reference should point to the ID, name, owner, location, or other value to count once.",
-          "Criteria references filter which rows are included."
+          "Both criteria must match. Criteria values are quoted as text; comparison expressions are not a builder option."
         ];
       },
       getInstructions() {
         return [
-          "Use this when a source sheet may contain multiple rows for the same project, owner, location, or item.",
+          "Use this when a source sheet may contain repeated record IDs, owners, locations, or other values to count once.",
           "Add it to a dashboard or summary metric.",
           "Confirm the unique value reference contains consistent naming."
         ];
@@ -487,7 +502,7 @@
       getSetupNotes() {
         return [
           "This formula assumes another column already provides the number of open predecessors.",
-          "It is a practical project-control helper for dependency readiness reporting."
+          "It does not calculate predecessor relationships. Complete status takes precedence; otherwise, zero open predecessors returns the ready value and any other count returns the blocked value."
         ];
       },
       getInstructions() {

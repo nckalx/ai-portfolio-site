@@ -3,81 +3,94 @@
   const catalog = {
     "appendFinishDateLabel": {
       "id": "appendFinishDateLabel",
-      "label": "Append Finish Date to Milestone Label",
-      "explanation": "Creates a clean milestone label for project controls reports by keeping the milestone name as the base text and appending the row's Finish Date when that date is available.",
+      "label": "Append Date to Text",
+      "explanation": "Appends a date to text from the current row, separated by \" - \". When the date is blank, returns the original text.",
       "fields": [
         {
           "id": "milestoneLabelColumn",
-          "label": "Milestone label column",
-          "defaultValue": "Milestone Label",
-          "help": "The current-sheet column that stores the readable milestone name."
+          "label": "Text column",
+          "defaultValue": "Item Name",
+          "help": "The current-sheet column containing the text to keep before the date."
         },
         {
           "id": "finishDateColumn",
-          "label": "Finish date column",
-          "defaultValue": "Finish Date",
-          "help": "The current-sheet finish date column to append when it has a value."
+          "label": "Date column",
+          "defaultValue": "Date",
+          "help": "The current-sheet date column to append when it has a value."
         }
+      ],
+      "categoryId": "text-labels",
+      "keywords": [
+        "append",
+        "date",
+        "text",
+        "concatenate"
       ]
     },
     "scheduleMovedWorkdays": {
       "id": "scheduleMovedWorkdays",
-      "label": "Schedule Moved in Workdays",
-      "explanation": "Calculates how many weekdays a milestone moved between its original date and revised date, giving project controls teams a quick schedule variance value for reporting.",
+      "label": "Schedule Movement in Weekdays",
+      "explanation": "Calculates signed weekday movement between an original date and a revised date. Positive values indicate a later date; negative values indicate an earlier date. Blank input dates return blank.",
       "fields": [
         {
           "id": "originalDateColumn",
           "label": "Original date column",
           "defaultValue": "Original Date",
-          "help": "The baseline or previous milestone date on the current sheet."
+          "help": "The original or baseline date on the current sheet."
         },
         {
           "id": "updatedDateColumn",
           "label": "Updated date column",
           "defaultValue": "New Date",
-          "help": "The current or revised milestone date on the current sheet."
+          "help": "The revised date on the current sheet."
         }
+      ],
+      "categoryId": "dates-status",
+      "keywords": [
+        "weekday variance",
+        "schedule movement",
+        "NETWORKDAYS"
       ]
     },
     "twoCriteriaLookup": {
       "id": "twoCriteriaLookup",
       "label": "Cross-Sheet Two-Criteria Lookup",
-      "explanation": "Looks up a value from another Smartsheet sheet only when two current-row criteria match the source sheet, which is useful for pulling the correct forecast date, owner, status, or control value from a master project source.",
+      "explanation": "Returns the first source value from another sheet where both source criteria match the current row. Returns blank if the lookup produces an error.",
       "fields": [
         {
           "id": "lookupCurrentCriteriaOneColumn",
           "label": "Current sheet criteria column 1",
-          "defaultValue": "Project ID",
+          "defaultValue": "Record ID",
           "help": "The first value to match from the current row."
         },
         {
           "id": "lookupCurrentCriteriaTwoColumn",
           "label": "Current sheet criteria column 2",
-          "defaultValue": "Milestone",
+          "defaultValue": "Category",
           "help": "The second value to match from the current row."
         },
         {
           "id": "lookupSourceSheetName",
           "label": "Source sheet name",
-          "defaultValue": "Master Schedule",
+          "defaultValue": "Lookup Data",
           "help": "The Smartsheet sheet that contains the lookup data."
         },
         {
           "id": "lookupSourceReturnColumn",
           "label": "Source return column",
-          "defaultValue": "Forecast Date",
+          "defaultValue": "Result",
           "help": "The source-sheet column that contains the value you want returned."
         },
         {
           "id": "lookupSourceCriteriaOneColumn",
           "label": "Source criteria column 1",
-          "defaultValue": "Project ID",
+          "defaultValue": "Record ID",
           "help": "The source-sheet column that should match criteria column 1."
         },
         {
           "id": "lookupSourceCriteriaTwoColumn",
           "label": "Source criteria column 2",
-          "defaultValue": "Milestone",
+          "defaultValue": "Category",
           "help": "The source-sheet column that should match criteria column 2."
         },
         {
@@ -89,38 +102,45 @@
         {
           "id": "lookupCriteriaOneReference",
           "label": "Criteria 1 range reference name",
-          "defaultValue": "Lookup Project ID Range",
+          "defaultValue": "Criteria 1 Range",
           "help": "The name to use for the first cross-sheet criteria range."
         },
         {
           "id": "lookupCriteriaTwoReference",
           "label": "Criteria 2 range reference name",
-          "defaultValue": "Lookup Milestone Range",
+          "defaultValue": "Criteria 2 Range",
           "help": "The name to use for the second cross-sheet criteria range."
         }
+      ],
+      "categoryId": "lookups-matching",
+      "keywords": [
+        "lookup",
+        "two criteria",
+        "cross sheet",
+        "COLLECT"
       ]
     },
     "checkboxMatch": {
       "id": "checkboxMatch",
       "label": "Checkbox Based on Cross-Sheet Match",
-      "explanation": "Checks a box when the current row has a matching value in another sheet, helping teams flag milestones that are tied to an external log, action tracker, or control register.",
+      "explanation": "Checks a box when the current row's configured value appears in a reference range from another sheet.",
       "fields": [
         {
           "id": "checkboxCurrentMatchColumn",
           "label": "Current sheet match column",
-          "defaultValue": "Milestone ID",
+          "defaultValue": "Record ID",
           "help": "The value from the current row to search for in another sheet."
         },
         {
           "id": "checkboxSourceSheetName",
           "label": "Source sheet name",
-          "defaultValue": "RIO Log",
-          "help": "The sheet that contains the matching IDs."
+          "defaultValue": "Lookup Data",
+          "help": "The sheet containing the source values to match."
         },
         {
           "id": "checkboxSourceMatchColumn",
           "label": "Source match column",
-          "defaultValue": "Related Milestone ID",
+          "defaultValue": "Related Record ID",
           "help": "The source-sheet column that should contain the current row value."
         },
         {
@@ -129,98 +149,126 @@
           "defaultValue": "Source Match Range",
           "help": "The name to use for the cross-sheet match range."
         }
+      ],
+      "categoryId": "lookups-matching",
+      "keywords": [
+        "checkbox",
+        "match",
+        "cross sheet",
+        "COUNTIF"
       ]
     },
     "rioIdLookup": {
       "id": "rioIdLookup",
-      "label": "RIO ID Lookup",
-      "explanation": "Finds the related Risk, Issue, or Opportunity ID from a RIO log by matching the current milestone ID, so project teams can connect schedule rows back to their active risk and issue records.",
+      "label": "Cross-Sheet First-Match Lookup",
+      "explanation": "Returns the first value from another sheet where the source match column equals the current row's lookup value. Returns blank if the lookup produces an error.",
       "fields": [
         {
           "id": "rioCurrentIdColumn",
-          "label": "Current sheet milestone ID column",
-          "defaultValue": "Milestone ID",
-          "help": "The current row value used to find a related RIO item."
+          "label": "Current sheet lookup column",
+          "defaultValue": "Record ID",
+          "help": "The current-sheet column containing the lookup value to match."
         },
         {
           "id": "rioSourceSheetName",
-          "label": "RIO source sheet name",
-          "defaultValue": "RIO Log",
-          "help": "The Risk, Issue, and Opportunity log that stores RIO IDs."
+          "label": "Source sheet name",
+          "defaultValue": "Lookup Data",
+          "help": "The sheet containing the return and match columns."
         },
         {
           "id": "rioSourceIdColumn",
-          "label": "Source RIO ID column",
-          "defaultValue": "RIO ID",
-          "help": "The source-sheet column that contains the RIO ID to return."
+          "label": "Source return column",
+          "defaultValue": "Result",
+          "help": "The source-sheet column containing the value to return."
         },
         {
           "id": "rioSourceMatchColumn",
           "label": "Source match column",
-          "defaultValue": "Related Milestone ID",
-          "help": "The source-sheet column that links a RIO item to the current milestone."
+          "defaultValue": "Record ID",
+          "help": "The source-sheet column to compare with the current row's lookup value."
         },
         {
           "id": "rioIdReference",
-          "label": "RIO ID range reference name",
-          "defaultValue": "RIO ID Range",
-          "help": "The name to use for the cross-sheet RIO ID range."
+          "label": "Return range reference name",
+          "defaultValue": "Source Return Range",
+          "help": "The name to use for the cross-sheet return range."
         },
         {
           "id": "rioMatchReference",
-          "label": "RIO match range reference name",
-          "defaultValue": "RIO Match ID Range",
+          "label": "Match range reference name",
+          "defaultValue": "Source Match Range",
           "help": "The name to use for the cross-sheet match range."
         }
+      ],
+      "categoryId": "lookups-matching",
+      "keywords": [
+        "lookup",
+        "first match",
+        "return value",
+        "cross sheet",
+        "COLLECT"
       ]
     },
     "buildMilestoneId": {
       "id": "buildMilestoneId",
-      "label": "Build Milestone ID",
-      "explanation": "Creates a standardized milestone ID for reports, dashboards, automation records, and cross-sheet matching by combining a milestone number, location, and task name.",
+      "label": "Combine Three Columns into Text",
+      "explanation": "Combines three current-row columns in the fixed pattern \"Prefix - Middle Final\". Returns blank when the prefix is blank.",
       "fields": [
         {
           "id": "milestoneNumberColumn",
-          "label": "Milestone number column",
-          "defaultValue": "Milestone Number",
-          "help": "The current-sheet column that stores the milestone sequence or ID number."
+          "label": "Prefix column",
+          "defaultValue": "Record ID",
+          "help": "The first value in the combined text. If this cell is blank, the output is blank."
         },
         {
           "id": "locationColumn",
-          "label": "Location or short location column",
-          "defaultValue": "Location",
-          "help": "The current-sheet location column, or a helper column that already stores a shortened location label."
+          "label": "Middle column",
+          "defaultValue": "Group",
+          "help": "The value placed after the prefix and \" - \" separator."
         },
         {
           "id": "taskNameColumn",
-          "label": "Task name column",
-          "defaultValue": "Task Name",
-          "help": "The task or milestone name to append after the location."
+          "label": "Final column",
+          "defaultValue": "Name",
+          "help": "The value placed after the middle value and a single space."
         }
+      ],
+      "categoryId": "text-labels",
+      "keywords": [
+        "combine",
+        "concatenate",
+        "three columns",
+        "text"
       ]
     },
     "shortenLocationName": {
       "id": "shortenLocationName",
-      "label": "Shorten Location Name",
-      "explanation": "Creates a short location label from a longer location name. It is useful for milestone IDs, dashboards, reports, and helper columns where shorter text is easier to read.",
+      "label": "Extract Longest Word (First 6 Words)",
+      "explanation": "Returns the longest word among the first six space-separated words in the source text. Ties favor the earliest matching word. Blank source text returns blank.",
       "fields": [
         {
           "id": "locationNameColumn",
-          "label": "Location name column",
-          "defaultValue": "Location",
-          "help": "The current-sheet column that stores the full location name."
+          "label": "Source text column (first 6 words)",
+          "defaultValue": "Text",
+          "help": "The current-sheet text column to inspect. The formula returns the longest of its first six space-separated words, not an abbreviation."
         }
+      ],
+      "categoryId": "text-labels",
+      "keywords": [
+        "longest word",
+        "first six words",
+        "text extraction"
       ]
     },
     "countCheckboxValues": {
       "id": "countCheckboxValues",
       "label": "Count Checkbox Values",
-      "explanation": "Counts completed, incomplete, or total checkbox items from another sheet, which is useful for dashboards and summary sheets that track checklist progress.",
+      "explanation": "Counts checked, unchecked, or both checkbox states from another sheet.",
       "fields": [
         {
           "id": "checkboxCountReference",
           "label": "Cross-sheet checkbox reference name",
-          "defaultValue": "Hold Kick-off",
+          "defaultValue": "Source Checkbox Range",
           "help": "The named Smartsheet reference that points to the checkbox column you want to count."
         },
         {
@@ -244,25 +292,38 @@
           ],
           "help": "Choose whether to count checked boxes, unchecked boxes, or both."
         }
+      ],
+      "categoryId": "counts-calculations",
+      "keywords": [
+        "checkbox",
+        "checked",
+        "unchecked",
+        "COUNTIF"
       ]
     },
     "monthNameSortNumber": {
       "id": "monthNameSortNumber",
-      "label": "Convert Month Name to Sort Number",
-      "explanation": "Turns month names into sortable numbers so reports, filters, dashboards, and budget timing views display months in calendar order.",
+      "label": "Convert Month Name to Number",
+      "explanation": "Converts full English month names to numbers from 1 to 12 for calendar-order sorting. Blank or unrecognized names return blank.",
       "fields": [
         {
           "id": "monthNameColumn",
           "label": "Month name column",
-          "defaultValue": "First Month Budgeted",
-          "help": "The current-sheet column that stores a month name such as January or February."
+          "defaultValue": "Month Name",
+          "help": "The current-sheet column containing a full English month name, such as January or February."
         }
+      ],
+      "categoryId": "text-labels",
+      "keywords": [
+        "month name",
+        "month number",
+        "calendar order"
       ]
     },
     "statusIndicator": {
       "id": "statusIndicator",
-      "label": "Build Status Indicator",
-      "explanation": "Creates a simple Red, Yellow, or Green schedule health indicator for reports and dashboards using start date, finish date, and status values.",
+      "label": "Schedule Health Indicator",
+      "explanation": "Returns Green for completed tasks, Red for overdue tasks or tasks whose start date has passed while their status is not started, and Yellow otherwise. Uses the current row's start date, finish date, and status.",
       "fields": [
         {
           "id": "statusStartColumn",
@@ -294,18 +355,25 @@
           "defaultValue": "Complete",
           "help": "The status text that means the work is complete."
         }
+      ],
+      "categoryId": "dates-status",
+      "keywords": [
+        "schedule health",
+        "overdue",
+        "red yellow green",
+        "status"
       ]
     },
     "multiLineReportLabel": {
       "id": "multiLineReportLabel",
-      "label": "Build Multi-Line Milestone Report Label",
-      "explanation": "Creates a readable multi-line label from structured task, location, and assignment fields, especially for dashboards, exports, or reports where several fields need to appear together.",
+      "label": "Multi-Line Task Assignment Label",
+      "explanation": "Creates a fixed multi-line task assignment label containing a task, location, and up to three assignees. Output labels are \"Task Lead:\", \"Task Second:\", and \"Task Third:\"; the second and third assignee lines are omitted when their cells are blank.",
       "fields": [
         {
           "id": "reportTaskColumn",
-          "label": "Milestone or task column",
+          "label": "Task column",
           "defaultValue": "Task Name",
-          "help": "The current-sheet column that stores the milestone or task name."
+          "help": "The current-sheet column containing the task name."
         },
         {
           "id": "reportLocationColumn",
@@ -315,46 +383,53 @@
         },
         {
           "id": "leadOwnerColumn",
-          "label": "Task lead column",
+          "label": "Primary assignee column",
           "defaultValue": "Task Lead",
-          "help": "The current-sheet column that stores the primary task assignee."
+          "help": "The column for the fixed \"Task Lead:\" output line."
         },
         {
           "id": "secondaryOwnerColumn",
-          "label": "Task second column",
+          "label": "Second assignee column",
           "defaultValue": "Task Second",
-          "help": "The current-sheet column that stores the secondary task assignee."
+          "help": "The column for the fixed \"Task Second:\" output line. The column name is required; a blank cell omits this line."
         },
         {
           "id": "tertiaryOwnerColumn",
-          "label": "Task third column",
+          "label": "Third assignee column",
           "defaultValue": "Task Third",
-          "help": "The current-sheet column that stores the third task assignee."
+          "help": "The column for the fixed \"Task Third:\" output line. The column name is required; a blank cell omits this line."
         }
+      ],
+      "categoryId": "text-labels",
+      "keywords": [
+        "task assignment",
+        "assignees",
+        "multiline text",
+        "CHAR(10)"
       ]
     },
     "spendDateAttribute": {
       "id": "spendDateAttribute",
-      "label": "Build Spend Date Attribute",
-      "explanation": "Supports budget timing, capital planning, and reporting workflows by deriving year, quarter, or month attributes from spend milestone dates.",
+      "label": "Date Attribute for Checked Rows",
+      "explanation": "For checked rows, returns the year, calendar quarter, or month number from the preferred date, using the fallback date when the preferred date is blank. Unchecked rows return blank.",
       "fields": [
         {
           "id": "spendingMilestoneColumn",
-          "label": "Spending milestone checkbox column",
-          "defaultValue": "Spending Milestone",
-          "help": "The checkbox column that identifies rows used for spend reporting."
+          "label": "Include row checkbox column",
+          "defaultValue": "Include Row",
+          "help": "The checkbox column identifying rows that should return a date attribute."
         },
         {
           "id": "spendStartColumn",
-          "label": "Start date column",
-          "defaultValue": "Start",
-          "help": "The start date to use when Finish is blank."
+          "label": "Fallback date column",
+          "defaultValue": "Fallback Date",
+          "help": "The date to use when the preferred date cell is blank."
         },
         {
           "id": "spendFinishColumn",
-          "label": "Finish date column",
-          "defaultValue": "Finish",
-          "help": "The finish date to use first when it is available."
+          "label": "Preferred date column",
+          "defaultValue": "Date",
+          "help": "The date to use first when its cell has a value."
         },
         {
           "id": "spendAttribute",
@@ -375,8 +450,17 @@
               "label": "Month Number"
             }
           ],
-          "help": "Choose the spend date attribute needed for reporting."
+          "help": "Choose year, calendar quarter (Q1-Q4), or month number."
         }
+      ],
+      "categoryId": "dates-status",
+      "keywords": [
+        "checked rows",
+        "date attribute",
+        "year",
+        "calendar quarter",
+        "month",
+        "fallback date"
       ]
     },
     "singleCriteriaLookup": {
@@ -402,6 +486,13 @@
           "defaultValue": "Lookup ID",
           "help": "The current-sheet column that contains the value to match."
         }
+      ],
+      "categoryId": "lookups-matching",
+      "keywords": [
+        "lookup",
+        "cross sheet",
+        "INDEX",
+        "MATCH"
       ]
     },
     "joinMatchingValues": {
@@ -461,12 +552,20 @@
           ],
           "help": "Choose how the matching values should be separated in the output cell."
         }
+      ],
+      "categoryId": "lookups-matching",
+      "keywords": [
+        "join",
+        "matching values",
+        "distinct",
+        "COLLECT",
+        "line breaks"
       ]
     },
     "countRowsMultipleCriteria": {
       "id": "countRowsMultipleCriteria",
-      "label": "Count Rows with Multiple Criteria",
-      "explanation": "Counts rows from another sheet where both conditions are true.",
+      "label": "Count Rows Matching Two Criteria",
+      "explanation": "Counts rows from another sheet where both configured text criteria match.",
       "fields": [
         {
           "id": "countCriteriaReferenceOne",
@@ -489,15 +588,21 @@
         {
           "id": "countCriteriaValueTwo",
           "label": "Criteria 2 value",
-          "defaultValue": "Renovation",
+          "defaultValue": "Category A",
           "help": "The second exact text value to count."
         }
+      ],
+      "categoryId": "counts-calculations",
+      "keywords": [
+        "count",
+        "two criteria",
+        "COUNTIFS"
       ]
     },
     "sumValuesMultipleCriteria": {
       "id": "sumValuesMultipleCriteria",
-      "label": "Sum Values with Multiple Criteria",
-      "explanation": "Adds numeric values from rows that match multiple conditions.",
+      "label": "Sum Values Matching Two Criteria",
+      "explanation": "Sums numeric values from another sheet where both configured text criteria match.",
       "fields": [
         {
           "id": "sumValueReference",
@@ -526,15 +631,21 @@
         {
           "id": "sumCriteriaValueTwo",
           "label": "Criteria 2 value",
-          "defaultValue": "Renovation",
+          "defaultValue": "Category A",
           "help": "The second exact text value to match."
         }
+      ],
+      "categoryId": "counts-calculations",
+      "keywords": [
+        "sum",
+        "two criteria",
+        "SUMIFS"
       ]
     },
     "averageValuesMultipleCriteria": {
       "id": "averageValuesMultipleCriteria",
-      "label": "Average Values with Multiple Criteria",
-      "explanation": "Calculates the average of values that match multiple conditions.",
+      "label": "Average Values Matching Two Criteria",
+      "explanation": "Averages numeric values from another sheet where both configured text criteria match. Returns blank if the calculation produces an error.",
       "fields": [
         {
           "id": "averageValueReference",
@@ -563,9 +674,16 @@
         {
           "id": "averageCriteriaValueTwo",
           "label": "Criteria 2 value",
-          "defaultValue": "Renovation",
+          "defaultValue": "Category A",
           "help": "The second exact text value to match."
         }
+      ],
+      "categoryId": "counts-calculations",
+      "keywords": [
+        "average",
+        "two criteria",
+        "AVG",
+        "COLLECT"
       ]
     },
     "matchingDateExtremes": {
@@ -608,17 +726,25 @@
           ],
           "help": "Choose whether to return the newest or oldest matching date."
         }
+      ],
+      "categoryId": "dates-status",
+      "keywords": [
+        "latest date",
+        "earliest date",
+        "MIN",
+        "MAX",
+        "COLLECT"
       ]
     },
     "uniqueCountCriteria": {
       "id": "uniqueCountCriteria",
-      "label": "Unique Count with Criteria",
-      "explanation": "Counts unique matching values without double-counting repeated records.",
+      "label": "Count Unique Values Matching Two Criteria",
+      "explanation": "Counts distinct values from another sheet where both configured text criteria match, without double-counting repeated values.",
       "fields": [
         {
           "id": "uniqueValueReference",
           "label": "Source unique value reference",
-          "defaultValue": "Source Project ID",
+          "defaultValue": "Source Record ID",
           "help": "The cross-sheet reference that points to the value to count once."
         },
         {
@@ -642,9 +768,16 @@
         {
           "id": "uniqueCriteriaValueTwo",
           "label": "Criteria 2 value",
-          "defaultValue": "Renovation",
+          "defaultValue": "Category A",
           "help": "The second exact text value to match."
         }
+      ],
+      "categoryId": "counts-calculations",
+      "keywords": [
+        "unique count",
+        "distinct",
+        "two criteria",
+        "COLLECT"
       ]
     },
     "parentChildRollup": {
@@ -691,6 +824,14 @@
           ],
           "help": "Choose how the child values should roll up to the parent row."
         }
+      ],
+      "categoryId": "row-hierarchy",
+      "keywords": [
+        "parent",
+        "children",
+        "rollup",
+        "sum",
+        "average"
       ]
     },
     "hierarchyLevelHelper": {
@@ -715,6 +856,12 @@
           ],
           "help": "Choose whether top-level rows should return 0 or 1."
         }
+      ],
+      "categoryId": "row-hierarchy",
+      "keywords": [
+        "hierarchy",
+        "indent level",
+        "ancestors"
       ]
     },
     "showParentValue": {
@@ -728,6 +875,12 @@
           "defaultValue": "Task Name",
           "help": "The current-sheet column whose parent value should appear on child rows."
         }
+      ],
+      "categoryId": "row-hierarchy",
+      "keywords": [
+        "parent",
+        "row hierarchy",
+        "inherit value"
       ]
     },
     "multiSelectHasCheck": {
@@ -768,6 +921,14 @@
           ],
           "help": "Choose the type of result the formula should return."
         }
+      ],
+      "categoryId": "lookups-matching",
+      "keywords": [
+        "multi select",
+        "contains",
+        "HAS",
+        "tags",
+        "contacts"
       ]
     },
     "textBeforeAfterDelimiter": {
@@ -804,12 +965,20 @@
           ],
           "help": "Choose which side of the delimiter should be returned."
         }
+      ],
+      "categoryId": "text-labels",
+      "keywords": [
+        "text extraction",
+        "delimiter",
+        "before",
+        "after",
+        "split"
       ]
     },
     "readyToStartBasedOnPredecessors": {
       "id": "readyToStartBasedOnPredecessors",
-      "label": "Ready to Start Based on Predecessors",
-      "explanation": "Returns whether a task is complete, ready to start, or blocked by unfinished predecessor work.",
+      "label": "Task Readiness from Open Predecessor Count",
+      "explanation": "Returns a task's complete, ready, or blocked status using an existing open-predecessor count. This formula does not calculate predecessor relationships or the count itself.",
       "fields": [
         {
           "id": "openPredecessorCountColumn",
@@ -839,7 +1008,7 @@
           "id": "readinessBlockedValue",
           "label": "Blocked output value",
           "defaultValue": "Blocked",
-          "help": "The value to return when open predecessor count is greater than zero."
+          "help": "The value to return when the task is not complete and the open predecessor count is not zero."
         },
         {
           "id": "readinessCompleteValue",
@@ -847,12 +1016,19 @@
           "defaultValue": "Complete",
           "help": "The value to return when the status already shows complete."
         }
+      ],
+      "categoryId": "dates-status",
+      "keywords": [
+        "task readiness",
+        "open predecessor count",
+        "blocked",
+        "ready"
       ]
     },
     "rankedValue": {
       "id": "rankedValue",
-      "label": "Top N / Nth Highest or Lowest Value",
-      "explanation": "Returns a ranked value from a set of numbers, such as the highest priority score, second-highest cost, lowest variance, or third-lowest duration.",
+      "label": "Nth Highest or Lowest Value",
+      "explanation": "Returns one Nth highest or Nth lowest numeric value from a source range, such as the second-highest amount or third-lowest duration. It does not return a list of the top N values.",
       "fields": [
         {
           "id": "rankedValueReference",
@@ -884,9 +1060,40 @@
           "help": "Choose whether to rank from the top or bottom of the source values."
         }
       ],
-      "validationRule": "positiveWholeNumberRank"
+      "validationRule": "positiveWholeNumberRank",
+      "categoryId": "counts-calculations",
+      "keywords": [
+        "nth highest",
+        "nth lowest",
+        "rank",
+        "LARGE",
+        "SMALL"
+      ]
     }
   };
+
+  const categories = [
+    {
+      "id": "text-labels",
+      "label": "Text & labels"
+    },
+    {
+      "id": "dates-status",
+      "label": "Dates & status"
+    },
+    {
+      "id": "lookups-matching",
+      "label": "Lookups & matching"
+    },
+    {
+      "id": "counts-calculations",
+      "label": "Counts & calculations"
+    },
+    {
+      "id": "row-hierarchy",
+      "label": "Row hierarchy"
+    }
+  ];
 
   const configuration = {
     "maxLocationWordsToCheck": 6,
@@ -942,5 +1149,5 @@
     ]
   };
 
-  globalThis.SmartsheetFormulaBuilder = { catalog, configuration };
+  globalThis.SmartsheetFormulaBuilder = { catalog, categories, configuration };
 })();

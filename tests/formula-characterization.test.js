@@ -1,6 +1,6 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
-const fixtures = require("./fixtures/formula-builder-cases.json");
+const { currentLegacyFixtures: fixtures, generalizedFixtures } = require("./helpers/formula-expectations");
 const { loadFormulaCore } = require("./helpers/load-formula-core");
 
 const core = loadFormulaCore();
@@ -12,7 +12,7 @@ test("characterization includes all 26 types and 44 selectable combinations", ()
   assert.deepEqual(Object.keys(core.catalog), fixtures.catalog.map(entry => entry.id));
 });
 
-for (const entry of fixtures.cases) {
+for (const entry of [...fixtures.cases, ...generalizedFixtures.cases]) {
   test(`characterization: ${entry.name}`, () => {
     const input = { ...entry.rawValues };
     const original = { ...input };

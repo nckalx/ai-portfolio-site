@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
 const vm = require("node:vm");
-const fixtures = require("./fixtures/formula-builder-cases.json");
+const { currentLegacyFixtures: fixtures, generalizedFixtures } = require("./helpers/formula-expectations");
 const { loadFormulaCore, loadFormulaScript } = require("./helpers/load-formula-core");
 const { createFormulaDocument } = require("./helpers/formula-dom");
 
@@ -16,7 +16,7 @@ function setup(navigator = {}) {
 test("UI initializes catalog options, first formula, labeled fields, and prevents submission", () => {
   const { get } = setup();
   assert.deepEqual(get("formulaType").children.map(option => [option.value, option.textContent]), fixtures.catalog.map(entry => [entry.id, entry.label]));
-  assert.equal(get("generatedFormula").textContent, fixtures.cases[0].expected.formula);
+  assert.equal(get("generatedFormula").textContent, generalizedFixtures.cases[0].expected.formula);
   assert.equal(get("copyFormulaButton").disabled, false);
   let prevented = false;
   get("formulaBuilderForm").dispatch("submit", { preventDefault() { prevented = true; } });
@@ -29,7 +29,7 @@ test("UI initializes catalog options, first formula, labeled fields, and prevent
 
 test("UI renders every baseline result including missing-field precedence and guidance", () => {
   const { get } = setup();
-  for (const entry of fixtures.cases) {
+  for (const entry of [...fixtures.cases, ...generalizedFixtures.cases]) {
     get("formulaType").value = entry.formulaType;
     get("formulaType").dispatch("change");
     const fields = fixtures.catalog.find(config => config.id === entry.formulaType).fields;

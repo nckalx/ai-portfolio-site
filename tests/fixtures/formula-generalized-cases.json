@@ -1,0 +1,3649 @@
+{
+  "description": "Reviewed generalized catalog and default-output expectations. Original explicit-input formulas remain frozen in formula-builder-cases.json. legacyGuidance contains only intentional text changes; legacy references and generated formulas are never overridden.",
+  "categories": [
+    {
+      "id": "text-labels",
+      "label": "Text & labels"
+    },
+    {
+      "id": "dates-status",
+      "label": "Dates & status"
+    },
+    {
+      "id": "lookups-matching",
+      "label": "Lookups & matching"
+    },
+    {
+      "id": "counts-calculations",
+      "label": "Counts & calculations"
+    },
+    {
+      "id": "row-hierarchy",
+      "label": "Row hierarchy"
+    }
+  ],
+  "catalog": [
+    {
+      "id": "appendFinishDateLabel",
+      "label": "Append Date to Text",
+      "explanation": "Appends a date to text from the current row, separated by \" - \". When the date is blank, returns the original text.",
+      "fields": [
+        {
+          "id": "milestoneLabelColumn",
+          "label": "Text column",
+          "defaultValue": "Item Name",
+          "help": "The current-sheet column containing the text to keep before the date."
+        },
+        {
+          "id": "finishDateColumn",
+          "label": "Date column",
+          "defaultValue": "Date",
+          "help": "The current-sheet date column to append when it has a value."
+        }
+      ],
+      "categoryId": "text-labels",
+      "keywords": [
+        "append",
+        "date",
+        "text",
+        "concatenate"
+      ]
+    },
+    {
+      "id": "scheduleMovedWorkdays",
+      "label": "Schedule Movement in Weekdays",
+      "explanation": "Calculates signed weekday movement between an original date and a revised date. Positive values indicate a later date; negative values indicate an earlier date. Blank input dates return blank.",
+      "fields": [
+        {
+          "id": "originalDateColumn",
+          "label": "Original date column",
+          "defaultValue": "Original Date",
+          "help": "The original or baseline date on the current sheet."
+        },
+        {
+          "id": "updatedDateColumn",
+          "label": "Updated date column",
+          "defaultValue": "New Date",
+          "help": "The revised date on the current sheet."
+        }
+      ],
+      "categoryId": "dates-status",
+      "keywords": [
+        "weekday variance",
+        "schedule movement",
+        "NETWORKDAYS"
+      ]
+    },
+    {
+      "id": "twoCriteriaLookup",
+      "label": "Cross-Sheet Two-Criteria Lookup",
+      "explanation": "Returns the first source value from another sheet where both source criteria match the current row. Returns blank if the lookup produces an error.",
+      "fields": [
+        {
+          "id": "lookupCurrentCriteriaOneColumn",
+          "label": "Current sheet criteria column 1",
+          "defaultValue": "Record ID",
+          "help": "The first value to match from the current row."
+        },
+        {
+          "id": "lookupCurrentCriteriaTwoColumn",
+          "label": "Current sheet criteria column 2",
+          "defaultValue": "Category",
+          "help": "The second value to match from the current row."
+        },
+        {
+          "id": "lookupSourceSheetName",
+          "label": "Source sheet name",
+          "defaultValue": "Lookup Data",
+          "help": "The Smartsheet sheet that contains the lookup data."
+        },
+        {
+          "id": "lookupSourceReturnColumn",
+          "label": "Source return column",
+          "defaultValue": "Result",
+          "help": "The source-sheet column that contains the value you want returned."
+        },
+        {
+          "id": "lookupSourceCriteriaOneColumn",
+          "label": "Source criteria column 1",
+          "defaultValue": "Record ID",
+          "help": "The source-sheet column that should match criteria column 1."
+        },
+        {
+          "id": "lookupSourceCriteriaTwoColumn",
+          "label": "Source criteria column 2",
+          "defaultValue": "Category",
+          "help": "The source-sheet column that should match criteria column 2."
+        },
+        {
+          "id": "lookupReturnReference",
+          "label": "Return range reference name",
+          "defaultValue": "Lookup Result Range",
+          "help": "The name to use for the cross-sheet return range."
+        },
+        {
+          "id": "lookupCriteriaOneReference",
+          "label": "Criteria 1 range reference name",
+          "defaultValue": "Criteria 1 Range",
+          "help": "The name to use for the first cross-sheet criteria range."
+        },
+        {
+          "id": "lookupCriteriaTwoReference",
+          "label": "Criteria 2 range reference name",
+          "defaultValue": "Criteria 2 Range",
+          "help": "The name to use for the second cross-sheet criteria range."
+        }
+      ],
+      "categoryId": "lookups-matching",
+      "keywords": [
+        "lookup",
+        "two criteria",
+        "cross sheet",
+        "COLLECT"
+      ]
+    },
+    {
+      "id": "checkboxMatch",
+      "label": "Checkbox Based on Cross-Sheet Match",
+      "explanation": "Checks a box when the current row's configured value appears in a reference range from another sheet.",
+      "fields": [
+        {
+          "id": "checkboxCurrentMatchColumn",
+          "label": "Current sheet match column",
+          "defaultValue": "Record ID",
+          "help": "The value from the current row to search for in another sheet."
+        },
+        {
+          "id": "checkboxSourceSheetName",
+          "label": "Source sheet name",
+          "defaultValue": "Lookup Data",
+          "help": "The sheet containing the source values to match."
+        },
+        {
+          "id": "checkboxSourceMatchColumn",
+          "label": "Source match column",
+          "defaultValue": "Related Record ID",
+          "help": "The source-sheet column that should contain the current row value."
+        },
+        {
+          "id": "checkboxMatchReference",
+          "label": "Match range reference name",
+          "defaultValue": "Source Match Range",
+          "help": "The name to use for the cross-sheet match range."
+        }
+      ],
+      "categoryId": "lookups-matching",
+      "keywords": [
+        "checkbox",
+        "match",
+        "cross sheet",
+        "COUNTIF"
+      ]
+    },
+    {
+      "id": "rioIdLookup",
+      "label": "Cross-Sheet First-Match Lookup",
+      "explanation": "Returns the first value from another sheet where the source match column equals the current row's lookup value. Returns blank if the lookup produces an error.",
+      "fields": [
+        {
+          "id": "rioCurrentIdColumn",
+          "label": "Current sheet lookup column",
+          "defaultValue": "Record ID",
+          "help": "The current-sheet column containing the lookup value to match."
+        },
+        {
+          "id": "rioSourceSheetName",
+          "label": "Source sheet name",
+          "defaultValue": "Lookup Data",
+          "help": "The sheet containing the return and match columns."
+        },
+        {
+          "id": "rioSourceIdColumn",
+          "label": "Source return column",
+          "defaultValue": "Result",
+          "help": "The source-sheet column containing the value to return."
+        },
+        {
+          "id": "rioSourceMatchColumn",
+          "label": "Source match column",
+          "defaultValue": "Record ID",
+          "help": "The source-sheet column to compare with the current row's lookup value."
+        },
+        {
+          "id": "rioIdReference",
+          "label": "Return range reference name",
+          "defaultValue": "Source Return Range",
+          "help": "The name to use for the cross-sheet return range."
+        },
+        {
+          "id": "rioMatchReference",
+          "label": "Match range reference name",
+          "defaultValue": "Source Match Range",
+          "help": "The name to use for the cross-sheet match range."
+        }
+      ],
+      "categoryId": "lookups-matching",
+      "keywords": [
+        "lookup",
+        "first match",
+        "return value",
+        "cross sheet",
+        "COLLECT"
+      ]
+    },
+    {
+      "id": "buildMilestoneId",
+      "label": "Combine Three Columns into Text",
+      "explanation": "Combines three current-row columns in the fixed pattern \"Prefix - Middle Final\". Returns blank when the prefix is blank.",
+      "fields": [
+        {
+          "id": "milestoneNumberColumn",
+          "label": "Prefix column",
+          "defaultValue": "Record ID",
+          "help": "The first value in the combined text. If this cell is blank, the output is blank."
+        },
+        {
+          "id": "locationColumn",
+          "label": "Middle column",
+          "defaultValue": "Group",
+          "help": "The value placed after the prefix and \" - \" separator."
+        },
+        {
+          "id": "taskNameColumn",
+          "label": "Final column",
+          "defaultValue": "Name",
+          "help": "The value placed after the middle value and a single space."
+        }
+      ],
+      "categoryId": "text-labels",
+      "keywords": [
+        "combine",
+        "concatenate",
+        "three columns",
+        "text"
+      ]
+    },
+    {
+      "id": "shortenLocationName",
+      "label": "Extract Longest Word (First 6 Words)",
+      "explanation": "Returns the longest word among the first six space-separated words in the source text. Ties favor the earliest matching word. Blank source text returns blank.",
+      "fields": [
+        {
+          "id": "locationNameColumn",
+          "label": "Source text column (first 6 words)",
+          "defaultValue": "Text",
+          "help": "The current-sheet text column to inspect. The formula returns the longest of its first six space-separated words, not an abbreviation."
+        }
+      ],
+      "categoryId": "text-labels",
+      "keywords": [
+        "longest word",
+        "first six words",
+        "text extraction"
+      ]
+    },
+    {
+      "id": "countCheckboxValues",
+      "label": "Count Checkbox Values",
+      "explanation": "Counts checked, unchecked, or both checkbox states from another sheet.",
+      "fields": [
+        {
+          "id": "checkboxCountReference",
+          "label": "Cross-sheet checkbox reference name",
+          "defaultValue": "Source Checkbox Range",
+          "help": "The named Smartsheet reference that points to the checkbox column you want to count."
+        },
+        {
+          "id": "checkboxCountType",
+          "label": "Count type",
+          "type": "select",
+          "defaultValue": "checkedOnly",
+          "options": [
+            {
+              "value": "checkedOnly",
+              "label": "Checked only"
+            },
+            {
+              "value": "uncheckedOnly",
+              "label": "Unchecked only"
+            },
+            {
+              "value": "checkedAndUnchecked",
+              "label": "Checked and unchecked"
+            }
+          ],
+          "help": "Choose whether to count checked boxes, unchecked boxes, or both."
+        }
+      ],
+      "categoryId": "counts-calculations",
+      "keywords": [
+        "checkbox",
+        "checked",
+        "unchecked",
+        "COUNTIF"
+      ]
+    },
+    {
+      "id": "monthNameSortNumber",
+      "label": "Convert Month Name to Number",
+      "explanation": "Converts full English month names to numbers from 1 to 12 for calendar-order sorting. Blank or unrecognized names return blank.",
+      "fields": [
+        {
+          "id": "monthNameColumn",
+          "label": "Month name column",
+          "defaultValue": "Month Name",
+          "help": "The current-sheet column containing a full English month name, such as January or February."
+        }
+      ],
+      "categoryId": "text-labels",
+      "keywords": [
+        "month name",
+        "month number",
+        "calendar order"
+      ]
+    },
+    {
+      "id": "statusIndicator",
+      "label": "Schedule Health Indicator",
+      "explanation": "Returns Green for completed tasks, Red for overdue tasks or tasks whose start date has passed while their status is not started, and Yellow otherwise. Uses the current row's start date, finish date, and status.",
+      "fields": [
+        {
+          "id": "statusStartColumn",
+          "label": "Start date column",
+          "defaultValue": "Updated Start",
+          "help": "The current-sheet start date column used to flag work that should have started."
+        },
+        {
+          "id": "statusFinishColumn",
+          "label": "Finish date column",
+          "defaultValue": "Updated Finish",
+          "help": "The current-sheet finish date column used to flag overdue work."
+        },
+        {
+          "id": "statusColumn",
+          "label": "Status column",
+          "defaultValue": "Status",
+          "help": "The current-sheet column that stores the task status."
+        },
+        {
+          "id": "notStartedValue",
+          "label": "Not started value",
+          "defaultValue": "Not Started",
+          "help": "The status text that means work has not started."
+        },
+        {
+          "id": "completeValue",
+          "label": "Complete value",
+          "defaultValue": "Complete",
+          "help": "The status text that means the work is complete."
+        }
+      ],
+      "categoryId": "dates-status",
+      "keywords": [
+        "schedule health",
+        "overdue",
+        "red yellow green",
+        "status"
+      ]
+    },
+    {
+      "id": "multiLineReportLabel",
+      "label": "Multi-Line Task Assignment Label",
+      "explanation": "Creates a fixed multi-line task assignment label containing a task, location, and up to three assignees. Output labels are \"Task Lead:\", \"Task Second:\", and \"Task Third:\"; the second and third assignee lines are omitted when their cells are blank.",
+      "fields": [
+        {
+          "id": "reportTaskColumn",
+          "label": "Task column",
+          "defaultValue": "Task Name",
+          "help": "The current-sheet column containing the task name."
+        },
+        {
+          "id": "reportLocationColumn",
+          "label": "Location column",
+          "defaultValue": "Location",
+          "help": "The current-sheet column that stores the location name."
+        },
+        {
+          "id": "leadOwnerColumn",
+          "label": "Primary assignee column",
+          "defaultValue": "Task Lead",
+          "help": "The column for the fixed \"Task Lead:\" output line."
+        },
+        {
+          "id": "secondaryOwnerColumn",
+          "label": "Second assignee column",
+          "defaultValue": "Task Second",
+          "help": "The column for the fixed \"Task Second:\" output line. The column name is required; a blank cell omits this line."
+        },
+        {
+          "id": "tertiaryOwnerColumn",
+          "label": "Third assignee column",
+          "defaultValue": "Task Third",
+          "help": "The column for the fixed \"Task Third:\" output line. The column name is required; a blank cell omits this line."
+        }
+      ],
+      "categoryId": "text-labels",
+      "keywords": [
+        "task assignment",
+        "assignees",
+        "multiline text",
+        "CHAR(10)"
+      ]
+    },
+    {
+      "id": "spendDateAttribute",
+      "label": "Date Attribute for Checked Rows",
+      "explanation": "For checked rows, returns the year, calendar quarter, or month number from the preferred date, using the fallback date when the preferred date is blank. Unchecked rows return blank.",
+      "fields": [
+        {
+          "id": "spendingMilestoneColumn",
+          "label": "Include row checkbox column",
+          "defaultValue": "Include Row",
+          "help": "The checkbox column identifying rows that should return a date attribute."
+        },
+        {
+          "id": "spendStartColumn",
+          "label": "Fallback date column",
+          "defaultValue": "Fallback Date",
+          "help": "The date to use when the preferred date cell is blank."
+        },
+        {
+          "id": "spendFinishColumn",
+          "label": "Preferred date column",
+          "defaultValue": "Date",
+          "help": "The date to use first when its cell has a value."
+        },
+        {
+          "id": "spendAttribute",
+          "label": "Attribute to return",
+          "type": "select",
+          "defaultValue": "year",
+          "options": [
+            {
+              "value": "year",
+              "label": "Year"
+            },
+            {
+              "value": "quarter",
+              "label": "Quarter"
+            },
+            {
+              "value": "monthNumber",
+              "label": "Month Number"
+            }
+          ],
+          "help": "Choose year, calendar quarter (Q1-Q4), or month number."
+        }
+      ],
+      "categoryId": "dates-status",
+      "keywords": [
+        "checked rows",
+        "date attribute",
+        "year",
+        "calendar quarter",
+        "month",
+        "fallback date"
+      ]
+    },
+    {
+      "id": "singleCriteriaLookup",
+      "label": "Single-Criteria Cross-Sheet Lookup",
+      "explanation": "Looks up a value from another sheet when the current row has a matching ID, name, or other lookup key.",
+      "fields": [
+        {
+          "id": "singleLookupReturnReference",
+          "label": "Source return reference",
+          "defaultValue": "Source Return Value",
+          "help": "The cross-sheet reference that points to the source value you want returned."
+        },
+        {
+          "id": "singleLookupMatchReference",
+          "label": "Source match reference",
+          "defaultValue": "Source Match ID",
+          "help": "The cross-sheet reference that points to the source lookup key or ID column."
+        },
+        {
+          "id": "singleLookupCurrentColumn",
+          "label": "Current sheet lookup column",
+          "defaultValue": "Lookup ID",
+          "help": "The current-sheet column that contains the value to match."
+        }
+      ],
+      "categoryId": "lookups-matching",
+      "keywords": [
+        "lookup",
+        "cross sheet",
+        "INDEX",
+        "MATCH"
+      ]
+    },
+    {
+      "id": "joinMatchingValues",
+      "label": "Join Matching Values",
+      "explanation": "Collects multiple matching values from another sheet and displays them together in one cell.",
+      "fields": [
+        {
+          "id": "joinSourceValuesReference",
+          "label": "Source values reference",
+          "defaultValue": "Source Values",
+          "help": "The cross-sheet reference that points to the values you want to return."
+        },
+        {
+          "id": "joinSourceMatchReference",
+          "label": "Source match reference",
+          "defaultValue": "Source Match ID",
+          "help": "The cross-sheet reference that points to the source match column."
+        },
+        {
+          "id": "joinCurrentLookupColumn",
+          "label": "Current sheet lookup column",
+          "defaultValue": "Lookup ID",
+          "help": "The current-sheet column that contains the value to match."
+        },
+        {
+          "id": "joinOutputType",
+          "label": "Match output type",
+          "type": "select",
+          "defaultValue": "all",
+          "options": [
+            {
+              "value": "all",
+              "label": "All matching values"
+            },
+            {
+              "value": "distinct",
+              "label": "Distinct matching values only"
+            }
+          ],
+          "help": "Choose whether repeated matching values should be kept or removed."
+        },
+        {
+          "id": "joinSeparator",
+          "label": "Separator",
+          "type": "select",
+          "defaultValue": "comma",
+          "options": [
+            {
+              "value": "comma",
+              "label": "Comma"
+            },
+            {
+              "value": "lineBreak",
+              "label": "Line break"
+            }
+          ],
+          "help": "Choose how the matching values should be separated in the output cell."
+        }
+      ],
+      "categoryId": "lookups-matching",
+      "keywords": [
+        "join",
+        "matching values",
+        "distinct",
+        "COLLECT",
+        "line breaks"
+      ]
+    },
+    {
+      "id": "countRowsMultipleCriteria",
+      "label": "Count Rows Matching Two Criteria",
+      "explanation": "Counts rows from another sheet where both configured text criteria match.",
+      "fields": [
+        {
+          "id": "countCriteriaReferenceOne",
+          "label": "Criteria range 1 reference",
+          "defaultValue": "Source Status",
+          "help": "The cross-sheet reference for the first criteria column."
+        },
+        {
+          "id": "countCriteriaValueOne",
+          "label": "Criteria 1 value",
+          "defaultValue": "Complete",
+          "help": "The first exact text value to count."
+        },
+        {
+          "id": "countCriteriaReferenceTwo",
+          "label": "Criteria range 2 reference",
+          "defaultValue": "Source Category",
+          "help": "The cross-sheet reference for the second criteria column."
+        },
+        {
+          "id": "countCriteriaValueTwo",
+          "label": "Criteria 2 value",
+          "defaultValue": "Category A",
+          "help": "The second exact text value to count."
+        }
+      ],
+      "categoryId": "counts-calculations",
+      "keywords": [
+        "count",
+        "two criteria",
+        "COUNTIFS"
+      ]
+    },
+    {
+      "id": "sumValuesMultipleCriteria",
+      "label": "Sum Values Matching Two Criteria",
+      "explanation": "Sums numeric values from another sheet where both configured text criteria match.",
+      "fields": [
+        {
+          "id": "sumValueReference",
+          "label": "Source value reference",
+          "defaultValue": "Source Amount",
+          "help": "The cross-sheet reference that points to the numeric values to sum."
+        },
+        {
+          "id": "sumCriteriaReferenceOne",
+          "label": "Criteria range 1 reference",
+          "defaultValue": "Source Status",
+          "help": "The cross-sheet reference for the first criteria column."
+        },
+        {
+          "id": "sumCriteriaValueOne",
+          "label": "Criteria 1 value",
+          "defaultValue": "Approved",
+          "help": "The first exact text value to match."
+        },
+        {
+          "id": "sumCriteriaReferenceTwo",
+          "label": "Criteria range 2 reference",
+          "defaultValue": "Source Category",
+          "help": "The cross-sheet reference for the second criteria column."
+        },
+        {
+          "id": "sumCriteriaValueTwo",
+          "label": "Criteria 2 value",
+          "defaultValue": "Category A",
+          "help": "The second exact text value to match."
+        }
+      ],
+      "categoryId": "counts-calculations",
+      "keywords": [
+        "sum",
+        "two criteria",
+        "SUMIFS"
+      ]
+    },
+    {
+      "id": "averageValuesMultipleCriteria",
+      "label": "Average Values Matching Two Criteria",
+      "explanation": "Averages numeric values from another sheet where both configured text criteria match. Returns blank if the calculation produces an error.",
+      "fields": [
+        {
+          "id": "averageValueReference",
+          "label": "Source value reference",
+          "defaultValue": "Source Duration",
+          "help": "The cross-sheet reference that points to the numeric values to average."
+        },
+        {
+          "id": "averageCriteriaReferenceOne",
+          "label": "Criteria range 1 reference",
+          "defaultValue": "Source Status",
+          "help": "The cross-sheet reference for the first criteria column."
+        },
+        {
+          "id": "averageCriteriaValueOne",
+          "label": "Criteria 1 value",
+          "defaultValue": "Complete",
+          "help": "The first exact text value to match."
+        },
+        {
+          "id": "averageCriteriaReferenceTwo",
+          "label": "Criteria range 2 reference",
+          "defaultValue": "Source Category",
+          "help": "The cross-sheet reference for the second criteria column."
+        },
+        {
+          "id": "averageCriteriaValueTwo",
+          "label": "Criteria 2 value",
+          "defaultValue": "Category A",
+          "help": "The second exact text value to match."
+        }
+      ],
+      "categoryId": "counts-calculations",
+      "keywords": [
+        "average",
+        "two criteria",
+        "AVG",
+        "COLLECT"
+      ]
+    },
+    {
+      "id": "matchingDateExtremes",
+      "label": "Latest or Earliest Matching Date",
+      "explanation": "Finds the latest or earliest date related to the current row's lookup value.",
+      "fields": [
+        {
+          "id": "matchingDateReference",
+          "label": "Source date reference",
+          "defaultValue": "Source Date",
+          "help": "The cross-sheet reference that points to the source date column."
+        },
+        {
+          "id": "matchingDateMatchReference",
+          "label": "Source match reference",
+          "defaultValue": "Source Match ID",
+          "help": "The cross-sheet reference that points to the source match column."
+        },
+        {
+          "id": "matchingDateLookupColumn",
+          "label": "Current sheet lookup column",
+          "defaultValue": "Lookup ID",
+          "help": "The current-sheet column that contains the value to match."
+        },
+        {
+          "id": "matchingDateResultType",
+          "label": "Date result type",
+          "type": "select",
+          "defaultValue": "latest",
+          "options": [
+            {
+              "value": "latest",
+              "label": "Latest date"
+            },
+            {
+              "value": "earliest",
+              "label": "Earliest date"
+            }
+          ],
+          "help": "Choose whether to return the newest or oldest matching date."
+        }
+      ],
+      "categoryId": "dates-status",
+      "keywords": [
+        "latest date",
+        "earliest date",
+        "MIN",
+        "MAX",
+        "COLLECT"
+      ]
+    },
+    {
+      "id": "uniqueCountCriteria",
+      "label": "Count Unique Values Matching Two Criteria",
+      "explanation": "Counts distinct values from another sheet where both configured text criteria match, without double-counting repeated values.",
+      "fields": [
+        {
+          "id": "uniqueValueReference",
+          "label": "Source unique value reference",
+          "defaultValue": "Source Record ID",
+          "help": "The cross-sheet reference that points to the value to count once."
+        },
+        {
+          "id": "uniqueCriteriaReferenceOne",
+          "label": "Criteria range 1 reference",
+          "defaultValue": "Source Status",
+          "help": "The cross-sheet reference for the first criteria column."
+        },
+        {
+          "id": "uniqueCriteriaValueOne",
+          "label": "Criteria 1 value",
+          "defaultValue": "Complete",
+          "help": "The first exact text value to match."
+        },
+        {
+          "id": "uniqueCriteriaReferenceTwo",
+          "label": "Criteria range 2 reference",
+          "defaultValue": "Source Category",
+          "help": "The cross-sheet reference for the second criteria column."
+        },
+        {
+          "id": "uniqueCriteriaValueTwo",
+          "label": "Criteria 2 value",
+          "defaultValue": "Category A",
+          "help": "The second exact text value to match."
+        }
+      ],
+      "categoryId": "counts-calculations",
+      "keywords": [
+        "unique count",
+        "distinct",
+        "two criteria",
+        "COLLECT"
+      ]
+    },
+    {
+      "id": "parentChildRollup",
+      "label": "Parent/Child Rollup Summary",
+      "explanation": "Rolls up child-row values into a parent row.",
+      "fields": [
+        {
+          "id": "childValueColumn",
+          "label": "Child value column",
+          "defaultValue": "Amount",
+          "help": "The current-sheet column that contains the child values to summarize."
+        },
+        {
+          "id": "childRollupType",
+          "label": "Rollup type",
+          "type": "select",
+          "defaultValue": "sum",
+          "options": [
+            {
+              "value": "sum",
+              "label": "Sum child values"
+            },
+            {
+              "value": "count",
+              "label": "Count child values"
+            },
+            {
+              "value": "average",
+              "label": "Average child values"
+            },
+            {
+              "value": "maximum",
+              "label": "Maximum child value"
+            },
+            {
+              "value": "minimum",
+              "label": "Minimum child value"
+            },
+            {
+              "value": "checked",
+              "label": "Count checked child boxes"
+            }
+          ],
+          "help": "Choose how the child values should roll up to the parent row."
+        }
+      ],
+      "categoryId": "row-hierarchy",
+      "keywords": [
+        "parent",
+        "children",
+        "rollup",
+        "sum",
+        "average"
+      ]
+    },
+    {
+      "id": "hierarchyLevelHelper",
+      "label": "Hierarchy Level Helper",
+      "explanation": "Identifies how deeply a row is indented in the sheet hierarchy.",
+      "fields": [
+        {
+          "id": "hierarchyLevelStart",
+          "label": "Level numbering type",
+          "type": "select",
+          "defaultValue": "zero",
+          "options": [
+            {
+              "value": "zero",
+              "label": "Top level starts at 0"
+            },
+            {
+              "value": "one",
+              "label": "Top level starts at 1"
+            }
+          ],
+          "help": "Choose whether top-level rows should return 0 or 1."
+        }
+      ],
+      "categoryId": "row-hierarchy",
+      "keywords": [
+        "hierarchy",
+        "indent level",
+        "ancestors"
+      ]
+    },
+    {
+      "id": "showParentValue",
+      "label": "Show Parent Value",
+      "explanation": "Pulls the parent row's value into the current row.",
+      "fields": [
+        {
+          "id": "parentValueColumn",
+          "label": "Parent value column",
+          "defaultValue": "Task Name",
+          "help": "The current-sheet column whose parent value should appear on child rows."
+        }
+      ],
+      "categoryId": "row-hierarchy",
+      "keywords": [
+        "parent",
+        "row hierarchy",
+        "inherit value"
+      ]
+    },
+    {
+      "id": "multiSelectHasCheck",
+      "label": "Multi-Select Contains / HAS Check",
+      "explanation": "Checks whether a selected value exists in a multi-select dropdown or multi-contact cell.",
+      "fields": [
+        {
+          "id": "multiSelectColumn",
+          "label": "Multi-select column",
+          "defaultValue": "Tags",
+          "help": "The multi-select dropdown or multi-contact column to check."
+        },
+        {
+          "id": "multiSelectValue",
+          "label": "Value to check for",
+          "defaultValue": "Risk",
+          "help": "The selectable value that should be found in the cell."
+        },
+        {
+          "id": "multiSelectOutputType",
+          "label": "Output type",
+          "type": "select",
+          "defaultValue": "checkbox",
+          "options": [
+            {
+              "value": "checkbox",
+              "label": "Checkbox"
+            },
+            {
+              "value": "yesNo",
+              "label": "Yes/No text"
+            },
+            {
+              "value": "foundBlank",
+              "label": "Found/Blank text"
+            }
+          ],
+          "help": "Choose the type of result the formula should return."
+        }
+      ],
+      "categoryId": "lookups-matching",
+      "keywords": [
+        "multi select",
+        "contains",
+        "HAS",
+        "tags",
+        "contacts"
+      ]
+    },
+    {
+      "id": "textBeforeAfterDelimiter",
+      "label": "Text Before / After Delimiter",
+      "explanation": "Splits combined text into the portion before or after a selected delimiter.",
+      "fields": [
+        {
+          "id": "delimiterSourceColumn",
+          "label": "Source text column",
+          "defaultValue": "Combined Text",
+          "help": "The current-sheet text column that contains the combined value."
+        },
+        {
+          "id": "delimiterText",
+          "label": "Delimiter",
+          "defaultValue": "-",
+          "help": "The delimiter exactly as it appears in the source text."
+        },
+        {
+          "id": "delimiterExtractType",
+          "label": "Extract type",
+          "type": "select",
+          "defaultValue": "before",
+          "options": [
+            {
+              "value": "before",
+              "label": "Text before delimiter"
+            },
+            {
+              "value": "after",
+              "label": "Text after delimiter"
+            }
+          ],
+          "help": "Choose which side of the delimiter should be returned."
+        }
+      ],
+      "categoryId": "text-labels",
+      "keywords": [
+        "text extraction",
+        "delimiter",
+        "before",
+        "after",
+        "split"
+      ]
+    },
+    {
+      "id": "readyToStartBasedOnPredecessors",
+      "label": "Task Readiness from Open Predecessor Count",
+      "explanation": "Returns a task's complete, ready, or blocked status using an existing open-predecessor count. This formula does not calculate predecessor relationships or the count itself.",
+      "fields": [
+        {
+          "id": "openPredecessorCountColumn",
+          "label": "Open predecessor count column",
+          "defaultValue": "Open Predecessor Count",
+          "help": "The current-sheet column that stores the number of unfinished predecessor tasks."
+        },
+        {
+          "id": "readinessStatusColumn",
+          "label": "Status column",
+          "defaultValue": "Status",
+          "help": "The current-sheet status column."
+        },
+        {
+          "id": "readinessCompleteStatus",
+          "label": "Complete status value",
+          "defaultValue": "Complete",
+          "help": "The status value that means the task is complete."
+        },
+        {
+          "id": "readinessReadyValue",
+          "label": "Ready output value",
+          "defaultValue": "Ready",
+          "help": "The value to return when open predecessor count is zero."
+        },
+        {
+          "id": "readinessBlockedValue",
+          "label": "Blocked output value",
+          "defaultValue": "Blocked",
+          "help": "The value to return when the task is not complete and the open predecessor count is not zero."
+        },
+        {
+          "id": "readinessCompleteValue",
+          "label": "Complete output value",
+          "defaultValue": "Complete",
+          "help": "The value to return when the status already shows complete."
+        }
+      ],
+      "categoryId": "dates-status",
+      "keywords": [
+        "task readiness",
+        "open predecessor count",
+        "blocked",
+        "ready"
+      ]
+    },
+    {
+      "id": "rankedValue",
+      "label": "Nth Highest or Lowest Value",
+      "explanation": "Returns one Nth highest or Nth lowest numeric value from a source range, such as the second-highest amount or third-lowest duration. It does not return a list of the top N values.",
+      "fields": [
+        {
+          "id": "rankedValueReference",
+          "label": "Source value reference",
+          "defaultValue": "Source Score",
+          "help": "The cross-sheet reference that points to the numeric values to rank."
+        },
+        {
+          "id": "rankNumber",
+          "label": "Rank number",
+          "defaultValue": "1",
+          "help": "The rank to return. Use 1 for the highest or lowest value."
+        },
+        {
+          "id": "rankingType",
+          "label": "Ranking type",
+          "type": "select",
+          "defaultValue": "highest",
+          "options": [
+            {
+              "value": "highest",
+              "label": "Nth highest"
+            },
+            {
+              "value": "lowest",
+              "label": "Nth lowest"
+            }
+          ],
+          "help": "Choose whether to rank from the top or bottom of the source values."
+        }
+      ],
+      "validationRule": "positiveWholeNumberRank",
+      "categoryId": "counts-calculations",
+      "keywords": [
+        "nth highest",
+        "nth lowest",
+        "rank",
+        "LARGE",
+        "SMALL"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "name": "appendFinishDateLabel: generalized option combination 1",
+      "kind": "default",
+      "formulaType": "appendFinishDateLabel",
+      "rawValues": {
+        "milestoneLabelColumn": "Item Name",
+        "finishDateColumn": "Date"
+      },
+      "expected": {
+        "formulaType": "appendFinishDateLabel",
+        "values": {
+          "milestoneLabelColumn": "Item Name",
+          "finishDateColumn": "Date"
+        },
+        "explanation": "Appends a date to text from the current row, separated by \" - \". When the date is blank, returns the original text.",
+        "formula": "=IF(ISBLANK([Date]@row), [Item Name]@row, [Item Name]@row + \" - \" + [Date]@row)",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [],
+        "setupNotes": [
+          "This formula only uses columns from the current sheet."
+        ],
+        "instructions": [
+          "Add this formula to the helper column where you want the combined text and date to appear.",
+          "Confirm the column names match Item Name and Date.",
+          "Use a Text/Number column for the formula output."
+        ]
+      }
+    },
+    {
+      "name": "scheduleMovedWorkdays: generalized option combination 1",
+      "kind": "default",
+      "formulaType": "scheduleMovedWorkdays",
+      "rawValues": {
+        "originalDateColumn": "Original Date",
+        "updatedDateColumn": "New Date"
+      },
+      "expected": {
+        "formulaType": "scheduleMovedWorkdays",
+        "values": {
+          "originalDateColumn": "Original Date",
+          "updatedDateColumn": "New Date"
+        },
+        "explanation": "Calculates signed weekday movement between an original date and a revised date. Positive values indicate a later date; negative values indicate an earlier date. Blank input dates return blank.",
+        "formula": "=IF(OR(ISBLANK([Original Date]@row), ISBLANK([New Date]@row)), \"\", IF([New Date]@row >= [Original Date]@row, NETWORKDAYS([Original Date]@row, [New Date]@row) - 1, -(NETWORKDAYS([New Date]@row, [Original Date]@row) - 1)))",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [],
+        "setupNotes": [
+          "This formula only uses columns from the current sheet."
+        ],
+        "instructions": [
+          "Add this formula to a Text/Number column on the same sheet as the date columns.",
+          "Positive values mean New Date is later than Original Date.",
+          "Negative values mean the revised date moved earlier. This formula excludes Saturdays and Sundays and does not supply a holiday calendar."
+        ]
+      }
+    },
+    {
+      "name": "twoCriteriaLookup: generalized option combination 1",
+      "kind": "default",
+      "formulaType": "twoCriteriaLookup",
+      "rawValues": {
+        "lookupCurrentCriteriaOneColumn": "Record ID",
+        "lookupCurrentCriteriaTwoColumn": "Category",
+        "lookupSourceSheetName": "Lookup Data",
+        "lookupSourceReturnColumn": "Result",
+        "lookupSourceCriteriaOneColumn": "Record ID",
+        "lookupSourceCriteriaTwoColumn": "Category",
+        "lookupReturnReference": "Lookup Result Range",
+        "lookupCriteriaOneReference": "Criteria 1 Range",
+        "lookupCriteriaTwoReference": "Criteria 2 Range"
+      },
+      "expected": {
+        "formulaType": "twoCriteriaLookup",
+        "values": {
+          "lookupCurrentCriteriaOneColumn": "Record ID",
+          "lookupCurrentCriteriaTwoColumn": "Category",
+          "lookupSourceSheetName": "Lookup Data",
+          "lookupSourceReturnColumn": "Result",
+          "lookupSourceCriteriaOneColumn": "Record ID",
+          "lookupSourceCriteriaTwoColumn": "Category",
+          "lookupReturnReference": "Lookup Result Range",
+          "lookupCriteriaOneReference": "Criteria 1 Range",
+          "lookupCriteriaTwoReference": "Criteria 2 Range"
+        },
+        "explanation": "Returns the first source value from another sheet where both source criteria match the current row. Returns blank if the lookup produces an error.",
+        "formula": "=IFERROR(INDEX(COLLECT({Lookup Result Range}, {Criteria 1 Range}, [Record ID]@row, {Criteria 2 Range}, [Category]@row), 1), \"\")",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [
+          {
+            "name": "Lookup Result Range",
+            "sheet": "Lookup Data",
+            "range": "Result"
+          },
+          {
+            "name": "Criteria 1 Range",
+            "sheet": "Lookup Data",
+            "range": "Record ID"
+          },
+          {
+            "name": "Criteria 2 Range",
+            "sheet": "Lookup Data",
+            "range": "Category"
+          }
+        ],
+        "setupNotes": [
+          "Create the named cross-sheet references in Smartsheet before using this formula.",
+          "Keep the referenced source ranges aligned so Smartsheet can compare rows correctly."
+        ],
+        "instructions": [
+          "Create each cross-sheet reference from the source sheet named Lookup Data.",
+          "Make sure each reference points to a full column or same-height range on the source sheet.",
+          "Paste the formula into the current sheet where you want Result returned."
+        ]
+      }
+    },
+    {
+      "name": "checkboxMatch: generalized option combination 1",
+      "kind": "default",
+      "formulaType": "checkboxMatch",
+      "rawValues": {
+        "checkboxCurrentMatchColumn": "Record ID",
+        "checkboxSourceSheetName": "Lookup Data",
+        "checkboxSourceMatchColumn": "Related Record ID",
+        "checkboxMatchReference": "Source Match Range"
+      },
+      "expected": {
+        "formulaType": "checkboxMatch",
+        "values": {
+          "checkboxCurrentMatchColumn": "Record ID",
+          "checkboxSourceSheetName": "Lookup Data",
+          "checkboxSourceMatchColumn": "Related Record ID",
+          "checkboxMatchReference": "Source Match Range"
+        },
+        "explanation": "Checks a box when the current row's configured value appears in a reference range from another sheet.",
+        "formula": "=IF(COUNTIF({Source Match Range}, [Record ID]@row) > 0, 1, 0)",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [
+          {
+            "name": "Source Match Range",
+            "sheet": "Lookup Data",
+            "range": "Related Record ID"
+          }
+        ],
+        "setupNotes": [
+          "Create the named cross-sheet references in Smartsheet before using this formula.",
+          "Keep the referenced source ranges aligned so Smartsheet can compare rows correctly."
+        ],
+        "instructions": [
+          "Create the cross-sheet reference from Lookup Data.",
+          "Select the source column named Related Record ID.",
+          "Paste the formula into a Checkbox column on the current sheet."
+        ]
+      }
+    },
+    {
+      "name": "rioIdLookup: generalized option combination 1",
+      "kind": "default",
+      "formulaType": "rioIdLookup",
+      "rawValues": {
+        "rioCurrentIdColumn": "Record ID",
+        "rioSourceSheetName": "Lookup Data",
+        "rioSourceIdColumn": "Result",
+        "rioSourceMatchColumn": "Record ID",
+        "rioIdReference": "Source Return Range",
+        "rioMatchReference": "Source Match Range"
+      },
+      "expected": {
+        "formulaType": "rioIdLookup",
+        "values": {
+          "rioCurrentIdColumn": "Record ID",
+          "rioSourceSheetName": "Lookup Data",
+          "rioSourceIdColumn": "Result",
+          "rioSourceMatchColumn": "Record ID",
+          "rioIdReference": "Source Return Range",
+          "rioMatchReference": "Source Match Range"
+        },
+        "explanation": "Returns the first value from another sheet where the source match column equals the current row's lookup value. Returns blank if the lookup produces an error.",
+        "formula": "=IFERROR(INDEX(COLLECT({Source Return Range}, {Source Match Range}, [Record ID]@row), 1), \"\")",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [
+          {
+            "name": "Source Return Range",
+            "sheet": "Lookup Data",
+            "range": "Result"
+          },
+          {
+            "name": "Source Match Range",
+            "sheet": "Lookup Data",
+            "range": "Record ID"
+          }
+        ],
+        "setupNotes": [
+          "Create the named cross-sheet references in Smartsheet before using this formula.",
+          "Keep the referenced source ranges aligned so Smartsheet can compare rows correctly."
+        ],
+        "instructions": [
+          "Create both cross-sheet references from Lookup Data.",
+          "Use Result as the return range and Record ID as the match range.",
+          "Keep the return and match ranges aligned so they describe the same source rows.",
+          "Paste the formula into the current sheet where the first matching source value should appear."
+        ]
+      }
+    },
+    {
+      "name": "buildMilestoneId: generalized option combination 1",
+      "kind": "default",
+      "formulaType": "buildMilestoneId",
+      "rawValues": {
+        "milestoneNumberColumn": "Record ID",
+        "locationColumn": "Group",
+        "taskNameColumn": "Name"
+      },
+      "expected": {
+        "formulaType": "buildMilestoneId",
+        "values": {
+          "milestoneNumberColumn": "Record ID",
+          "locationColumn": "Group",
+          "taskNameColumn": "Name"
+        },
+        "explanation": "Combines three current-row columns in the fixed pattern \"Prefix - Middle Final\". Returns blank when the prefix is blank.",
+        "formula": "=IF(ISBLANK([Record ID]@row), \"\", [Record ID]@row + \" - \" + [Group]@row + \" \" + [Name]@row)",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [],
+        "setupNotes": [
+          "This formula only uses columns from the current sheet.",
+          "The fixed output pattern is Prefix - Middle Final. A blank prefix cell returns blank."
+        ],
+        "instructions": [
+          "Add this formula to a Text/Number helper column for the combined text.",
+          "Confirm Record ID, Group, and Name match your sheet exactly.",
+          "Use the combined text in labels, reports, or matching workflows. This formula does not create or guarantee unique IDs."
+        ]
+      }
+    },
+    {
+      "name": "shortenLocationName: generalized option combination 1",
+      "kind": "default",
+      "formulaType": "shortenLocationName",
+      "rawValues": {
+        "locationNameColumn": "Text"
+      },
+      "expected": {
+        "formulaType": "shortenLocationName",
+        "values": {
+          "locationNameColumn": "Text"
+        },
+        "explanation": "Returns the longest word among the first six space-separated words in the source text. Ties favor the earliest matching word. Blank source text returns blank.",
+        "formula": "=IF(ISBLANK([Text]@row), \"\", IF(LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 1, LEN(TRIM([Text]@row))))) = MAX(LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 1, LEN(TRIM([Text]@row))))), LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 1 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row))))), LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 2 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row))))), LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 3 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row))))), LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 4 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row))))), LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 5 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row)))))), TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 1, LEN(TRIM([Text]@row)))), IF(LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 1 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row))))) = MAX(LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 1, LEN(TRIM([Text]@row))))), LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 1 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row))))), LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 2 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row))))), LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 3 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row))))), LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 4 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row))))), LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 5 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row)))))), TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 1 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row)))), IF(LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 2 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row))))) = MAX(LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 1, LEN(TRIM([Text]@row))))), LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 1 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row))))), LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 2 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row))))), LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 3 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row))))), LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 4 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row))))), LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 5 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row)))))), TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 2 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row)))), IF(LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 3 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row))))) = MAX(LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 1, LEN(TRIM([Text]@row))))), LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 1 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row))))), LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 2 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row))))), LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 3 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row))))), LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 4 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row))))), LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 5 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row)))))), TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 3 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row)))), IF(LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 4 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row))))) = MAX(LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 1, LEN(TRIM([Text]@row))))), LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 1 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row))))), LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 2 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row))))), LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 3 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row))))), LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 4 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row))))), LEN(TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 5 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row)))))), TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 4 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row)))), TRIM(MID(SUBSTITUTE(TRIM([Text]@row), \" \", REPT(\" \", LEN(TRIM([Text]@row)))), 5 * LEN(TRIM([Text]@row)) + 1, LEN(TRIM([Text]@row))))))))))",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [],
+        "setupNotes": [
+          "This formula returns the longest of the first 6 space-separated words. Later words are not evaluated.",
+          "When words tie for the longest length, the earliest matching word is returned. This is word extraction, not abbreviation."
+        ],
+        "instructions": [
+          "Add this formula to a Text/Number helper column for the longest-word result.",
+          "Confirm Text contains the source text whose first 6 words should be inspected.",
+          "Use the extracted longest word only where the first-6-words limit fits your text. Blank source text returns blank."
+        ]
+      }
+    },
+    {
+      "name": "countCheckboxValues: generalized option combination 1",
+      "kind": "default",
+      "formulaType": "countCheckboxValues",
+      "rawValues": {
+        "checkboxCountReference": "Source Checkbox Range",
+        "checkboxCountType": "checkedOnly"
+      },
+      "expected": {
+        "formulaType": "countCheckboxValues",
+        "values": {
+          "checkboxCountReference": "Source Checkbox Range",
+          "checkboxCountType": "checkedOnly"
+        },
+        "explanation": "Counts checked, unchecked, or both checkbox states from another sheet.",
+        "formula": "=COUNTIF({Source Checkbox Range}, 1)",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [
+          {
+            "name": "Source Checkbox Range",
+            "sheet": "Source checklist or tracking sheet",
+            "range": "Checkbox column to count"
+          }
+        ],
+        "setupNotes": [
+          "Create the named cross-sheet references in Smartsheet before using this formula.",
+          "Keep the referenced source ranges aligned so Smartsheet can compare rows correctly."
+        ],
+        "instructions": [
+          "Create {Source Checkbox Range} as a cross-sheet reference to the checkbox column you want to summarize.",
+          "Place the formula in a summary sheet, dashboard source sheet, or sheet summary field.",
+          "Choose checked, unchecked, or both states to match what the checkbox represents in your sheet."
+        ]
+      }
+    },
+    {
+      "name": "countCheckboxValues: generalized option combination 2",
+      "kind": "default",
+      "formulaType": "countCheckboxValues",
+      "rawValues": {
+        "checkboxCountReference": "Source Checkbox Range",
+        "checkboxCountType": "uncheckedOnly"
+      },
+      "expected": {
+        "formulaType": "countCheckboxValues",
+        "values": {
+          "checkboxCountReference": "Source Checkbox Range",
+          "checkboxCountType": "uncheckedOnly"
+        },
+        "explanation": "Counts checked, unchecked, or both checkbox states from another sheet.",
+        "formula": "=COUNTIF({Source Checkbox Range}, 0)",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [
+          {
+            "name": "Source Checkbox Range",
+            "sheet": "Source checklist or tracking sheet",
+            "range": "Checkbox column to count"
+          }
+        ],
+        "setupNotes": [
+          "Create the named cross-sheet references in Smartsheet before using this formula.",
+          "Keep the referenced source ranges aligned so Smartsheet can compare rows correctly."
+        ],
+        "instructions": [
+          "Create {Source Checkbox Range} as a cross-sheet reference to the checkbox column you want to summarize.",
+          "Place the formula in a summary sheet, dashboard source sheet, or sheet summary field.",
+          "Choose checked, unchecked, or both states to match what the checkbox represents in your sheet."
+        ]
+      }
+    },
+    {
+      "name": "countCheckboxValues: generalized option combination 3",
+      "kind": "default",
+      "formulaType": "countCheckboxValues",
+      "rawValues": {
+        "checkboxCountReference": "Source Checkbox Range",
+        "checkboxCountType": "checkedAndUnchecked"
+      },
+      "expected": {
+        "formulaType": "countCheckboxValues",
+        "values": {
+          "checkboxCountReference": "Source Checkbox Range",
+          "checkboxCountType": "checkedAndUnchecked"
+        },
+        "explanation": "Counts checked, unchecked, or both checkbox states from another sheet.",
+        "formula": "=COUNTIF({Source Checkbox Range}, 1) + COUNTIF({Source Checkbox Range}, 0)",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [
+          {
+            "name": "Source Checkbox Range",
+            "sheet": "Source checklist or tracking sheet",
+            "range": "Checkbox column to count"
+          }
+        ],
+        "setupNotes": [
+          "Create the named cross-sheet references in Smartsheet before using this formula.",
+          "Keep the referenced source ranges aligned so Smartsheet can compare rows correctly."
+        ],
+        "instructions": [
+          "Create {Source Checkbox Range} as a cross-sheet reference to the checkbox column you want to summarize.",
+          "Place the formula in a summary sheet, dashboard source sheet, or sheet summary field.",
+          "Choose checked, unchecked, or both states to match what the checkbox represents in your sheet."
+        ]
+      }
+    },
+    {
+      "name": "monthNameSortNumber: generalized option combination 1",
+      "kind": "default",
+      "formulaType": "monthNameSortNumber",
+      "rawValues": {
+        "monthNameColumn": "Month Name"
+      },
+      "expected": {
+        "formulaType": "monthNameSortNumber",
+        "values": {
+          "monthNameColumn": "Month Name"
+        },
+        "explanation": "Converts full English month names to numbers from 1 to 12 for calendar-order sorting. Blank or unrecognized names return blank.",
+        "formula": "=IF(ISBLANK([Month Name]@row), \"\", IF([Month Name]@row = \"January\", 1, IF([Month Name]@row = \"February\", 2, IF([Month Name]@row = \"March\", 3, IF([Month Name]@row = \"April\", 4, IF([Month Name]@row = \"May\", 5, IF([Month Name]@row = \"June\", 6, IF([Month Name]@row = \"July\", 7, IF([Month Name]@row = \"August\", 8, IF([Month Name]@row = \"September\", 9, IF([Month Name]@row = \"October\", 10, IF([Month Name]@row = \"November\", 11, IF([Month Name]@row = \"December\", 12, \"\")))))))))))))",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [],
+        "setupNotes": [
+          "This formula only uses columns from the current sheet."
+        ],
+        "instructions": [
+          "Add this formula to a Text/Number helper column.",
+          "Confirm Month Name stores full English month names like January, February, or March.",
+          "Sort reports and dashboard source data by this helper column instead of the month name text."
+        ]
+      }
+    },
+    {
+      "name": "statusIndicator: generalized option combination 1",
+      "kind": "default",
+      "formulaType": "statusIndicator",
+      "rawValues": {
+        "statusStartColumn": "Updated Start",
+        "statusFinishColumn": "Updated Finish",
+        "statusColumn": "Status",
+        "notStartedValue": "Not Started",
+        "completeValue": "Complete"
+      },
+      "expected": {
+        "formulaType": "statusIndicator",
+        "values": {
+          "statusStartColumn": "Updated Start",
+          "statusFinishColumn": "Updated Finish",
+          "statusColumn": "Status",
+          "notStartedValue": "Not Started",
+          "completeValue": "Complete"
+        },
+        "explanation": "Returns Green for completed tasks, Red for overdue tasks or tasks whose start date has passed while their status is not started, and Yellow otherwise. Uses the current row's start date, finish date, and status.",
+        "formula": "=IF([Status]@row = \"Complete\", \"Green\", IF(OR(AND(NOT(ISBLANK([Updated Start]@row)), [Updated Start]@row < TODAY(), [Status]@row = \"Not Started\"), AND(NOT(ISBLANK([Updated Finish]@row)), [Updated Finish]@row < TODAY())), \"Red\", \"Yellow\"))",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [],
+        "setupNotes": [
+          "This formula only uses columns from the current sheet.",
+          "Completed status takes precedence and returns Green. Otherwise, a past finish date or a past start date with not-started status returns Red; all other cases return Yellow."
+        ],
+        "instructions": [
+          "Add this formula to a Symbol or Text/Number column used for schedule health reporting.",
+          "Confirm Status uses Not Started and Complete consistently.",
+          "Use the result to highlight overdue work, not-started work, and completed items in reports or dashboards."
+        ]
+      }
+    },
+    {
+      "name": "multiLineReportLabel: generalized option combination 1",
+      "kind": "default",
+      "formulaType": "multiLineReportLabel",
+      "rawValues": {
+        "reportTaskColumn": "Task Name",
+        "reportLocationColumn": "Location",
+        "leadOwnerColumn": "Task Lead",
+        "secondaryOwnerColumn": "Task Second",
+        "tertiaryOwnerColumn": "Task Third"
+      },
+      "expected": {
+        "formulaType": "multiLineReportLabel",
+        "values": {
+          "reportTaskColumn": "Task Name",
+          "reportLocationColumn": "Location",
+          "leadOwnerColumn": "Task Lead",
+          "secondaryOwnerColumn": "Task Second",
+          "tertiaryOwnerColumn": "Task Third"
+        },
+        "explanation": "Creates a fixed multi-line task assignment label containing a task, location, and up to three assignees. Output labels are \"Task Lead:\", \"Task Second:\", and \"Task Third:\"; the second and third assignee lines are omitted when their cells are blank.",
+        "formula": "=[Task Name]@row + CHAR(10) + [Location]@row + CHAR(10) + \"Task Lead: \" + [Task Lead]@row + IF(ISBLANK([Task Second]@row), \"\", CHAR(10) + \"Task Second: \" + [Task Second]@row) + IF(ISBLANK([Task Third]@row), \"\", CHAR(10) + \"Task Third: \" + [Task Third]@row)",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [],
+        "setupNotes": [
+          "This formula only uses columns from the current sheet.",
+          "Enable wrap text in Smartsheet if you want the CHAR(10) line breaks to display cleanly.",
+          "All five column names are required. Blank second or third assignee cells omit their lines; the output labels remain Task Lead:, Task Second:, and Task Third:."
+        ],
+        "instructions": [
+          "Add this formula to a Text/Number helper column used by reports or dashboards.",
+          "Confirm Task Name, Location, and task assignment columns are available on the sheet.",
+          "Use this fixed task, location, and three-assignee template where its output labels fit your sheet."
+        ]
+      }
+    },
+    {
+      "name": "spendDateAttribute: generalized option combination 1",
+      "kind": "default",
+      "formulaType": "spendDateAttribute",
+      "rawValues": {
+        "spendingMilestoneColumn": "Include Row",
+        "spendStartColumn": "Fallback Date",
+        "spendFinishColumn": "Date",
+        "spendAttribute": "year"
+      },
+      "expected": {
+        "formulaType": "spendDateAttribute",
+        "values": {
+          "spendingMilestoneColumn": "Include Row",
+          "spendStartColumn": "Fallback Date",
+          "spendFinishColumn": "Date",
+          "spendAttribute": "year"
+        },
+        "explanation": "For checked rows, returns the year, calendar quarter, or month number from the preferred date, using the fallback date when the preferred date is blank. Unchecked rows return blank.",
+        "formula": "=IF([Include Row]@row <> 1, \"\", YEAR(IF(ISBLANK([Date]@row), [Fallback Date]@row, [Date]@row)))",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [],
+        "setupNotes": [
+          "This formula only uses columns from the current sheet.",
+          "Only checked rows return a date attribute. The preferred date takes priority over the fallback date.",
+          "Quarter output uses calendar quarters Q1-Q4, not a custom fiscal calendar."
+        ],
+        "instructions": [
+          "Add this formula to a helper column for the selected date attribute.",
+          "Use Include Row to identify the rows to include.",
+          "Use Date as the preferred date and Fallback Date when the preferred date is blank."
+        ]
+      }
+    },
+    {
+      "name": "spendDateAttribute: generalized option combination 2",
+      "kind": "default",
+      "formulaType": "spendDateAttribute",
+      "rawValues": {
+        "spendingMilestoneColumn": "Include Row",
+        "spendStartColumn": "Fallback Date",
+        "spendFinishColumn": "Date",
+        "spendAttribute": "quarter"
+      },
+      "expected": {
+        "formulaType": "spendDateAttribute",
+        "values": {
+          "spendingMilestoneColumn": "Include Row",
+          "spendStartColumn": "Fallback Date",
+          "spendFinishColumn": "Date",
+          "spendAttribute": "quarter"
+        },
+        "explanation": "For checked rows, returns the year, calendar quarter, or month number from the preferred date, using the fallback date when the preferred date is blank. Unchecked rows return blank.",
+        "formula": "=IF([Include Row]@row <> 1, \"\", \"Q\" + ROUNDUP(MONTH(IF(ISBLANK([Date]@row), [Fallback Date]@row, [Date]@row)) / 3, 0))",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [],
+        "setupNotes": [
+          "This formula only uses columns from the current sheet.",
+          "Only checked rows return a date attribute. The preferred date takes priority over the fallback date.",
+          "Quarter output uses calendar quarters Q1-Q4, not a custom fiscal calendar."
+        ],
+        "instructions": [
+          "Add this formula to a helper column for the selected date attribute.",
+          "Use Include Row to identify the rows to include.",
+          "Use Date as the preferred date and Fallback Date when the preferred date is blank."
+        ]
+      }
+    },
+    {
+      "name": "spendDateAttribute: generalized option combination 3",
+      "kind": "default",
+      "formulaType": "spendDateAttribute",
+      "rawValues": {
+        "spendingMilestoneColumn": "Include Row",
+        "spendStartColumn": "Fallback Date",
+        "spendFinishColumn": "Date",
+        "spendAttribute": "monthNumber"
+      },
+      "expected": {
+        "formulaType": "spendDateAttribute",
+        "values": {
+          "spendingMilestoneColumn": "Include Row",
+          "spendStartColumn": "Fallback Date",
+          "spendFinishColumn": "Date",
+          "spendAttribute": "monthNumber"
+        },
+        "explanation": "For checked rows, returns the year, calendar quarter, or month number from the preferred date, using the fallback date when the preferred date is blank. Unchecked rows return blank.",
+        "formula": "=IF([Include Row]@row <> 1, \"\", MONTH(IF(ISBLANK([Date]@row), [Fallback Date]@row, [Date]@row)))",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [],
+        "setupNotes": [
+          "This formula only uses columns from the current sheet.",
+          "Only checked rows return a date attribute. The preferred date takes priority over the fallback date.",
+          "Quarter output uses calendar quarters Q1-Q4, not a custom fiscal calendar."
+        ],
+        "instructions": [
+          "Add this formula to a helper column for the selected date attribute.",
+          "Use Include Row to identify the rows to include.",
+          "Use Date as the preferred date and Fallback Date when the preferred date is blank."
+        ]
+      }
+    },
+    {
+      "name": "singleCriteriaLookup: generalized option combination 1",
+      "kind": "default",
+      "formulaType": "singleCriteriaLookup",
+      "rawValues": {
+        "singleLookupReturnReference": "Source Return Value",
+        "singleLookupMatchReference": "Source Match ID",
+        "singleLookupCurrentColumn": "Lookup ID"
+      },
+      "expected": {
+        "formulaType": "singleCriteriaLookup",
+        "values": {
+          "singleLookupReturnReference": "Source Return Value",
+          "singleLookupMatchReference": "Source Match ID",
+          "singleLookupCurrentColumn": "Lookup ID"
+        },
+        "explanation": "Looks up a value from another sheet when the current row has a matching ID, name, or other lookup key.",
+        "formula": "=IFERROR(INDEX({Source Return Value}, MATCH([Lookup ID]@row, {Source Match ID}, 0)), \"\")",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [
+          {
+            "name": "Source Return Value",
+            "sheet": "Source lookup sheet",
+            "range": "Value column to return"
+          },
+          {
+            "name": "Source Match ID",
+            "sheet": "Source lookup sheet",
+            "range": "Source ID or lookup key column"
+          }
+        ],
+        "setupNotes": [
+          "Create a cross-sheet reference for the value you want returned.",
+          "Create a cross-sheet reference for the source column that contains the matching ID or key.",
+          "The current sheet must have a lookup column containing the value to match."
+        ],
+        "instructions": [
+          "Add this formula to the column where you want the returned value to appear.",
+          "Create {Source Return Value} and {Source Match ID} in Smartsheet.",
+          "Confirm Lookup ID matches the values in {Source Match ID}."
+        ]
+      }
+    },
+    {
+      "name": "joinMatchingValues: generalized option combination 1",
+      "kind": "default",
+      "formulaType": "joinMatchingValues",
+      "rawValues": {
+        "joinSourceValuesReference": "Source Values",
+        "joinSourceMatchReference": "Source Match ID",
+        "joinCurrentLookupColumn": "Lookup ID",
+        "joinOutputType": "all",
+        "joinSeparator": "comma"
+      },
+      "expected": {
+        "formulaType": "joinMatchingValues",
+        "values": {
+          "joinSourceValuesReference": "Source Values",
+          "joinSourceMatchReference": "Source Match ID",
+          "joinCurrentLookupColumn": "Lookup ID",
+          "joinOutputType": "all",
+          "joinSeparator": "comma"
+        },
+        "explanation": "Collects multiple matching values from another sheet and displays them together in one cell.",
+        "formula": "=IFERROR(JOIN(COLLECT({Source Values}, {Source Match ID}, [Lookup ID]@row), \", \"), \"\")",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [
+          {
+            "name": "Source Values",
+            "sheet": "Source detail sheet",
+            "range": "Values to join"
+          },
+          {
+            "name": "Source Match ID",
+            "sheet": "Source detail sheet",
+            "range": "Source match column"
+          }
+        ],
+        "setupNotes": [
+          "Create a cross-sheet reference for the values you want to return.",
+          "Create a cross-sheet reference for the source match column.",
+          "Enable wrap text in Smartsheet if using line break output."
+        ],
+        "instructions": [
+          "Use this when one lookup value may have multiple matching records.",
+          "Choose distinct values if you want repeated matches removed.",
+          "Choose line breaks for report-friendly stacked labels."
+        ]
+      }
+    },
+    {
+      "name": "joinMatchingValues: generalized option combination 2",
+      "kind": "default",
+      "formulaType": "joinMatchingValues",
+      "rawValues": {
+        "joinSourceValuesReference": "Source Values",
+        "joinSourceMatchReference": "Source Match ID",
+        "joinCurrentLookupColumn": "Lookup ID",
+        "joinOutputType": "all",
+        "joinSeparator": "lineBreak"
+      },
+      "expected": {
+        "formulaType": "joinMatchingValues",
+        "values": {
+          "joinSourceValuesReference": "Source Values",
+          "joinSourceMatchReference": "Source Match ID",
+          "joinCurrentLookupColumn": "Lookup ID",
+          "joinOutputType": "all",
+          "joinSeparator": "lineBreak"
+        },
+        "explanation": "Collects multiple matching values from another sheet and displays them together in one cell.",
+        "formula": "=IFERROR(JOIN(COLLECT({Source Values}, {Source Match ID}, [Lookup ID]@row), CHAR(10)), \"\")",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [
+          {
+            "name": "Source Values",
+            "sheet": "Source detail sheet",
+            "range": "Values to join"
+          },
+          {
+            "name": "Source Match ID",
+            "sheet": "Source detail sheet",
+            "range": "Source match column"
+          }
+        ],
+        "setupNotes": [
+          "Create a cross-sheet reference for the values you want to return.",
+          "Create a cross-sheet reference for the source match column.",
+          "Enable wrap text in Smartsheet if using line break output."
+        ],
+        "instructions": [
+          "Use this when one lookup value may have multiple matching records.",
+          "Choose distinct values if you want repeated matches removed.",
+          "Choose line breaks for report-friendly stacked labels."
+        ]
+      }
+    },
+    {
+      "name": "joinMatchingValues: generalized option combination 3",
+      "kind": "default",
+      "formulaType": "joinMatchingValues",
+      "rawValues": {
+        "joinSourceValuesReference": "Source Values",
+        "joinSourceMatchReference": "Source Match ID",
+        "joinCurrentLookupColumn": "Lookup ID",
+        "joinOutputType": "distinct",
+        "joinSeparator": "comma"
+      },
+      "expected": {
+        "formulaType": "joinMatchingValues",
+        "values": {
+          "joinSourceValuesReference": "Source Values",
+          "joinSourceMatchReference": "Source Match ID",
+          "joinCurrentLookupColumn": "Lookup ID",
+          "joinOutputType": "distinct",
+          "joinSeparator": "comma"
+        },
+        "explanation": "Collects multiple matching values from another sheet and displays them together in one cell.",
+        "formula": "=IFERROR(JOIN(DISTINCT(COLLECT({Source Values}, {Source Match ID}, [Lookup ID]@row)), \", \"), \"\")",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [
+          {
+            "name": "Source Values",
+            "sheet": "Source detail sheet",
+            "range": "Values to join"
+          },
+          {
+            "name": "Source Match ID",
+            "sheet": "Source detail sheet",
+            "range": "Source match column"
+          }
+        ],
+        "setupNotes": [
+          "Create a cross-sheet reference for the values you want to return.",
+          "Create a cross-sheet reference for the source match column.",
+          "Enable wrap text in Smartsheet if using line break output."
+        ],
+        "instructions": [
+          "Use this when one lookup value may have multiple matching records.",
+          "Choose distinct values if you want repeated matches removed.",
+          "Choose line breaks for report-friendly stacked labels."
+        ]
+      }
+    },
+    {
+      "name": "joinMatchingValues: generalized option combination 4",
+      "kind": "default",
+      "formulaType": "joinMatchingValues",
+      "rawValues": {
+        "joinSourceValuesReference": "Source Values",
+        "joinSourceMatchReference": "Source Match ID",
+        "joinCurrentLookupColumn": "Lookup ID",
+        "joinOutputType": "distinct",
+        "joinSeparator": "lineBreak"
+      },
+      "expected": {
+        "formulaType": "joinMatchingValues",
+        "values": {
+          "joinSourceValuesReference": "Source Values",
+          "joinSourceMatchReference": "Source Match ID",
+          "joinCurrentLookupColumn": "Lookup ID",
+          "joinOutputType": "distinct",
+          "joinSeparator": "lineBreak"
+        },
+        "explanation": "Collects multiple matching values from another sheet and displays them together in one cell.",
+        "formula": "=IFERROR(JOIN(DISTINCT(COLLECT({Source Values}, {Source Match ID}, [Lookup ID]@row)), CHAR(10)), \"\")",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [
+          {
+            "name": "Source Values",
+            "sheet": "Source detail sheet",
+            "range": "Values to join"
+          },
+          {
+            "name": "Source Match ID",
+            "sheet": "Source detail sheet",
+            "range": "Source match column"
+          }
+        ],
+        "setupNotes": [
+          "Create a cross-sheet reference for the values you want to return.",
+          "Create a cross-sheet reference for the source match column.",
+          "Enable wrap text in Smartsheet if using line break output."
+        ],
+        "instructions": [
+          "Use this when one lookup value may have multiple matching records.",
+          "Choose distinct values if you want repeated matches removed.",
+          "Choose line breaks for report-friendly stacked labels."
+        ]
+      }
+    },
+    {
+      "name": "countRowsMultipleCriteria: generalized option combination 1",
+      "kind": "default",
+      "formulaType": "countRowsMultipleCriteria",
+      "rawValues": {
+        "countCriteriaReferenceOne": "Source Status",
+        "countCriteriaValueOne": "Complete",
+        "countCriteriaReferenceTwo": "Source Category",
+        "countCriteriaValueTwo": "Category A"
+      },
+      "expected": {
+        "formulaType": "countRowsMultipleCriteria",
+        "values": {
+          "countCriteriaReferenceOne": "Source Status",
+          "countCriteriaValueOne": "Complete",
+          "countCriteriaReferenceTwo": "Source Category",
+          "countCriteriaValueTwo": "Category A"
+        },
+        "explanation": "Counts rows from another sheet where both configured text criteria match.",
+        "formula": "=COUNTIFS({Source Status}, \"Complete\", {Source Category}, \"Category A\")",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [
+          {
+            "name": "Source Status",
+            "sheet": "Source data sheet",
+            "range": "First criteria column"
+          },
+          {
+            "name": "Source Category",
+            "sheet": "Source data sheet",
+            "range": "Second criteria column"
+          }
+        ],
+        "setupNotes": [
+          "Create one cross-sheet reference for each criteria column.",
+          "Both criteria must match. Enter text values to match; the builder quotes them as text rather than accepting comparison expressions."
+        ],
+        "instructions": [
+          "Add this formula to a summary or dashboard metric cell.",
+          "Set each criteria reference to the source column you want to evaluate.",
+          "Enter the criteria text to count."
+        ]
+      }
+    },
+    {
+      "name": "sumValuesMultipleCriteria: generalized option combination 1",
+      "kind": "default",
+      "formulaType": "sumValuesMultipleCriteria",
+      "rawValues": {
+        "sumValueReference": "Source Amount",
+        "sumCriteriaReferenceOne": "Source Status",
+        "sumCriteriaValueOne": "Approved",
+        "sumCriteriaReferenceTwo": "Source Category",
+        "sumCriteriaValueTwo": "Category A"
+      },
+      "expected": {
+        "formulaType": "sumValuesMultipleCriteria",
+        "values": {
+          "sumValueReference": "Source Amount",
+          "sumCriteriaReferenceOne": "Source Status",
+          "sumCriteriaValueOne": "Approved",
+          "sumCriteriaReferenceTwo": "Source Category",
+          "sumCriteriaValueTwo": "Category A"
+        },
+        "explanation": "Sums numeric values from another sheet where both configured text criteria match.",
+        "formula": "=SUMIFS({Source Amount}, {Source Status}, \"Approved\", {Source Category}, \"Category A\")",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [
+          {
+            "name": "Source Amount",
+            "sheet": "Source data sheet",
+            "range": "Numeric value column"
+          },
+          {
+            "name": "Source Status",
+            "sheet": "Source data sheet",
+            "range": "First criteria column"
+          },
+          {
+            "name": "Source Category",
+            "sheet": "Source data sheet",
+            "range": "Second criteria column"
+          }
+        ],
+        "setupNotes": [
+          "The source value reference should point to a numeric column.",
+          "Both criteria must match. Criteria values are quoted as text; comparison expressions are not a builder option."
+        ],
+        "instructions": [
+          "Use this for budget, cost, hours, units, or quantity summaries.",
+          "Add it to a dashboard, summary sheet, or helper column.",
+          "Confirm the value column contains numbers."
+        ]
+      }
+    },
+    {
+      "name": "averageValuesMultipleCriteria: generalized option combination 1",
+      "kind": "default",
+      "formulaType": "averageValuesMultipleCriteria",
+      "rawValues": {
+        "averageValueReference": "Source Duration",
+        "averageCriteriaReferenceOne": "Source Status",
+        "averageCriteriaValueOne": "Complete",
+        "averageCriteriaReferenceTwo": "Source Category",
+        "averageCriteriaValueTwo": "Category A"
+      },
+      "expected": {
+        "formulaType": "averageValuesMultipleCriteria",
+        "values": {
+          "averageValueReference": "Source Duration",
+          "averageCriteriaReferenceOne": "Source Status",
+          "averageCriteriaValueOne": "Complete",
+          "averageCriteriaReferenceTwo": "Source Category",
+          "averageCriteriaValueTwo": "Category A"
+        },
+        "explanation": "Averages numeric values from another sheet where both configured text criteria match. Returns blank if the calculation produces an error.",
+        "formula": "=IFERROR(AVG(COLLECT({Source Duration}, {Source Status}, \"Complete\", {Source Category}, \"Category A\")), \"\")",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [
+          {
+            "name": "Source Duration",
+            "sheet": "Source data sheet",
+            "range": "Numeric value column"
+          },
+          {
+            "name": "Source Status",
+            "sheet": "Source data sheet",
+            "range": "First criteria column"
+          },
+          {
+            "name": "Source Category",
+            "sheet": "Source data sheet",
+            "range": "Second criteria column"
+          }
+        ],
+        "setupNotes": [
+          "The source value reference should point to a numeric column.",
+          "Averages the values collected from rows where both criteria match. Criteria values are quoted as text; comparison expressions are not a builder option."
+        ],
+        "instructions": [
+          "Use this for average duration, average score, average percent complete, or cycle-time analysis.",
+          "Add it to a summary or dashboard sheet.",
+          "Confirm the value column contains numbers."
+        ]
+      }
+    },
+    {
+      "name": "matchingDateExtremes: generalized option combination 1",
+      "kind": "default",
+      "formulaType": "matchingDateExtremes",
+      "rawValues": {
+        "matchingDateReference": "Source Date",
+        "matchingDateMatchReference": "Source Match ID",
+        "matchingDateLookupColumn": "Lookup ID",
+        "matchingDateResultType": "latest"
+      },
+      "expected": {
+        "formulaType": "matchingDateExtremes",
+        "values": {
+          "matchingDateReference": "Source Date",
+          "matchingDateMatchReference": "Source Match ID",
+          "matchingDateLookupColumn": "Lookup ID",
+          "matchingDateResultType": "latest"
+        },
+        "explanation": "Finds the latest or earliest date related to the current row's lookup value.",
+        "formula": "=IFERROR(MAX(COLLECT({Source Date}, {Source Match ID}, [Lookup ID]@row)), \"\")",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [
+          {
+            "name": "Source Date",
+            "sheet": "Source date sheet",
+            "range": "Source date column"
+          },
+          {
+            "name": "Source Match ID",
+            "sheet": "Source date sheet",
+            "range": "Source match column"
+          }
+        ],
+        "setupNotes": [
+          "Create a cross-sheet reference for the source date column.",
+          "Create a cross-sheet reference for the source match column.",
+          "The current sheet must have a lookup column."
+        ],
+        "instructions": [
+          "Use latest date for last update, latest completion, latest submission, or most recent activity.",
+          "Use earliest date for next due date, first start, or earliest milestone.",
+          "Format the destination column as a Date column."
+        ]
+      }
+    },
+    {
+      "name": "matchingDateExtremes: generalized option combination 2",
+      "kind": "default",
+      "formulaType": "matchingDateExtremes",
+      "rawValues": {
+        "matchingDateReference": "Source Date",
+        "matchingDateMatchReference": "Source Match ID",
+        "matchingDateLookupColumn": "Lookup ID",
+        "matchingDateResultType": "earliest"
+      },
+      "expected": {
+        "formulaType": "matchingDateExtremes",
+        "values": {
+          "matchingDateReference": "Source Date",
+          "matchingDateMatchReference": "Source Match ID",
+          "matchingDateLookupColumn": "Lookup ID",
+          "matchingDateResultType": "earliest"
+        },
+        "explanation": "Finds the latest or earliest date related to the current row's lookup value.",
+        "formula": "=IFERROR(MIN(COLLECT({Source Date}, {Source Match ID}, [Lookup ID]@row)), \"\")",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [
+          {
+            "name": "Source Date",
+            "sheet": "Source date sheet",
+            "range": "Source date column"
+          },
+          {
+            "name": "Source Match ID",
+            "sheet": "Source date sheet",
+            "range": "Source match column"
+          }
+        ],
+        "setupNotes": [
+          "Create a cross-sheet reference for the source date column.",
+          "Create a cross-sheet reference for the source match column.",
+          "The current sheet must have a lookup column."
+        ],
+        "instructions": [
+          "Use latest date for last update, latest completion, latest submission, or most recent activity.",
+          "Use earliest date for next due date, first start, or earliest milestone.",
+          "Format the destination column as a Date column."
+        ]
+      }
+    },
+    {
+      "name": "uniqueCountCriteria: generalized option combination 1",
+      "kind": "default",
+      "formulaType": "uniqueCountCriteria",
+      "rawValues": {
+        "uniqueValueReference": "Source Record ID",
+        "uniqueCriteriaReferenceOne": "Source Status",
+        "uniqueCriteriaValueOne": "Complete",
+        "uniqueCriteriaReferenceTwo": "Source Category",
+        "uniqueCriteriaValueTwo": "Category A"
+      },
+      "expected": {
+        "formulaType": "uniqueCountCriteria",
+        "values": {
+          "uniqueValueReference": "Source Record ID",
+          "uniqueCriteriaReferenceOne": "Source Status",
+          "uniqueCriteriaValueOne": "Complete",
+          "uniqueCriteriaReferenceTwo": "Source Category",
+          "uniqueCriteriaValueTwo": "Category A"
+        },
+        "explanation": "Counts distinct values from another sheet where both configured text criteria match, without double-counting repeated values.",
+        "formula": "=IFERROR(COUNT(DISTINCT(COLLECT({Source Record ID}, {Source Status}, \"Complete\", {Source Category}, \"Category A\"))), 0)",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [
+          {
+            "name": "Source Record ID",
+            "sheet": "Source data sheet",
+            "range": "Unique value column"
+          },
+          {
+            "name": "Source Status",
+            "sheet": "Source data sheet",
+            "range": "First criteria column"
+          },
+          {
+            "name": "Source Category",
+            "sheet": "Source data sheet",
+            "range": "Second criteria column"
+          }
+        ],
+        "setupNotes": [
+          "The unique value reference should point to the ID, name, owner, location, or other value to count once.",
+          "Both criteria must match. Criteria values are quoted as text; comparison expressions are not a builder option."
+        ],
+        "instructions": [
+          "Use this when a source sheet may contain repeated record IDs, owners, locations, or other values to count once.",
+          "Add it to a dashboard or summary metric.",
+          "Confirm the unique value reference contains consistent naming."
+        ]
+      }
+    },
+    {
+      "name": "parentChildRollup: generalized option combination 1",
+      "kind": "default",
+      "formulaType": "parentChildRollup",
+      "rawValues": {
+        "childValueColumn": "Amount",
+        "childRollupType": "sum"
+      },
+      "expected": {
+        "formulaType": "parentChildRollup",
+        "values": {
+          "childValueColumn": "Amount",
+          "childRollupType": "sum"
+        },
+        "explanation": "Rolls up child-row values into a parent row.",
+        "formula": "=SUM(CHILDREN([Amount]@row))",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [],
+        "setupNotes": [
+          "This formula is intended for hierarchy-enabled Smartsheet sheets with parent and child rows.",
+          "Add the formula to parent rows or use a column formula if appropriate for the workflow."
+        ],
+        "instructions": [
+          "Choose the column that contains the child values.",
+          "Choose the rollup type.",
+          "Place the formula on the parent row where the summary should appear."
+        ]
+      }
+    },
+    {
+      "name": "parentChildRollup: generalized option combination 2",
+      "kind": "default",
+      "formulaType": "parentChildRollup",
+      "rawValues": {
+        "childValueColumn": "Amount",
+        "childRollupType": "count"
+      },
+      "expected": {
+        "formulaType": "parentChildRollup",
+        "values": {
+          "childValueColumn": "Amount",
+          "childRollupType": "count"
+        },
+        "explanation": "Rolls up child-row values into a parent row.",
+        "formula": "=COUNT(CHILDREN([Amount]@row))",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [],
+        "setupNotes": [
+          "This formula is intended for hierarchy-enabled Smartsheet sheets with parent and child rows.",
+          "Add the formula to parent rows or use a column formula if appropriate for the workflow."
+        ],
+        "instructions": [
+          "Choose the column that contains the child values.",
+          "Choose the rollup type.",
+          "Place the formula on the parent row where the summary should appear."
+        ]
+      }
+    },
+    {
+      "name": "parentChildRollup: generalized option combination 3",
+      "kind": "default",
+      "formulaType": "parentChildRollup",
+      "rawValues": {
+        "childValueColumn": "Amount",
+        "childRollupType": "average"
+      },
+      "expected": {
+        "formulaType": "parentChildRollup",
+        "values": {
+          "childValueColumn": "Amount",
+          "childRollupType": "average"
+        },
+        "explanation": "Rolls up child-row values into a parent row.",
+        "formula": "=IFERROR(AVG(CHILDREN([Amount]@row)), \"\")",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [],
+        "setupNotes": [
+          "This formula is intended for hierarchy-enabled Smartsheet sheets with parent and child rows.",
+          "Add the formula to parent rows or use a column formula if appropriate for the workflow."
+        ],
+        "instructions": [
+          "Choose the column that contains the child values.",
+          "Choose the rollup type.",
+          "Place the formula on the parent row where the summary should appear."
+        ]
+      }
+    },
+    {
+      "name": "parentChildRollup: generalized option combination 4",
+      "kind": "default",
+      "formulaType": "parentChildRollup",
+      "rawValues": {
+        "childValueColumn": "Amount",
+        "childRollupType": "maximum"
+      },
+      "expected": {
+        "formulaType": "parentChildRollup",
+        "values": {
+          "childValueColumn": "Amount",
+          "childRollupType": "maximum"
+        },
+        "explanation": "Rolls up child-row values into a parent row.",
+        "formula": "=IFERROR(MAX(CHILDREN([Amount]@row)), \"\")",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [],
+        "setupNotes": [
+          "This formula is intended for hierarchy-enabled Smartsheet sheets with parent and child rows.",
+          "Add the formula to parent rows or use a column formula if appropriate for the workflow."
+        ],
+        "instructions": [
+          "Choose the column that contains the child values.",
+          "Choose the rollup type.",
+          "Place the formula on the parent row where the summary should appear."
+        ]
+      }
+    },
+    {
+      "name": "parentChildRollup: generalized option combination 5",
+      "kind": "default",
+      "formulaType": "parentChildRollup",
+      "rawValues": {
+        "childValueColumn": "Amount",
+        "childRollupType": "minimum"
+      },
+      "expected": {
+        "formulaType": "parentChildRollup",
+        "values": {
+          "childValueColumn": "Amount",
+          "childRollupType": "minimum"
+        },
+        "explanation": "Rolls up child-row values into a parent row.",
+        "formula": "=IFERROR(MIN(CHILDREN([Amount]@row)), \"\")",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [],
+        "setupNotes": [
+          "This formula is intended for hierarchy-enabled Smartsheet sheets with parent and child rows.",
+          "Add the formula to parent rows or use a column formula if appropriate for the workflow."
+        ],
+        "instructions": [
+          "Choose the column that contains the child values.",
+          "Choose the rollup type.",
+          "Place the formula on the parent row where the summary should appear."
+        ]
+      }
+    },
+    {
+      "name": "parentChildRollup: generalized option combination 6",
+      "kind": "default",
+      "formulaType": "parentChildRollup",
+      "rawValues": {
+        "childValueColumn": "Amount",
+        "childRollupType": "checked"
+      },
+      "expected": {
+        "formulaType": "parentChildRollup",
+        "values": {
+          "childValueColumn": "Amount",
+          "childRollupType": "checked"
+        },
+        "explanation": "Rolls up child-row values into a parent row.",
+        "formula": "=COUNTIF(CHILDREN([Amount]@row), 1)",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [],
+        "setupNotes": [
+          "This formula is intended for hierarchy-enabled Smartsheet sheets with parent and child rows.",
+          "Add the formula to parent rows or use a column formula if appropriate for the workflow."
+        ],
+        "instructions": [
+          "Choose the column that contains the child values.",
+          "Choose the rollup type.",
+          "Place the formula on the parent row where the summary should appear."
+        ]
+      }
+    },
+    {
+      "name": "hierarchyLevelHelper: generalized option combination 1",
+      "kind": "default",
+      "formulaType": "hierarchyLevelHelper",
+      "rawValues": {
+        "hierarchyLevelStart": "zero"
+      },
+      "expected": {
+        "formulaType": "hierarchyLevelHelper",
+        "values": {
+          "hierarchyLevelStart": "zero"
+        },
+        "explanation": "Identifies how deeply a row is indented in the sheet hierarchy.",
+        "formula": "=COUNT(ANCESTORS())",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [],
+        "setupNotes": [
+          "This formula uses Smartsheet hierarchy functions.",
+          "Top-level rows have no ancestors."
+        ],
+        "instructions": [
+          "Add this to a helper column.",
+          "Use it for reports, filters, conditional formatting, or separating phases from tasks.",
+          "Choose whether top-level rows should return 0 or 1."
+        ]
+      }
+    },
+    {
+      "name": "hierarchyLevelHelper: generalized option combination 2",
+      "kind": "default",
+      "formulaType": "hierarchyLevelHelper",
+      "rawValues": {
+        "hierarchyLevelStart": "one"
+      },
+      "expected": {
+        "formulaType": "hierarchyLevelHelper",
+        "values": {
+          "hierarchyLevelStart": "one"
+        },
+        "explanation": "Identifies how deeply a row is indented in the sheet hierarchy.",
+        "formula": "=COUNT(ANCESTORS()) + 1",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [],
+        "setupNotes": [
+          "This formula uses Smartsheet hierarchy functions.",
+          "Top-level rows have no ancestors."
+        ],
+        "instructions": [
+          "Add this to a helper column.",
+          "Use it for reports, filters, conditional formatting, or separating phases from tasks.",
+          "Choose whether top-level rows should return 0 or 1."
+        ]
+      }
+    },
+    {
+      "name": "showParentValue: generalized option combination 1",
+      "kind": "default",
+      "formulaType": "showParentValue",
+      "rawValues": {
+        "parentValueColumn": "Task Name"
+      },
+      "expected": {
+        "formulaType": "showParentValue",
+        "values": {
+          "parentValueColumn": "Task Name"
+        },
+        "explanation": "Pulls the parent row's value into the current row.",
+        "formula": "=IFERROR(PARENT([Task Name]@row), \"\")",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [],
+        "setupNotes": [
+          "This works on indented child rows.",
+          "Top-level rows without a parent return blank."
+        ],
+        "instructions": [
+          "Add this to a helper column.",
+          "Use it when reports include child rows but need parent context.",
+          "Common uses include showing parent task, phase, location, project, or category."
+        ]
+      }
+    },
+    {
+      "name": "multiSelectHasCheck: generalized option combination 1",
+      "kind": "default",
+      "formulaType": "multiSelectHasCheck",
+      "rawValues": {
+        "multiSelectColumn": "Tags",
+        "multiSelectValue": "Risk",
+        "multiSelectOutputType": "checkbox"
+      },
+      "expected": {
+        "formulaType": "multiSelectHasCheck",
+        "values": {
+          "multiSelectColumn": "Tags",
+          "multiSelectValue": "Risk",
+          "multiSelectOutputType": "checkbox"
+        },
+        "explanation": "Checks whether a selected value exists in a multi-select dropdown or multi-contact cell.",
+        "formula": "=IF(HAS([Tags]@row, \"Risk\"), 1, 0)",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [],
+        "setupNotes": [
+          "HAS is best for multi-select dropdown and multi-contact columns.",
+          "The value must match one of the selectable values."
+        ],
+        "instructions": [
+          "Use this to flag rows by owner, department, tag, phase, risk category, region, or workflow type.",
+          "Choose checkbox output if the destination column is a checkbox column.",
+          "Choose text output if the destination column is text/number."
+        ]
+      }
+    },
+    {
+      "name": "multiSelectHasCheck: generalized option combination 2",
+      "kind": "default",
+      "formulaType": "multiSelectHasCheck",
+      "rawValues": {
+        "multiSelectColumn": "Tags",
+        "multiSelectValue": "Risk",
+        "multiSelectOutputType": "yesNo"
+      },
+      "expected": {
+        "formulaType": "multiSelectHasCheck",
+        "values": {
+          "multiSelectColumn": "Tags",
+          "multiSelectValue": "Risk",
+          "multiSelectOutputType": "yesNo"
+        },
+        "explanation": "Checks whether a selected value exists in a multi-select dropdown or multi-contact cell.",
+        "formula": "=IF(HAS([Tags]@row, \"Risk\"), \"Yes\", \"No\")",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [],
+        "setupNotes": [
+          "HAS is best for multi-select dropdown and multi-contact columns.",
+          "The value must match one of the selectable values."
+        ],
+        "instructions": [
+          "Use this to flag rows by owner, department, tag, phase, risk category, region, or workflow type.",
+          "Choose checkbox output if the destination column is a checkbox column.",
+          "Choose text output if the destination column is text/number."
+        ]
+      }
+    },
+    {
+      "name": "multiSelectHasCheck: generalized option combination 3",
+      "kind": "default",
+      "formulaType": "multiSelectHasCheck",
+      "rawValues": {
+        "multiSelectColumn": "Tags",
+        "multiSelectValue": "Risk",
+        "multiSelectOutputType": "foundBlank"
+      },
+      "expected": {
+        "formulaType": "multiSelectHasCheck",
+        "values": {
+          "multiSelectColumn": "Tags",
+          "multiSelectValue": "Risk",
+          "multiSelectOutputType": "foundBlank"
+        },
+        "explanation": "Checks whether a selected value exists in a multi-select dropdown or multi-contact cell.",
+        "formula": "=IF(HAS([Tags]@row, \"Risk\"), \"Found\", \"\")",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [],
+        "setupNotes": [
+          "HAS is best for multi-select dropdown and multi-contact columns.",
+          "The value must match one of the selectable values."
+        ],
+        "instructions": [
+          "Use this to flag rows by owner, department, tag, phase, risk category, region, or workflow type.",
+          "Choose checkbox output if the destination column is a checkbox column.",
+          "Choose text output if the destination column is text/number."
+        ]
+      }
+    },
+    {
+      "name": "textBeforeAfterDelimiter: generalized option combination 1",
+      "kind": "default",
+      "formulaType": "textBeforeAfterDelimiter",
+      "rawValues": {
+        "delimiterSourceColumn": "Combined Text",
+        "delimiterText": "-",
+        "delimiterExtractType": "before"
+      },
+      "expected": {
+        "formulaType": "textBeforeAfterDelimiter",
+        "values": {
+          "delimiterSourceColumn": "Combined Text",
+          "delimiterText": "-",
+          "delimiterExtractType": "before"
+        },
+        "explanation": "Splits combined text into the portion before or after a selected delimiter.",
+        "formula": "=IFERROR(LEFT([Combined Text]@row, FIND(\"-\", [Combined Text]@row) - 1), [Combined Text]@row)",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [],
+        "setupNotes": [
+          "This is useful for imported data, combined IDs, labels, codes, and report helper columns.",
+          "If the delimiter is not found, the before-delimiter formula returns the full source text and the after-delimiter formula returns blank."
+        ],
+        "instructions": [
+          "Enter the source text column.",
+          "Enter the delimiter exactly as it appears in the text.",
+          "Choose whether to return the text before or after that delimiter."
+        ]
+      }
+    },
+    {
+      "name": "textBeforeAfterDelimiter: generalized option combination 2",
+      "kind": "default",
+      "formulaType": "textBeforeAfterDelimiter",
+      "rawValues": {
+        "delimiterSourceColumn": "Combined Text",
+        "delimiterText": "-",
+        "delimiterExtractType": "after"
+      },
+      "expected": {
+        "formulaType": "textBeforeAfterDelimiter",
+        "values": {
+          "delimiterSourceColumn": "Combined Text",
+          "delimiterText": "-",
+          "delimiterExtractType": "after"
+        },
+        "explanation": "Splits combined text into the portion before or after a selected delimiter.",
+        "formula": "=IFERROR(RIGHT([Combined Text]@row, LEN([Combined Text]@row) - FIND(\"-\", [Combined Text]@row) - LEN(\"-\") + 1), \"\")",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [],
+        "setupNotes": [
+          "This is useful for imported data, combined IDs, labels, codes, and report helper columns.",
+          "If the delimiter is not found, the before-delimiter formula returns the full source text and the after-delimiter formula returns blank."
+        ],
+        "instructions": [
+          "Enter the source text column.",
+          "Enter the delimiter exactly as it appears in the text.",
+          "Choose whether to return the text before or after that delimiter."
+        ]
+      }
+    },
+    {
+      "name": "readyToStartBasedOnPredecessors: generalized option combination 1",
+      "kind": "default",
+      "formulaType": "readyToStartBasedOnPredecessors",
+      "rawValues": {
+        "openPredecessorCountColumn": "Open Predecessor Count",
+        "readinessStatusColumn": "Status",
+        "readinessCompleteStatus": "Complete",
+        "readinessReadyValue": "Ready",
+        "readinessBlockedValue": "Blocked",
+        "readinessCompleteValue": "Complete"
+      },
+      "expected": {
+        "formulaType": "readyToStartBasedOnPredecessors",
+        "values": {
+          "openPredecessorCountColumn": "Open Predecessor Count",
+          "readinessStatusColumn": "Status",
+          "readinessCompleteStatus": "Complete",
+          "readinessReadyValue": "Ready",
+          "readinessBlockedValue": "Blocked",
+          "readinessCompleteValue": "Complete"
+        },
+        "explanation": "Returns a task's complete, ready, or blocked status using an existing open-predecessor count. This formula does not calculate predecessor relationships or the count itself.",
+        "formula": "=IF([Status]@row = \"Complete\", \"Complete\", IF([Open Predecessor Count]@row = 0, \"Ready\", \"Blocked\"))",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [],
+        "setupNotes": [
+          "This formula assumes another column already provides the number of open predecessors.",
+          "It does not calculate predecessor relationships. Complete status takes precedence; otherwise, zero open predecessors returns the ready value and any other count returns the blocked value."
+        ],
+        "instructions": [
+          "Add or maintain an Open Predecessor Count column.",
+          "Add this formula to a readiness/status helper column.",
+          "Use the result in reports, dashboards, filters, or conditional formatting."
+        ]
+      }
+    },
+    {
+      "name": "rankedValue: generalized option combination 1",
+      "kind": "default",
+      "formulaType": "rankedValue",
+      "rawValues": {
+        "rankedValueReference": "Source Score",
+        "rankNumber": "1",
+        "rankingType": "highest"
+      },
+      "expected": {
+        "formulaType": "rankedValue",
+        "values": {
+          "rankedValueReference": "Source Score",
+          "rankNumber": "1",
+          "rankingType": "highest"
+        },
+        "explanation": "Returns one Nth highest or Nth lowest numeric value from a source range, such as the second-highest amount or third-lowest duration. It does not return a list of the top N values.",
+        "formula": "=IFERROR(LARGE({Source Score}, 1), \"\")",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [
+          {
+            "name": "Source Score",
+            "sheet": "Source ranking sheet",
+            "range": "Numeric values to rank"
+          }
+        ],
+        "setupNotes": [
+          "Create a cross-sheet reference to the numeric values you want to rank.",
+          "The source values should be numeric.",
+          "Rank 1 means highest or lowest, depending on the selected ranking type."
+        ],
+        "instructions": [
+          "Choose the source value reference.",
+          "Enter the rank number.",
+          "Choose whether to return the Nth highest or Nth lowest value."
+        ]
+      }
+    },
+    {
+      "name": "rankedValue: generalized option combination 2",
+      "kind": "default",
+      "formulaType": "rankedValue",
+      "rawValues": {
+        "rankedValueReference": "Source Score",
+        "rankNumber": "1",
+        "rankingType": "lowest"
+      },
+      "expected": {
+        "formulaType": "rankedValue",
+        "values": {
+          "rankedValueReference": "Source Score",
+          "rankNumber": "1",
+          "rankingType": "lowest"
+        },
+        "explanation": "Returns one Nth highest or Nth lowest numeric value from a source range, such as the second-highest amount or third-lowest duration. It does not return a list of the top N values.",
+        "formula": "=IFERROR(SMALL({Source Score}, 1), \"\")",
+        "missingFields": [],
+        "validationErrors": [],
+        "references": [
+          {
+            "name": "Source Score",
+            "sheet": "Source ranking sheet",
+            "range": "Numeric values to rank"
+          }
+        ],
+        "setupNotes": [
+          "Create a cross-sheet reference to the numeric values you want to rank.",
+          "The source values should be numeric.",
+          "Rank 1 means highest or lowest, depending on the selected ranking type."
+        ],
+        "instructions": [
+          "Choose the source value reference.",
+          "Enter the rank number.",
+          "Choose whether to return the Nth highest or Nth lowest value."
+        ]
+      }
+    }
+  ],
+  "legacyGuidance": {
+    "appendFinishDateLabel: option combination 1": {
+      "instructions": [
+        "Add this formula to the helper column where you want the combined text and date to appear.",
+        "Confirm the column names match Milestone Label and Finish Date.",
+        "Use a Text/Number column for the formula output."
+      ]
+    },
+    "appendFinishDateLabel: custom combination 1": {
+      "instructions": [
+        "Add this formula to the helper column where you want the combined text and date to appear.",
+        "Confirm the column names match Custom milestoneLabelColumn \"North\" & caf? and Custom finishDateColumn \"North\" & caf?.",
+        "Use a Text/Number column for the formula output."
+      ]
+    },
+    "appendFinishDateLabel: missing milestoneLabelColumn": {
+      "instructions": [
+        "Add this formula to the helper column where you want the combined text and date to appear.",
+        "Confirm the column names match  and Finish Date.",
+        "Use a Text/Number column for the formula output."
+      ]
+    },
+    "appendFinishDateLabel: missing finishDateColumn": {
+      "instructions": [
+        "Add this formula to the helper column where you want the combined text and date to appear.",
+        "Confirm the column names match Milestone Label and .",
+        "Use a Text/Number column for the formula output."
+      ]
+    },
+    "appendFinishDateLabel: all fields empty": {
+      "instructions": [
+        "Add this formula to the helper column where you want the combined text and date to appear.",
+        "Confirm the column names match  and .",
+        "Use a Text/Number column for the formula output."
+      ]
+    },
+    "scheduleMovedWorkdays: option combination 1": {
+      "instructions": [
+        "Add this formula to a Text/Number column on the same sheet as the date columns.",
+        "Positive values mean New Date is later than Original Date.",
+        "Negative values mean the revised date moved earlier. This formula excludes Saturdays and Sundays and does not supply a holiday calendar."
+      ]
+    },
+    "scheduleMovedWorkdays: custom combination 1": {
+      "instructions": [
+        "Add this formula to a Text/Number column on the same sheet as the date columns.",
+        "Positive values mean Custom updatedDateColumn \"North\" & caf? is later than Custom originalDateColumn \"North\" & caf?.",
+        "Negative values mean the revised date moved earlier. This formula excludes Saturdays and Sundays and does not supply a holiday calendar."
+      ]
+    },
+    "scheduleMovedWorkdays: missing originalDateColumn": {
+      "instructions": [
+        "Add this formula to a Text/Number column on the same sheet as the date columns.",
+        "Positive values mean New Date is later than .",
+        "Negative values mean the revised date moved earlier. This formula excludes Saturdays and Sundays and does not supply a holiday calendar."
+      ]
+    },
+    "scheduleMovedWorkdays: missing updatedDateColumn": {
+      "instructions": [
+        "Add this formula to a Text/Number column on the same sheet as the date columns.",
+        "Positive values mean  is later than Original Date.",
+        "Negative values mean the revised date moved earlier. This formula excludes Saturdays and Sundays and does not supply a holiday calendar."
+      ]
+    },
+    "scheduleMovedWorkdays: all fields empty": {
+      "instructions": [
+        "Add this formula to a Text/Number column on the same sheet as the date columns.",
+        "Positive values mean  is later than .",
+        "Negative values mean the revised date moved earlier. This formula excludes Saturdays and Sundays and does not supply a holiday calendar."
+      ]
+    },
+    "rioIdLookup: option combination 1": {
+      "instructions": [
+        "Create both cross-sheet references from RIO Log.",
+        "Use RIO ID as the return range and Related Milestone ID as the match range.",
+        "Keep the return and match ranges aligned so they describe the same source rows.",
+        "Paste the formula into the current sheet where the first matching source value should appear."
+      ]
+    },
+    "rioIdLookup: custom combination 1": {
+      "instructions": [
+        "Create both cross-sheet references from Custom rioSourceSheetName \"North\" & caf?.",
+        "Use Custom rioSourceIdColumn \"North\" & caf? as the return range and Custom rioSourceMatchColumn \"North\" & caf? as the match range.",
+        "Keep the return and match ranges aligned so they describe the same source rows.",
+        "Paste the formula into the current sheet where the first matching source value should appear."
+      ]
+    },
+    "rioIdLookup: missing rioCurrentIdColumn": {
+      "instructions": [
+        "Create both cross-sheet references from RIO Log.",
+        "Use RIO ID as the return range and Related Milestone ID as the match range.",
+        "Keep the return and match ranges aligned so they describe the same source rows.",
+        "Paste the formula into the current sheet where the first matching source value should appear."
+      ]
+    },
+    "rioIdLookup: missing rioSourceSheetName": {
+      "instructions": [
+        "Create both cross-sheet references from .",
+        "Use RIO ID as the return range and Related Milestone ID as the match range.",
+        "Keep the return and match ranges aligned so they describe the same source rows.",
+        "Paste the formula into the current sheet where the first matching source value should appear."
+      ]
+    },
+    "rioIdLookup: missing rioSourceIdColumn": {
+      "instructions": [
+        "Create both cross-sheet references from RIO Log.",
+        "Use  as the return range and Related Milestone ID as the match range.",
+        "Keep the return and match ranges aligned so they describe the same source rows.",
+        "Paste the formula into the current sheet where the first matching source value should appear."
+      ]
+    },
+    "rioIdLookup: missing rioSourceMatchColumn": {
+      "instructions": [
+        "Create both cross-sheet references from RIO Log.",
+        "Use RIO ID as the return range and  as the match range.",
+        "Keep the return and match ranges aligned so they describe the same source rows.",
+        "Paste the formula into the current sheet where the first matching source value should appear."
+      ]
+    },
+    "rioIdLookup: missing rioIdReference": {
+      "instructions": [
+        "Create both cross-sheet references from RIO Log.",
+        "Use RIO ID as the return range and Related Milestone ID as the match range.",
+        "Keep the return and match ranges aligned so they describe the same source rows.",
+        "Paste the formula into the current sheet where the first matching source value should appear."
+      ]
+    },
+    "rioIdLookup: missing rioMatchReference": {
+      "instructions": [
+        "Create both cross-sheet references from RIO Log.",
+        "Use RIO ID as the return range and Related Milestone ID as the match range.",
+        "Keep the return and match ranges aligned so they describe the same source rows.",
+        "Paste the formula into the current sheet where the first matching source value should appear."
+      ]
+    },
+    "rioIdLookup: all fields empty": {
+      "instructions": [
+        "Create both cross-sheet references from .",
+        "Use  as the return range and  as the match range.",
+        "Keep the return and match ranges aligned so they describe the same source rows.",
+        "Paste the formula into the current sheet where the first matching source value should appear."
+      ]
+    },
+    "buildMilestoneId: option combination 1": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "The fixed output pattern is Prefix - Middle Final. A blank prefix cell returns blank."
+      ],
+      "instructions": [
+        "Add this formula to a Text/Number helper column for the combined text.",
+        "Confirm Milestone Number, Location, and Task Name match your sheet exactly.",
+        "Use the combined text in labels, reports, or matching workflows. This formula does not create or guarantee unique IDs."
+      ]
+    },
+    "buildMilestoneId: custom combination 1": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "The fixed output pattern is Prefix - Middle Final. A blank prefix cell returns blank."
+      ],
+      "instructions": [
+        "Add this formula to a Text/Number helper column for the combined text.",
+        "Confirm Custom milestoneNumberColumn \"North\" & caf?, Custom locationColumn \"North\" & caf?, and Custom taskNameColumn \"North\" & caf? match your sheet exactly.",
+        "Use the combined text in labels, reports, or matching workflows. This formula does not create or guarantee unique IDs."
+      ]
+    },
+    "buildMilestoneId: missing milestoneNumberColumn": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "The fixed output pattern is Prefix - Middle Final. A blank prefix cell returns blank."
+      ],
+      "instructions": [
+        "Add this formula to a Text/Number helper column for the combined text.",
+        "Confirm , Location, and Task Name match your sheet exactly.",
+        "Use the combined text in labels, reports, or matching workflows. This formula does not create or guarantee unique IDs."
+      ]
+    },
+    "buildMilestoneId: missing locationColumn": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "The fixed output pattern is Prefix - Middle Final. A blank prefix cell returns blank."
+      ],
+      "instructions": [
+        "Add this formula to a Text/Number helper column for the combined text.",
+        "Confirm Milestone Number, , and Task Name match your sheet exactly.",
+        "Use the combined text in labels, reports, or matching workflows. This formula does not create or guarantee unique IDs."
+      ]
+    },
+    "buildMilestoneId: missing taskNameColumn": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "The fixed output pattern is Prefix - Middle Final. A blank prefix cell returns blank."
+      ],
+      "instructions": [
+        "Add this formula to a Text/Number helper column for the combined text.",
+        "Confirm Milestone Number, Location, and  match your sheet exactly.",
+        "Use the combined text in labels, reports, or matching workflows. This formula does not create or guarantee unique IDs."
+      ]
+    },
+    "buildMilestoneId: all fields empty": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "The fixed output pattern is Prefix - Middle Final. A blank prefix cell returns blank."
+      ],
+      "instructions": [
+        "Add this formula to a Text/Number helper column for the combined text.",
+        "Confirm , , and  match your sheet exactly.",
+        "Use the combined text in labels, reports, or matching workflows. This formula does not create or guarantee unique IDs."
+      ]
+    },
+    "shortenLocationName: option combination 1": {
+      "setupNotes": [
+        "This formula returns the longest of the first 6 space-separated words. Later words are not evaluated.",
+        "When words tie for the longest length, the earliest matching word is returned. This is word extraction, not abbreviation."
+      ],
+      "instructions": [
+        "Add this formula to a Text/Number helper column for the longest-word result.",
+        "Confirm Location contains the source text whose first 6 words should be inspected.",
+        "Use the extracted longest word only where the first-6-words limit fits your text. Blank source text returns blank."
+      ]
+    },
+    "shortenLocationName: custom combination 1": {
+      "setupNotes": [
+        "This formula returns the longest of the first 6 space-separated words. Later words are not evaluated.",
+        "When words tie for the longest length, the earliest matching word is returned. This is word extraction, not abbreviation."
+      ],
+      "instructions": [
+        "Add this formula to a Text/Number helper column for the longest-word result.",
+        "Confirm Custom locationNameColumn \"North\" & caf? contains the source text whose first 6 words should be inspected.",
+        "Use the extracted longest word only where the first-6-words limit fits your text. Blank source text returns blank."
+      ]
+    },
+    "shortenLocationName: missing locationNameColumn": {
+      "setupNotes": [
+        "This formula returns the longest of the first 6 space-separated words. Later words are not evaluated.",
+        "When words tie for the longest length, the earliest matching word is returned. This is word extraction, not abbreviation."
+      ],
+      "instructions": [
+        "Add this formula to a Text/Number helper column for the longest-word result.",
+        "Confirm  contains the source text whose first 6 words should be inspected.",
+        "Use the extracted longest word only where the first-6-words limit fits your text. Blank source text returns blank."
+      ]
+    },
+    "shortenLocationName: all fields empty": {
+      "setupNotes": [
+        "This formula returns the longest of the first 6 space-separated words. Later words are not evaluated.",
+        "When words tie for the longest length, the earliest matching word is returned. This is word extraction, not abbreviation."
+      ],
+      "instructions": [
+        "Add this formula to a Text/Number helper column for the longest-word result.",
+        "Confirm  contains the source text whose first 6 words should be inspected.",
+        "Use the extracted longest word only where the first-6-words limit fits your text. Blank source text returns blank."
+      ]
+    },
+    "countCheckboxValues: option combination 1": {
+      "instructions": [
+        "Create {Hold Kick-off} as a cross-sheet reference to the checkbox column you want to summarize.",
+        "Place the formula in a summary sheet, dashboard source sheet, or sheet summary field.",
+        "Choose checked, unchecked, or both states to match what the checkbox represents in your sheet."
+      ]
+    },
+    "countCheckboxValues: custom combination 1": {
+      "instructions": [
+        "Create {Custom checkboxCountReference \"North\" & caf?} as a cross-sheet reference to the checkbox column you want to summarize.",
+        "Place the formula in a summary sheet, dashboard source sheet, or sheet summary field.",
+        "Choose checked, unchecked, or both states to match what the checkbox represents in your sheet."
+      ]
+    },
+    "countCheckboxValues: option combination 2": {
+      "instructions": [
+        "Create {Hold Kick-off} as a cross-sheet reference to the checkbox column you want to summarize.",
+        "Place the formula in a summary sheet, dashboard source sheet, or sheet summary field.",
+        "Choose checked, unchecked, or both states to match what the checkbox represents in your sheet."
+      ]
+    },
+    "countCheckboxValues: custom combination 2": {
+      "instructions": [
+        "Create {Custom checkboxCountReference \"North\" & caf?} as a cross-sheet reference to the checkbox column you want to summarize.",
+        "Place the formula in a summary sheet, dashboard source sheet, or sheet summary field.",
+        "Choose checked, unchecked, or both states to match what the checkbox represents in your sheet."
+      ]
+    },
+    "countCheckboxValues: option combination 3": {
+      "instructions": [
+        "Create {Hold Kick-off} as a cross-sheet reference to the checkbox column you want to summarize.",
+        "Place the formula in a summary sheet, dashboard source sheet, or sheet summary field.",
+        "Choose checked, unchecked, or both states to match what the checkbox represents in your sheet."
+      ]
+    },
+    "countCheckboxValues: custom combination 3": {
+      "instructions": [
+        "Create {Custom checkboxCountReference \"North\" & caf?} as a cross-sheet reference to the checkbox column you want to summarize.",
+        "Place the formula in a summary sheet, dashboard source sheet, or sheet summary field.",
+        "Choose checked, unchecked, or both states to match what the checkbox represents in your sheet."
+      ]
+    },
+    "countCheckboxValues: missing checkboxCountReference": {
+      "instructions": [
+        "Create {} as a cross-sheet reference to the checkbox column you want to summarize.",
+        "Place the formula in a summary sheet, dashboard source sheet, or sheet summary field.",
+        "Choose checked, unchecked, or both states to match what the checkbox represents in your sheet."
+      ]
+    },
+    "countCheckboxValues: missing checkboxCountType": {
+      "instructions": [
+        "Create {Hold Kick-off} as a cross-sheet reference to the checkbox column you want to summarize.",
+        "Place the formula in a summary sheet, dashboard source sheet, or sheet summary field.",
+        "Choose checked, unchecked, or both states to match what the checkbox represents in your sheet."
+      ]
+    },
+    "countCheckboxValues: all fields empty": {
+      "instructions": [
+        "Create {} as a cross-sheet reference to the checkbox column you want to summarize.",
+        "Place the formula in a summary sheet, dashboard source sheet, or sheet summary field.",
+        "Choose checked, unchecked, or both states to match what the checkbox represents in your sheet."
+      ]
+    },
+    "monthNameSortNumber: option combination 1": {
+      "instructions": [
+        "Add this formula to a Text/Number helper column.",
+        "Confirm First Month Budgeted stores full English month names like January, February, or March.",
+        "Sort reports and dashboard source data by this helper column instead of the month name text."
+      ]
+    },
+    "monthNameSortNumber: custom combination 1": {
+      "instructions": [
+        "Add this formula to a Text/Number helper column.",
+        "Confirm Custom monthNameColumn \"North\" & caf? stores full English month names like January, February, or March.",
+        "Sort reports and dashboard source data by this helper column instead of the month name text."
+      ]
+    },
+    "monthNameSortNumber: missing monthNameColumn": {
+      "instructions": [
+        "Add this formula to a Text/Number helper column.",
+        "Confirm  stores full English month names like January, February, or March.",
+        "Sort reports and dashboard source data by this helper column instead of the month name text."
+      ]
+    },
+    "monthNameSortNumber: all fields empty": {
+      "instructions": [
+        "Add this formula to a Text/Number helper column.",
+        "Confirm  stores full English month names like January, February, or March.",
+        "Sort reports and dashboard source data by this helper column instead of the month name text."
+      ]
+    },
+    "statusIndicator: option combination 1": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "Completed status takes precedence and returns Green. Otherwise, a past finish date or a past start date with not-started status returns Red; all other cases return Yellow."
+      ]
+    },
+    "statusIndicator: custom combination 1": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "Completed status takes precedence and returns Green. Otherwise, a past finish date or a past start date with not-started status returns Red; all other cases return Yellow."
+      ]
+    },
+    "statusIndicator: missing statusStartColumn": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "Completed status takes precedence and returns Green. Otherwise, a past finish date or a past start date with not-started status returns Red; all other cases return Yellow."
+      ]
+    },
+    "statusIndicator: missing statusFinishColumn": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "Completed status takes precedence and returns Green. Otherwise, a past finish date or a past start date with not-started status returns Red; all other cases return Yellow."
+      ]
+    },
+    "statusIndicator: missing statusColumn": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "Completed status takes precedence and returns Green. Otherwise, a past finish date or a past start date with not-started status returns Red; all other cases return Yellow."
+      ]
+    },
+    "statusIndicator: missing notStartedValue": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "Completed status takes precedence and returns Green. Otherwise, a past finish date or a past start date with not-started status returns Red; all other cases return Yellow."
+      ]
+    },
+    "statusIndicator: missing completeValue": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "Completed status takes precedence and returns Green. Otherwise, a past finish date or a past start date with not-started status returns Red; all other cases return Yellow."
+      ]
+    },
+    "statusIndicator: all fields empty": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "Completed status takes precedence and returns Green. Otherwise, a past finish date or a past start date with not-started status returns Red; all other cases return Yellow."
+      ]
+    },
+    "multiLineReportLabel: option combination 1": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "Enable wrap text in Smartsheet if you want the CHAR(10) line breaks to display cleanly.",
+        "All five column names are required. Blank second or third assignee cells omit their lines; the output labels remain Task Lead:, Task Second:, and Task Third:."
+      ],
+      "instructions": [
+        "Add this formula to a Text/Number helper column used by reports or dashboards.",
+        "Confirm Task Name, Location, and task assignment columns are available on the sheet.",
+        "Use this fixed task, location, and three-assignee template where its output labels fit your sheet."
+      ]
+    },
+    "multiLineReportLabel: custom combination 1": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "Enable wrap text in Smartsheet if you want the CHAR(10) line breaks to display cleanly.",
+        "All five column names are required. Blank second or third assignee cells omit their lines; the output labels remain Task Lead:, Task Second:, and Task Third:."
+      ],
+      "instructions": [
+        "Add this formula to a Text/Number helper column used by reports or dashboards.",
+        "Confirm Custom reportTaskColumn \"North\" & caf?, Custom reportLocationColumn \"North\" & caf?, and task assignment columns are available on the sheet.",
+        "Use this fixed task, location, and three-assignee template where its output labels fit your sheet."
+      ]
+    },
+    "multiLineReportLabel: missing reportTaskColumn": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "Enable wrap text in Smartsheet if you want the CHAR(10) line breaks to display cleanly.",
+        "All five column names are required. Blank second or third assignee cells omit their lines; the output labels remain Task Lead:, Task Second:, and Task Third:."
+      ],
+      "instructions": [
+        "Add this formula to a Text/Number helper column used by reports or dashboards.",
+        "Confirm , Location, and task assignment columns are available on the sheet.",
+        "Use this fixed task, location, and three-assignee template where its output labels fit your sheet."
+      ]
+    },
+    "multiLineReportLabel: missing reportLocationColumn": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "Enable wrap text in Smartsheet if you want the CHAR(10) line breaks to display cleanly.",
+        "All five column names are required. Blank second or third assignee cells omit their lines; the output labels remain Task Lead:, Task Second:, and Task Third:."
+      ],
+      "instructions": [
+        "Add this formula to a Text/Number helper column used by reports or dashboards.",
+        "Confirm Task Name, , and task assignment columns are available on the sheet.",
+        "Use this fixed task, location, and three-assignee template where its output labels fit your sheet."
+      ]
+    },
+    "multiLineReportLabel: missing leadOwnerColumn": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "Enable wrap text in Smartsheet if you want the CHAR(10) line breaks to display cleanly.",
+        "All five column names are required. Blank second or third assignee cells omit their lines; the output labels remain Task Lead:, Task Second:, and Task Third:."
+      ],
+      "instructions": [
+        "Add this formula to a Text/Number helper column used by reports or dashboards.",
+        "Confirm Task Name, Location, and task assignment columns are available on the sheet.",
+        "Use this fixed task, location, and three-assignee template where its output labels fit your sheet."
+      ]
+    },
+    "multiLineReportLabel: missing secondaryOwnerColumn": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "Enable wrap text in Smartsheet if you want the CHAR(10) line breaks to display cleanly.",
+        "All five column names are required. Blank second or third assignee cells omit their lines; the output labels remain Task Lead:, Task Second:, and Task Third:."
+      ],
+      "instructions": [
+        "Add this formula to a Text/Number helper column used by reports or dashboards.",
+        "Confirm Task Name, Location, and task assignment columns are available on the sheet.",
+        "Use this fixed task, location, and three-assignee template where its output labels fit your sheet."
+      ]
+    },
+    "multiLineReportLabel: missing tertiaryOwnerColumn": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "Enable wrap text in Smartsheet if you want the CHAR(10) line breaks to display cleanly.",
+        "All five column names are required. Blank second or third assignee cells omit their lines; the output labels remain Task Lead:, Task Second:, and Task Third:."
+      ],
+      "instructions": [
+        "Add this formula to a Text/Number helper column used by reports or dashboards.",
+        "Confirm Task Name, Location, and task assignment columns are available on the sheet.",
+        "Use this fixed task, location, and three-assignee template where its output labels fit your sheet."
+      ]
+    },
+    "multiLineReportLabel: all fields empty": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "Enable wrap text in Smartsheet if you want the CHAR(10) line breaks to display cleanly.",
+        "All five column names are required. Blank second or third assignee cells omit their lines; the output labels remain Task Lead:, Task Second:, and Task Third:."
+      ],
+      "instructions": [
+        "Add this formula to a Text/Number helper column used by reports or dashboards.",
+        "Confirm , , and task assignment columns are available on the sheet.",
+        "Use this fixed task, location, and three-assignee template where its output labels fit your sheet."
+      ]
+    },
+    "spendDateAttribute: option combination 1": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "Only checked rows return a date attribute. The preferred date takes priority over the fallback date.",
+        "Quarter output uses calendar quarters Q1-Q4, not a custom fiscal calendar."
+      ],
+      "instructions": [
+        "Add this formula to a helper column for the selected date attribute.",
+        "Use Spending Milestone to identify the rows to include.",
+        "Use Finish as the preferred date and Start when the preferred date is blank."
+      ]
+    },
+    "spendDateAttribute: custom combination 1": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "Only checked rows return a date attribute. The preferred date takes priority over the fallback date.",
+        "Quarter output uses calendar quarters Q1-Q4, not a custom fiscal calendar."
+      ],
+      "instructions": [
+        "Add this formula to a helper column for the selected date attribute.",
+        "Use Custom spendingMilestoneColumn \"North\" & caf? to identify the rows to include.",
+        "Use Custom spendFinishColumn \"North\" & caf? as the preferred date and Custom spendStartColumn \"North\" & caf? when the preferred date is blank."
+      ]
+    },
+    "spendDateAttribute: option combination 2": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "Only checked rows return a date attribute. The preferred date takes priority over the fallback date.",
+        "Quarter output uses calendar quarters Q1-Q4, not a custom fiscal calendar."
+      ],
+      "instructions": [
+        "Add this formula to a helper column for the selected date attribute.",
+        "Use Spending Milestone to identify the rows to include.",
+        "Use Finish as the preferred date and Start when the preferred date is blank."
+      ]
+    },
+    "spendDateAttribute: custom combination 2": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "Only checked rows return a date attribute. The preferred date takes priority over the fallback date.",
+        "Quarter output uses calendar quarters Q1-Q4, not a custom fiscal calendar."
+      ],
+      "instructions": [
+        "Add this formula to a helper column for the selected date attribute.",
+        "Use Custom spendingMilestoneColumn \"North\" & caf? to identify the rows to include.",
+        "Use Custom spendFinishColumn \"North\" & caf? as the preferred date and Custom spendStartColumn \"North\" & caf? when the preferred date is blank."
+      ]
+    },
+    "spendDateAttribute: option combination 3": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "Only checked rows return a date attribute. The preferred date takes priority over the fallback date.",
+        "Quarter output uses calendar quarters Q1-Q4, not a custom fiscal calendar."
+      ],
+      "instructions": [
+        "Add this formula to a helper column for the selected date attribute.",
+        "Use Spending Milestone to identify the rows to include.",
+        "Use Finish as the preferred date and Start when the preferred date is blank."
+      ]
+    },
+    "spendDateAttribute: custom combination 3": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "Only checked rows return a date attribute. The preferred date takes priority over the fallback date.",
+        "Quarter output uses calendar quarters Q1-Q4, not a custom fiscal calendar."
+      ],
+      "instructions": [
+        "Add this formula to a helper column for the selected date attribute.",
+        "Use Custom spendingMilestoneColumn \"North\" & caf? to identify the rows to include.",
+        "Use Custom spendFinishColumn \"North\" & caf? as the preferred date and Custom spendStartColumn \"North\" & caf? when the preferred date is blank."
+      ]
+    },
+    "spendDateAttribute: missing spendingMilestoneColumn": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "Only checked rows return a date attribute. The preferred date takes priority over the fallback date.",
+        "Quarter output uses calendar quarters Q1-Q4, not a custom fiscal calendar."
+      ],
+      "instructions": [
+        "Add this formula to a helper column for the selected date attribute.",
+        "Use  to identify the rows to include.",
+        "Use Finish as the preferred date and Start when the preferred date is blank."
+      ]
+    },
+    "spendDateAttribute: missing spendStartColumn": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "Only checked rows return a date attribute. The preferred date takes priority over the fallback date.",
+        "Quarter output uses calendar quarters Q1-Q4, not a custom fiscal calendar."
+      ],
+      "instructions": [
+        "Add this formula to a helper column for the selected date attribute.",
+        "Use Spending Milestone to identify the rows to include.",
+        "Use Finish as the preferred date and  when the preferred date is blank."
+      ]
+    },
+    "spendDateAttribute: missing spendFinishColumn": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "Only checked rows return a date attribute. The preferred date takes priority over the fallback date.",
+        "Quarter output uses calendar quarters Q1-Q4, not a custom fiscal calendar."
+      ],
+      "instructions": [
+        "Add this formula to a helper column for the selected date attribute.",
+        "Use Spending Milestone to identify the rows to include.",
+        "Use  as the preferred date and Start when the preferred date is blank."
+      ]
+    },
+    "spendDateAttribute: missing spendAttribute": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "Only checked rows return a date attribute. The preferred date takes priority over the fallback date.",
+        "Quarter output uses calendar quarters Q1-Q4, not a custom fiscal calendar."
+      ],
+      "instructions": [
+        "Add this formula to a helper column for the selected date attribute.",
+        "Use Spending Milestone to identify the rows to include.",
+        "Use Finish as the preferred date and Start when the preferred date is blank."
+      ]
+    },
+    "spendDateAttribute: all fields empty": {
+      "setupNotes": [
+        "This formula only uses columns from the current sheet.",
+        "Only checked rows return a date attribute. The preferred date takes priority over the fallback date.",
+        "Quarter output uses calendar quarters Q1-Q4, not a custom fiscal calendar."
+      ],
+      "instructions": [
+        "Add this formula to a helper column for the selected date attribute.",
+        "Use  to identify the rows to include.",
+        "Use  as the preferred date and  when the preferred date is blank."
+      ]
+    },
+    "countRowsMultipleCriteria: option combination 1": {
+      "setupNotes": [
+        "Create one cross-sheet reference for each criteria column.",
+        "Both criteria must match. Enter text values to match; the builder quotes them as text rather than accepting comparison expressions."
+      ]
+    },
+    "countRowsMultipleCriteria: custom combination 1": {
+      "setupNotes": [
+        "Create one cross-sheet reference for each criteria column.",
+        "Both criteria must match. Enter text values to match; the builder quotes them as text rather than accepting comparison expressions."
+      ]
+    },
+    "countRowsMultipleCriteria: missing countCriteriaReferenceOne": {
+      "setupNotes": [
+        "Create one cross-sheet reference for each criteria column.",
+        "Both criteria must match. Enter text values to match; the builder quotes them as text rather than accepting comparison expressions."
+      ]
+    },
+    "countRowsMultipleCriteria: missing countCriteriaValueOne": {
+      "setupNotes": [
+        "Create one cross-sheet reference for each criteria column.",
+        "Both criteria must match. Enter text values to match; the builder quotes them as text rather than accepting comparison expressions."
+      ]
+    },
+    "countRowsMultipleCriteria: missing countCriteriaReferenceTwo": {
+      "setupNotes": [
+        "Create one cross-sheet reference for each criteria column.",
+        "Both criteria must match. Enter text values to match; the builder quotes them as text rather than accepting comparison expressions."
+      ]
+    },
+    "countRowsMultipleCriteria: missing countCriteriaValueTwo": {
+      "setupNotes": [
+        "Create one cross-sheet reference for each criteria column.",
+        "Both criteria must match. Enter text values to match; the builder quotes them as text rather than accepting comparison expressions."
+      ]
+    },
+    "countRowsMultipleCriteria: all fields empty": {
+      "setupNotes": [
+        "Create one cross-sheet reference for each criteria column.",
+        "Both criteria must match. Enter text values to match; the builder quotes them as text rather than accepting comparison expressions."
+      ]
+    },
+    "sumValuesMultipleCriteria: option combination 1": {
+      "setupNotes": [
+        "The source value reference should point to a numeric column.",
+        "Both criteria must match. Criteria values are quoted as text; comparison expressions are not a builder option."
+      ]
+    },
+    "sumValuesMultipleCriteria: custom combination 1": {
+      "setupNotes": [
+        "The source value reference should point to a numeric column.",
+        "Both criteria must match. Criteria values are quoted as text; comparison expressions are not a builder option."
+      ]
+    },
+    "sumValuesMultipleCriteria: missing sumValueReference": {
+      "setupNotes": [
+        "The source value reference should point to a numeric column.",
+        "Both criteria must match. Criteria values are quoted as text; comparison expressions are not a builder option."
+      ]
+    },
+    "sumValuesMultipleCriteria: missing sumCriteriaReferenceOne": {
+      "setupNotes": [
+        "The source value reference should point to a numeric column.",
+        "Both criteria must match. Criteria values are quoted as text; comparison expressions are not a builder option."
+      ]
+    },
+    "sumValuesMultipleCriteria: missing sumCriteriaValueOne": {
+      "setupNotes": [
+        "The source value reference should point to a numeric column.",
+        "Both criteria must match. Criteria values are quoted as text; comparison expressions are not a builder option."
+      ]
+    },
+    "sumValuesMultipleCriteria: missing sumCriteriaReferenceTwo": {
+      "setupNotes": [
+        "The source value reference should point to a numeric column.",
+        "Both criteria must match. Criteria values are quoted as text; comparison expressions are not a builder option."
+      ]
+    },
+    "sumValuesMultipleCriteria: missing sumCriteriaValueTwo": {
+      "setupNotes": [
+        "The source value reference should point to a numeric column.",
+        "Both criteria must match. Criteria values are quoted as text; comparison expressions are not a builder option."
+      ]
+    },
+    "sumValuesMultipleCriteria: all fields empty": {
+      "setupNotes": [
+        "The source value reference should point to a numeric column.",
+        "Both criteria must match. Criteria values are quoted as text; comparison expressions are not a builder option."
+      ]
+    },
+    "averageValuesMultipleCriteria: option combination 1": {
+      "setupNotes": [
+        "The source value reference should point to a numeric column.",
+        "Averages the values collected from rows where both criteria match. Criteria values are quoted as text; comparison expressions are not a builder option."
+      ]
+    },
+    "averageValuesMultipleCriteria: custom combination 1": {
+      "setupNotes": [
+        "The source value reference should point to a numeric column.",
+        "Averages the values collected from rows where both criteria match. Criteria values are quoted as text; comparison expressions are not a builder option."
+      ]
+    },
+    "averageValuesMultipleCriteria: missing averageValueReference": {
+      "setupNotes": [
+        "The source value reference should point to a numeric column.",
+        "Averages the values collected from rows where both criteria match. Criteria values are quoted as text; comparison expressions are not a builder option."
+      ]
+    },
+    "averageValuesMultipleCriteria: missing averageCriteriaReferenceOne": {
+      "setupNotes": [
+        "The source value reference should point to a numeric column.",
+        "Averages the values collected from rows where both criteria match. Criteria values are quoted as text; comparison expressions are not a builder option."
+      ]
+    },
+    "averageValuesMultipleCriteria: missing averageCriteriaValueOne": {
+      "setupNotes": [
+        "The source value reference should point to a numeric column.",
+        "Averages the values collected from rows where both criteria match. Criteria values are quoted as text; comparison expressions are not a builder option."
+      ]
+    },
+    "averageValuesMultipleCriteria: missing averageCriteriaReferenceTwo": {
+      "setupNotes": [
+        "The source value reference should point to a numeric column.",
+        "Averages the values collected from rows where both criteria match. Criteria values are quoted as text; comparison expressions are not a builder option."
+      ]
+    },
+    "averageValuesMultipleCriteria: missing averageCriteriaValueTwo": {
+      "setupNotes": [
+        "The source value reference should point to a numeric column.",
+        "Averages the values collected from rows where both criteria match. Criteria values are quoted as text; comparison expressions are not a builder option."
+      ]
+    },
+    "averageValuesMultipleCriteria: all fields empty": {
+      "setupNotes": [
+        "The source value reference should point to a numeric column.",
+        "Averages the values collected from rows where both criteria match. Criteria values are quoted as text; comparison expressions are not a builder option."
+      ]
+    },
+    "uniqueCountCriteria: option combination 1": {
+      "setupNotes": [
+        "The unique value reference should point to the ID, name, owner, location, or other value to count once.",
+        "Both criteria must match. Criteria values are quoted as text; comparison expressions are not a builder option."
+      ],
+      "instructions": [
+        "Use this when a source sheet may contain repeated record IDs, owners, locations, or other values to count once.",
+        "Add it to a dashboard or summary metric.",
+        "Confirm the unique value reference contains consistent naming."
+      ]
+    },
+    "uniqueCountCriteria: custom combination 1": {
+      "setupNotes": [
+        "The unique value reference should point to the ID, name, owner, location, or other value to count once.",
+        "Both criteria must match. Criteria values are quoted as text; comparison expressions are not a builder option."
+      ],
+      "instructions": [
+        "Use this when a source sheet may contain repeated record IDs, owners, locations, or other values to count once.",
+        "Add it to a dashboard or summary metric.",
+        "Confirm the unique value reference contains consistent naming."
+      ]
+    },
+    "uniqueCountCriteria: missing uniqueValueReference": {
+      "setupNotes": [
+        "The unique value reference should point to the ID, name, owner, location, or other value to count once.",
+        "Both criteria must match. Criteria values are quoted as text; comparison expressions are not a builder option."
+      ],
+      "instructions": [
+        "Use this when a source sheet may contain repeated record IDs, owners, locations, or other values to count once.",
+        "Add it to a dashboard or summary metric.",
+        "Confirm the unique value reference contains consistent naming."
+      ]
+    },
+    "uniqueCountCriteria: missing uniqueCriteriaReferenceOne": {
+      "setupNotes": [
+        "The unique value reference should point to the ID, name, owner, location, or other value to count once.",
+        "Both criteria must match. Criteria values are quoted as text; comparison expressions are not a builder option."
+      ],
+      "instructions": [
+        "Use this when a source sheet may contain repeated record IDs, owners, locations, or other values to count once.",
+        "Add it to a dashboard or summary metric.",
+        "Confirm the unique value reference contains consistent naming."
+      ]
+    },
+    "uniqueCountCriteria: missing uniqueCriteriaValueOne": {
+      "setupNotes": [
+        "The unique value reference should point to the ID, name, owner, location, or other value to count once.",
+        "Both criteria must match. Criteria values are quoted as text; comparison expressions are not a builder option."
+      ],
+      "instructions": [
+        "Use this when a source sheet may contain repeated record IDs, owners, locations, or other values to count once.",
+        "Add it to a dashboard or summary metric.",
+        "Confirm the unique value reference contains consistent naming."
+      ]
+    },
+    "uniqueCountCriteria: missing uniqueCriteriaReferenceTwo": {
+      "setupNotes": [
+        "The unique value reference should point to the ID, name, owner, location, or other value to count once.",
+        "Both criteria must match. Criteria values are quoted as text; comparison expressions are not a builder option."
+      ],
+      "instructions": [
+        "Use this when a source sheet may contain repeated record IDs, owners, locations, or other values to count once.",
+        "Add it to a dashboard or summary metric.",
+        "Confirm the unique value reference contains consistent naming."
+      ]
+    },
+    "uniqueCountCriteria: missing uniqueCriteriaValueTwo": {
+      "setupNotes": [
+        "The unique value reference should point to the ID, name, owner, location, or other value to count once.",
+        "Both criteria must match. Criteria values are quoted as text; comparison expressions are not a builder option."
+      ],
+      "instructions": [
+        "Use this when a source sheet may contain repeated record IDs, owners, locations, or other values to count once.",
+        "Add it to a dashboard or summary metric.",
+        "Confirm the unique value reference contains consistent naming."
+      ]
+    },
+    "uniqueCountCriteria: all fields empty": {
+      "setupNotes": [
+        "The unique value reference should point to the ID, name, owner, location, or other value to count once.",
+        "Both criteria must match. Criteria values are quoted as text; comparison expressions are not a builder option."
+      ],
+      "instructions": [
+        "Use this when a source sheet may contain repeated record IDs, owners, locations, or other values to count once.",
+        "Add it to a dashboard or summary metric.",
+        "Confirm the unique value reference contains consistent naming."
+      ]
+    },
+    "readyToStartBasedOnPredecessors: option combination 1": {
+      "setupNotes": [
+        "This formula assumes another column already provides the number of open predecessors.",
+        "It does not calculate predecessor relationships. Complete status takes precedence; otherwise, zero open predecessors returns the ready value and any other count returns the blocked value."
+      ]
+    },
+    "readyToStartBasedOnPredecessors: custom combination 1": {
+      "setupNotes": [
+        "This formula assumes another column already provides the number of open predecessors.",
+        "It does not calculate predecessor relationships. Complete status takes precedence; otherwise, zero open predecessors returns the ready value and any other count returns the blocked value."
+      ]
+    },
+    "readyToStartBasedOnPredecessors: missing openPredecessorCountColumn": {
+      "setupNotes": [
+        "This formula assumes another column already provides the number of open predecessors.",
+        "It does not calculate predecessor relationships. Complete status takes precedence; otherwise, zero open predecessors returns the ready value and any other count returns the blocked value."
+      ]
+    },
+    "readyToStartBasedOnPredecessors: missing readinessStatusColumn": {
+      "setupNotes": [
+        "This formula assumes another column already provides the number of open predecessors.",
+        "It does not calculate predecessor relationships. Complete status takes precedence; otherwise, zero open predecessors returns the ready value and any other count returns the blocked value."
+      ]
+    },
+    "readyToStartBasedOnPredecessors: missing readinessCompleteStatus": {
+      "setupNotes": [
+        "This formula assumes another column already provides the number of open predecessors.",
+        "It does not calculate predecessor relationships. Complete status takes precedence; otherwise, zero open predecessors returns the ready value and any other count returns the blocked value."
+      ]
+    },
+    "readyToStartBasedOnPredecessors: missing readinessReadyValue": {
+      "setupNotes": [
+        "This formula assumes another column already provides the number of open predecessors.",
+        "It does not calculate predecessor relationships. Complete status takes precedence; otherwise, zero open predecessors returns the ready value and any other count returns the blocked value."
+      ]
+    },
+    "readyToStartBasedOnPredecessors: missing readinessBlockedValue": {
+      "setupNotes": [
+        "This formula assumes another column already provides the number of open predecessors.",
+        "It does not calculate predecessor relationships. Complete status takes precedence; otherwise, zero open predecessors returns the ready value and any other count returns the blocked value."
+      ]
+    },
+    "readyToStartBasedOnPredecessors: missing readinessCompleteValue": {
+      "setupNotes": [
+        "This formula assumes another column already provides the number of open predecessors.",
+        "It does not calculate predecessor relationships. Complete status takes precedence; otherwise, zero open predecessors returns the ready value and any other count returns the blocked value."
+      ]
+    },
+    "readyToStartBasedOnPredecessors: all fields empty": {
+      "setupNotes": [
+        "This formula assumes another column already provides the number of open predecessors.",
+        "It does not calculate predecessor relationships. Complete status takes precedence; otherwise, zero open predecessors returns the ready value and any other count returns the blocked value."
+      ]
+    }
+  }
+}

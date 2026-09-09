@@ -3,13 +3,13 @@ const test = require("node:test");
 const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
-const fixtures = require("./fixtures/formula-builder-cases.json");
+const { currentLegacyFixtures: fixtures } = require("./helpers/formula-expectations");
 const { loadFormulaCore, loadFormulaScript, coreScripts } = require("./helpers/load-formula-core");
 const plain = value => JSON.parse(JSON.stringify(value));
 const core = loadFormulaCore();
 
-test("catalog preserves all original metadata and valid defaults in dropdown order", () => {
-  assert.deepEqual(plain(Object.values(core.catalog).map(({ validationRule, ...entry }) => entry)), fixtures.catalog);
+test("catalog matches reviewed generalized metadata and valid defaults in dropdown order", () => {
+  assert.deepEqual(plain(Object.values(core.catalog)), fixtures.catalog);
   const fieldIds = new Set();
   let combinations = 0;
   for (const [id, config] of Object.entries(core.catalog)) {
