@@ -1,0 +1,79 @@
+:root {
+  color-scheme: light;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #202b3b;
+  background: #fff;
+  --muted: #576477;
+  --accent: #2454bb;
+  --border: #c4cbd5;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; height: 100vh; height: 100dvh; display: flex; flex-direction: column; }
+.app-header { padding: 12px 16px; border-bottom: 1px solid #e4e8ee; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; }
+.app-name { font-weight: 650; }
+.app-context { color: var(--muted); font-size: 12px; }
+main, .find-view, .build-view { flex: 1; min-height: 0; min-width: 0; display: flex; flex-direction: column; }
+.find-controls { padding: 20px 16px 0; }
+h1 { margin: 0 0 8px; font-size: 22px; font-weight: 650; line-height: 1.25; letter-spacing: -.02em; overflow-wrap: anywhere; }
+h2 { font-size: 16px; margin: 20px 0 6px; }
+h3 { font-size: 14px; margin: 16px 0 6px; }
+p { margin: 8px 0; }
+.muted, .intro { color: var(--muted); }
+.intro { margin: 0 0 20px; }
+label { display: block; font-weight: 600; margin: 12px 0 6px; }
+button, input, select, textarea { font: inherit; }
+input, select, textarea { width: 100%; min-width: 0; color: inherit; background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; }
+input, select { min-height: 38px; }
+button { cursor: pointer; color: inherit; }
+button:disabled { cursor: default; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+#build-title:focus { outline: 2px solid var(--accent); outline-offset: 3px; }
+[aria-invalid="true"] { border-color: #ac2937; }
+.results-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 10px 0; }
+.results-toolbar p { margin: 0; }
+.text-button { padding: 6px 2px; border: 0; background: transparent; color: var(--accent); text-align: left; }
+.text-button:hover:not(:disabled) { text-decoration: underline; }
+.text-button:disabled { color: var(--muted); opacity: .7; }
+.results-scroll, .builder-scroll { overflow-y: auto; flex: 1; min-height: 0; scrollbar-gutter: stable; }
+.results-scroll { padding: 0 12px 16px; }
+.results { padding: 0; margin: 0; list-style: none; }
+.formula-choice { display: block; width: 100%; padding: 13px 8px; border: 0; border-radius: 6px; background: transparent; text-align: left; overflow-wrap: anywhere; }
+.formula-choice:hover { background: #f2f5fa; }
+.formula-choice:focus-visible { outline-offset: -3px; }
+.choice-title { display: block; font-weight: 600; margin-bottom: 4px; }
+.choice-description { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--muted); font-size: 13px; }
+.empty-state { padding: 12px 8px; }
+.secondary-button { border: 1px solid var(--border); border-radius: 6px; background: #fff; padding: 8px 12px; }
+.builder-scroll { padding: 12px 16px 24px; }
+.back-button { margin-bottom: 12px; }
+.eyebrow { color: var(--muted); font-size: 12px; margin: 0 0 6px; }
+details { margin: 12px 0; }
+summary { cursor: pointer; color: var(--accent); padding: 4px 0; width: fit-content; max-width: 100%; }
+details p, details li { color: var(--muted); overflow-wrap: anywhere; }
+ul, ol { padding-left: 22px; }
+li + li { margin-top: 6px; }
+.results li + li { margin-top: 0; }
+.field { margin-top: 16px; }
+.field-help { font-size: 12px; margin: 4px 0 0; }
+.field-help summary { color: var(--muted); }
+.field-error, .validation { color: #a12230; font-size: 13px; }
+.validation:empty { margin: 0; }
+.output-section { margin-top: 24px; }
+#formula-output { display: block; font: 12px/1.6 ui-monospace, SFMono-Regular, Consolas, monospace; background: #f7f8fb; resize: vertical; min-height: 112px; max-height: 320px; white-space: pre-wrap; overflow-wrap: anywhere; }
+#reference-notice { font-size: 13px; margin-top: 6px; }
+.copy-bar { padding: 12px 16px 8px; border-top: 1px solid #e4e8ee; background: #fff; }
+.primary-button { width: 100%; min-height: 42px; border: 0; border-radius: 6px; padding: 10px 14px; background: var(--accent); color: #fff; font-weight: 600; }
+.primary-button:hover:not(:disabled) { background: #1b4195; }
+.primary-button:disabled { background: #e1e6ef; color: #576477; }
+.copy-status { min-height: 18px; font-size: 12px; margin: 5px 0 0; overflow-wrap: anywhere; }
+@media (max-height: 500px) {
+  body { height: auto; min-height: 100vh; }
+  .results-scroll, .builder-scroll { overflow-y: visible; }
+}
+@media (forced-colors: active) {
+  .primary-button, .formula-choice { border: 1px solid ButtonText; }
+}

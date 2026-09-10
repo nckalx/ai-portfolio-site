@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "Formula Builder for Smartsheet",
+  "version": "0.1.0",
+  "description": "Find, customize, and copy Smartsheet formulas in your side panel. Works locally.",
+  "minimum_chrome_version": "114",
+  "permissions": ["sidePanel"],
+  "background": { "service_worker": "service-worker.js" },
+  "action": { "default_title": "Open Formula Builder" },
+  "side_panel": { "default_path": "sidepanel.html" },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  }
+}

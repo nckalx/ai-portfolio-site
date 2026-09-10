@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Formula Builder for Smartsheet</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <header class="app-header"><span class="app-name">Formula Builder</span><span class="app-context">for Smartsheet</span></header>
+  <main>
+    <section id="find-view" class="find-view" aria-labelledby="find-title">
+      <div class="find-controls">
+        <h1 id="find-title">Find a formula</h1>
+        <p class="muted intro">Choose a starting point. Make it yours.</p>
+        <label for="search">Search formulas</label>
+        <input id="search" type="search" placeholder="Try lookup, dates, or count" autocomplete="off" spellcheck="false">
+        <label for="category">Category</label>
+        <select id="category"><option value="">All categories</option></select>
+        <div class="results-toolbar">
+          <p id="result-count" class="muted" role="status" aria-live="polite" aria-atomic="true"></p>
+          <button id="clear-filters" type="button" class="text-button">Clear filters</button>
+        </div>
+      </div>
+      <div id="results-scroll" class="results-scroll">
+        <ul id="results" class="results" aria-label="Formulas"></ul>
+        <div id="empty-state" class="empty-state" hidden>
+          <h2>No matching formulas</h2>
+          <p class="muted">Try a broader search or clear your filters.</p>
+          <button id="empty-clear" type="button" class="secondary-button">Clear filters</button>
+        </div>
+      </div>
+    </section>
+    <section id="build-view" class="build-view" aria-labelledby="build-title" hidden>
+      <div id="builder-scroll" class="builder-scroll">
+        <button id="back" type="button" class="text-button back-button">&#8592; All formulas</button>
+        <p id="build-category" class="eyebrow"></p>
+        <h1 id="build-title" tabindex="-1"></h1>
+        <details id="explanation-details">
+          <summary>What this formula does</summary>
+          <p id="explanation"></p>
+        </details>
+        <form id="fields-form" novalidate>
+          <h2>Configure</h2>
+          <p class="muted">Use your sheet's column names. All fields are required.</p>
+          <div id="fields"></div>
+        </form>
+        <section class="output-section" aria-labelledby="output-label">
+          <label id="output-label" for="formula-output">Your formula</label>
+          <p id="validation" class="validation" role="status" aria-live="polite" aria-atomic="true"></p>
+          <textarea id="formula-output" rows="5" readonly spellcheck="false" aria-describedby="validation" placeholder="Complete the fields above to see your formula."></textarea>
+          <button id="reference-notice" type="button" class="text-button" hidden></button>
+        </section>
+        <details id="setup-details">
+          <summary id="setup-summary">Setup &amp; references</summary>
+          <ul id="setup-notes"></ul>
+          <div id="reference-section" hidden>
+            <h3>Cross-sheet references</h3>
+            <p>Create these named references in Smartsheet before using the formula.</p>
+            <ul id="references"></ul>
+          </div>
+        </details>
+        <details id="instructions-details">
+          <summary>How to use it</summary>
+          <ol id="instructions"></ol>
+        </details>
+      </div>
+      <footer class="copy-bar">
+        <button id="copy" type="button" class="primary-button" disabled>Copy Formula</button>
+        <p id="copy-status" class="copy-status" role="status" aria-live="polite" aria-atomic="true"></p>
+      </footer>
+    </section>
+  </main>
+  <script src="core/formula-catalog.js"></script>
+  <script src="core/formula-utils.js"></script>
+  <script src="core/formula-validation.js"></script>
+  <script src="core/formula-guidance.js"></script>
+  <script src="core/formula-engine.js"></script>
+  <script src="formula-discovery.js"></script>
+  <script src="sidepanel.js"></script>
+</body>
+</html>
