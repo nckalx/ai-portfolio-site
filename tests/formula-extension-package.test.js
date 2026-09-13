@@ -20,9 +20,10 @@ test("copy-only package has exactly the allowlisted files and byte-identical can
   const directory = temporaryPackage(t);
   assert.equal(packageExtension(directory), directory);
   const files = fs.readdirSync(directory, { recursive: true }).filter(file => fs.statSync(path.join(directory, file)).isFile()).map(file => file.replaceAll("\\", "/")).sort();
-  const expected = ["manifest.json", "service-worker.js", "sidepanel.html", "sidepanel.css", "sidepanel.js", "formula-discovery.js",
-    ...[16, 32, 48, 128].map(size => `icons/icon-${size}.png`), ...coreScripts.map(name => `core/${name}.js`)].sort();
+  const expected = ["manifest.json", "service-worker.js", "sidepanel.html", "sidepanel.css", "sidepanel.js", "formula-discovery.js", "theme.js",
+    ...[16, 24, 32, 48, 128].map(size => `icons/icon-${size}.png`), ...coreScripts.map(name => `core/${name}.js`)].sort();
   assert.deepEqual(files, expected);
+  assert.ok(!files.some(file => file.includes("source/") || file.includes("master")));
   for (const file of packageFiles) {
     assert.ok(fs.readFileSync(path.join(directory, file.target)).equals(fs.readFileSync(path.join(root, file.source))), file.target);
   }
@@ -44,28 +45,42 @@ test("packager refuses unexpected output entries without deleting or overwriting
   assert.equal(fs.existsSync(path.join(directory, "manifest.json")), false);
 });
 
-test("manifest uses only sidePanel permission and resolves all local resources under the package", t => {
+test("manifest uses only sidePanel and storage permissions and resolves all local resources under the package", t => {
   const directory = packageExtension(temporaryPackage(t));
   const manifest = JSON.parse(fs.readFileSync(path.join(directory, "manifest.json"), "utf8"));
   assert.equal(manifest.manifest_version, 3);
-  assert.deepEqual(manifest.permissions, ["sidePanel"]);
+  assert.deepEqual(manifest.permissions, ["sidePanel", "storage"]);
   assert.equal(manifest.minimum_chrome_version, "114");
   assert.deepEqual(Object.keys(manifest).sort(), ["manifest_version", "name", "version", "description", "minimum_chrome_version", "permissions", "background", "action", "side_panel", "icons"].sort());
-  assert.deepEqual(Object.keys(manifest.action), ["default_title"]);
+  assert.deepEqual(manifest.action, {
+    default_title: "Open Formula Builder",
+    default_icon: {
+      "16": "icons/icon-16.png",
+      "24": "icons/icon-24.png",
+      "32": "icons/icon-32.png"
+    }
+  });
+  assert.deepEqual(manifest.icons, {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  });
   assert.deepEqual(manifest.background, { service_worker: "service-worker.js" });
   assert.deepEqual(manifest.side_panel, { default_path: "sidepanel.html" });
   const html = fs.readFileSync(path.join(directory, manifest.side_panel.default_path), "utf8");
   const scripts = [...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map(match => match[1]);
-  assert.deepEqual(scripts, [...coreScripts.map(name => `core/${name}.js`), "formula-discovery.js", "sidepanel.js"]);
+  assert.deepEqual(scripts, ["theme.js", ...coreScripts.map(name => `core/${name}.js`), "formula-discovery.js", "sidepanel.js"]);
+  assert.ok(html.indexOf('<script src="theme.js">') < html.indexOf("<body>"));
   assert.equal((html.match(/<script/g) || []).length, scripts.length);
   assert.doesNotMatch(html, /\son\w+=|<style\b|style=|https?:\/\//i);
   const resources = [...scripts, ...html.matchAll(/href="([^"]+)"/g)].map(value => typeof value === "string" ? value : value[1]);
-  resources.push(manifest.background.service_worker, ...Object.values(manifest.icons));
+  resources.push(manifest.background.service_worker, ...Object.values(manifest.icons), ...Object.values(manifest.action.default_icon));
   for (const resource of resources) {
     assert.ok(!resource.includes("..") && !path.isAbsolute(resource));
     assert.ok(fs.statSync(path.join(directory, resource)).isFile(), resource);
   }
-  for (const [size, file] of Object.entries(manifest.icons)) {
+  for (const [size, file] of Object.entries({ ...manifest.icons, ...manifest.action.default_icon })) {
     const png = fs.readFileSync(path.join(directory, file));
     assert.equal(png.subarray(0, 8).toString("hex"), "89504e470d0a1a0a");
     assert.equal(png.readUInt32BE(16), Number(size));

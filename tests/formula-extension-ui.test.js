@@ -5,6 +5,23 @@ const { generalizedFixtures, currentLegacyFixtures } = require("./helpers/formul
 const excluded = new Set(["multiLineReportLabel", "rioIdLookup"]);
 const tick = () => new Promise(resolve => setImmediate(resolve));
 
+test("polished discovery removes internal branding and exposes named native result buttons", () => {
+  const { get, choose, choices } = setupExtension();
+  assert.equal(get("find-title").textContent, "Find a formula");
+  assert.equal(get("theme-toggle").tagName, "button");
+  for (const button of choices()) {
+    assert.equal(button.tagName, "button");
+    assert.equal(button.type, "button");
+    assert.ok(get(button.getAttribute("aria-labelledby")).textContent);
+    assert.ok(get(button.getAttribute("aria-describedby")).textContent);
+    const chevron = button.children.find(node => node.className === "choice-chevron");
+    assert.equal(chevron.getAttribute("aria-hidden"), "true");
+  }
+  choose("appendFinishDateLabel");
+  assert.equal(get("build-view").hidden, false);
+  assert.equal(get("find-view").hidden, true);
+});
+
 test("panel starts in discovery with canonical categories and exactly 24 choices", () => {
   const { get, core, choices, choose } = setupExtension();
   assert.equal(get("find-view").hidden, false);

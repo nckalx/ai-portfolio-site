@@ -5,8 +5,14 @@ const { loadFormulaCore } = require("./load-formula-core");
 
 // Small DOM contract double, not a layout/accessibility emulator. Build the tree
 // from the real shell so renamed/missing elements and hidden views are tested.
-function setupExtension(navigator = {}) {
+function setupExtension(navigator = {}, theme = {}) {
   let document;
+  const storageWrites = [];
+  const mediaListeners = [];
+  const media = {
+    matches: theme.systemDark || false,
+    addEventListener(name, callback) { if (name === "change") mediaListeners.push(callback); }
+  };
   class Element {
     constructor(tagName) {
       this.tagName = tagName;
@@ -22,6 +28,7 @@ function setupExtension(navigator = {}) {
     }
     appendChild(child) { child.parent = this; this.children.push(child); return child; }
     setAttribute(name, value) { this.attributes[name] = value; }
+    getAttribute(name) { return this.attributes[name] ?? null; }
     addEventListener(name, callback) { (this.listeners[name] ||= []).push(callback); }
     dispatch(name, event = {}) {
       if (name === "click" && this.disabled) return;
@@ -38,6 +45,9 @@ function setupExtension(navigator = {}) {
   const root = new Element("root");
   document = {
     activeElement: null,
+    readyState: "loading",
+    listeners: {},
+    addEventListener(name, callback) { (this.listeners[name] ||= []).push(callback); },
     createElement: tag => new Element(tag),
     getElementById(id) {
       function find(node) {
@@ -65,20 +75,35 @@ function setupExtension(navigator = {}) {
     stack.at(-1).appendChild(node);
     if (!["meta", "link", "input"].includes(tag)) stack.push(node);
   }
-  const context = vm.createContext({ document, navigator });
+  document.documentElement = root.children.find(node => node.tagName === "html");
+  const context = vm.createContext({ document, navigator, matchMedia: () => media,
+    chrome: { storage: { local: {
+      get: theme.get || (async () => ({ theme: theme.saved })),
+      set: theme.set || (async value => { storageWrites.push(JSON.parse(JSON.stringify(value))); })
+    } } }
+  });
+  vm.runInContext(fs.readFileSync(path.join(directory, "theme.js"), "utf8"), context, { filename: "theme.js" });
   const core = loadFormulaCore(context);
+  let generationCalls = 0;
+  const generate = core.generateFormula;
+  core.generateFormula = (...args) => { generationCalls++; return generate(...args); };
   for (const file of ["formula-discovery.js", "sidepanel.js"]) {
     vm.runInContext(fs.readFileSync(path.join(directory, file), "utf8"), context, { filename: file });
   }
+  document.readyState = "complete";
+  for (const callback of document.listeners.DOMContentLoaded || []) callback();
   const get = id => document.getElementById(id);
   const choices = () => get("results").children.map(item => item.children[0]);
   const choose = id => {
-    const button = choices().find(button => button.children[0].textContent === core.catalog[id].label);
+    const button = choices().find(button => get(button.getAttribute("aria-labelledby"))?.textContent === core.catalog[id].label);
     if (!button) throw new Error(`Formula not discoverable: ${id}`);
     button.dispatch("click");
     return button;
   };
-  return { document, core, get, choose, choices };
+  return { document, core, get, choose, choices, storageWrites,
+    generationCount: () => generationCalls,
+    changeSystem(dark) { media.matches = dark; mediaListeners.forEach(callback => callback({ matches: dark })); }
+  };
 }
 
 module.exports = { setupExtension };

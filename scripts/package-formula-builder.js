@@ -5,8 +5,8 @@ const root = path.resolve(__dirname, "..");
 const outputDirectory = path.join(root, "dist/formula-builder");
 const extensionFiles = [
   "manifest.json", "service-worker.js", "sidepanel.html", "sidepanel.css",
-  "sidepanel.js", "formula-discovery.js",
-  "icons/icon-16.png", "icons/icon-32.png", "icons/icon-48.png", "icons/icon-128.png"
+  "sidepanel.js", "formula-discovery.js", "theme.js",
+  "icons/icon-16.png", "icons/icon-24.png", "icons/icon-32.png", "icons/icon-48.png", "icons/icon-128.png"
 ];
 const coreFiles = [
   "formula-catalog.js", "formula-utils.js", "formula-validation.js",

@@ -5,14 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Formula Builder for Smartsheet</title>
   <link rel="stylesheet" href="sidepanel.css">
+  <script src="theme.js"></script>
 </head>
 <body>
-  <header class="app-header"><span class="app-name">Formula Builder</span><span class="app-context">for Smartsheet</span></header>
+  <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Dark mode" aria-pressed="false" title="Turn on dark mode">
+    <span id="theme-icon" aria-hidden="true">☾</span>
+  </button>
+  <p id="theme-status" class="visually-hidden" role="status" aria-live="polite"></p>
   <main>
     <section id="find-view" class="find-view" aria-labelledby="find-title">
       <div class="find-controls">
         <h1 id="find-title">Find a formula</h1>
-        <p class="muted intro">Choose a starting point. Make it yours.</p>
         <label for="search">Search formulas</label>
         <input id="search" type="search" placeholder="Try lookup, dates, or count" autocomplete="off" spellcheck="false">
         <label for="category">Category</label>
@@ -32,8 +35,10 @@
       </div>
     </section>
     <section id="build-view" class="build-view" aria-labelledby="build-title" hidden>
-      <div id="builder-scroll" class="builder-scroll">
+      <nav class="build-navigation" aria-label="Formula navigation">
         <button id="back" type="button" class="text-button back-button">&#8592; All formulas</button>
+      </nav>
+      <div id="builder-scroll" class="builder-scroll">
         <p id="build-category" class="eyebrow"></p>
         <h1 id="build-title" tabindex="-1"></h1>
         <details id="explanation-details">

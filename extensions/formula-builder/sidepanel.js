@@ -33,8 +33,19 @@
     matches.forEach(config => {
       const button = element("button", undefined, "formula-choice");
       button.type = "button";
-      button.appendChild(element("span", config.label, "choice-title"));
-      button.appendChild(element("span", config.explanation, "choice-description"));
+      const title = element("span", config.label, "choice-title");
+      title.id = `choice-${config.id}`;
+      const description = element("span", config.explanation, "choice-description");
+      description.id = `choice-description-${config.id}`;
+      button.setAttribute("aria-labelledby", title.id);
+      button.setAttribute("aria-describedby", description.id);
+      const content = element("span", undefined, "choice-content");
+      content.appendChild(title);
+      content.appendChild(description);
+      const chevron = element("span", "›", "choice-chevron");
+      chevron.setAttribute("aria-hidden", "true");
+      button.appendChild(content);
+      button.appendChild(chevron);
       button.addEventListener("click", () => openFormula(config, button));
       const item = element("li");
       item.appendChild(button);
