@@ -2,6 +2,7 @@ const assert = require("node:assert/strict");
 const test = require("node:test");
 const { setupExtension } = require("./helpers/formula-extension-dom");
 const { generalizedFixtures, currentLegacyFixtures } = require("./helpers/formula-expectations");
+const availabilityFixture = require("./fixtures/formula-availability.json");
 const excluded = new Set(["multiLineReportLabel", "rioIdLookup"]);
 const tick = () => new Promise(resolve => setImmediate(resolve));
 
@@ -31,7 +32,29 @@ test("panel starts in discovery with canonical categories and exactly 24 choices
   const options = get("category").children.filter(child => child.tagName === "option");
   assert.deepEqual(options.map(option => option.value), ["", ...Array.from(core.categories, category => category.id)]);
   assert.equal(choices().length, 24);
+  assert.deepEqual(choices().map(button => button.getAttribute("aria-labelledby")),
+    Object.entries(availabilityFixture).filter(([, config]) => config.availability.extension).map(([id]) => `choice-${id}`));
   for (const id of excluded) assert.throws(() => choose(id), /not discoverable/);
+});
+
+test("discovery rendering follows changed availability metadata and can select a normally hidden ID", () => {
+  const { get, core, choices, choose } = setupExtension();
+  core.catalog.appendFinishDateLabel.availability = { extension: false, portfolio: true };
+  delete core.catalog.scheduleMovedWorkdays.availability;
+  core.catalog.checkboxMatch.availability = { extension: "true", portfolio: true };
+  core.catalog.rioIdLookup.availability = { extension: true, portfolio: true };
+  get("search").dispatch("input");
+  const expectedIds = currentLegacyFixtures.catalog.map(config => config.id).filter(id =>
+    !["appendFinishDateLabel", "scheduleMovedWorkdays", "checkboxMatch", "multiLineReportLabel"].includes(id));
+  assert.deepEqual(choices().map(button => button.getAttribute("aria-labelledby")), expectedIds.map(id => `choice-${id}`));
+  assert.equal(get("result-count").textContent, "22 formulas");
+  for (const id of ["appendFinishDateLabel", "scheduleMovedWorkdays", "checkboxMatch", "multiLineReportLabel"]) {
+    assert.throws(() => choose(id), /not discoverable/);
+  }
+  choose("rioIdLookup");
+  assert.equal(get("build-title").textContent, core.catalog.rioIdLookup.label);
+  assert.equal(get("formula-output").value, generalizedFixtures.cases.find(entry => entry.formulaType === "rioIdLookup").expected.formula);
+  assert.equal(get("copy").disabled, false);
 });
 
 test("search/category events update results, and both clear actions reset filters and focus", () => {

@@ -3,6 +3,11 @@
   const catalog = {
     "appendFinishDateLabel": {
       "id": "appendFinishDateLabel",
+      "libraryId": "advanced",
+      "availability": {
+        "extension": true,
+        "portfolio": true
+      },
       "label": "Append Date to Text",
       "explanation": "Appends a date to text from the current row, separated by \" - \". When the date is blank, returns the original text.",
       "fields": [
@@ -29,6 +34,11 @@
     },
     "scheduleMovedWorkdays": {
       "id": "scheduleMovedWorkdays",
+      "libraryId": "advanced",
+      "availability": {
+        "extension": true,
+        "portfolio": true
+      },
       "label": "Schedule Movement in Weekdays",
       "explanation": "Calculates signed weekday movement between an original date and a revised date. Positive values indicate a later date; negative values indicate an earlier date. Blank input dates return blank.",
       "fields": [
@@ -54,6 +64,11 @@
     },
     "twoCriteriaLookup": {
       "id": "twoCriteriaLookup",
+      "libraryId": "advanced",
+      "availability": {
+        "extension": true,
+        "portfolio": true
+      },
       "label": "Cross-Sheet Two-Criteria Lookup",
       "explanation": "Returns the first source value from another sheet where both source criteria match the current row. Returns blank if the lookup produces an error.",
       "fields": [
@@ -122,6 +137,11 @@
     },
     "checkboxMatch": {
       "id": "checkboxMatch",
+      "libraryId": "advanced",
+      "availability": {
+        "extension": true,
+        "portfolio": true
+      },
       "label": "Checkbox Based on Cross-Sheet Match",
       "explanation": "Checks a box when the current row's configured value appears in a reference range from another sheet.",
       "fields": [
@@ -160,6 +180,11 @@
     },
     "rioIdLookup": {
       "id": "rioIdLookup",
+      "libraryId": "advanced",
+      "availability": {
+        "extension": false,
+        "portfolio": true
+      },
       "label": "Cross-Sheet First-Match Lookup",
       "explanation": "Returns the first value from another sheet where the source match column equals the current row's lookup value. Returns blank if the lookup produces an error.",
       "fields": [
@@ -211,6 +236,11 @@
     },
     "buildMilestoneId": {
       "id": "buildMilestoneId",
+      "libraryId": "advanced",
+      "availability": {
+        "extension": true,
+        "portfolio": true
+      },
       "label": "Combine Three Columns into Text",
       "explanation": "Combines three current-row columns in the fixed pattern \"Prefix - Middle Final\". Returns blank when the prefix is blank.",
       "fields": [
@@ -243,6 +273,11 @@
     },
     "shortenLocationName": {
       "id": "shortenLocationName",
+      "libraryId": "advanced",
+      "availability": {
+        "extension": true,
+        "portfolio": true
+      },
       "label": "Extract Longest Word (First 6 Words)",
       "explanation": "Returns the longest word among the first six space-separated words in the source text. Ties favor the earliest matching word. Blank source text returns blank.",
       "fields": [
@@ -262,6 +297,11 @@
     },
     "countCheckboxValues": {
       "id": "countCheckboxValues",
+      "libraryId": "advanced",
+      "availability": {
+        "extension": true,
+        "portfolio": true
+      },
       "label": "Count Checkbox Values",
       "explanation": "Counts checked, unchecked, or both checkbox states from another sheet.",
       "fields": [
@@ -303,6 +343,11 @@
     },
     "monthNameSortNumber": {
       "id": "monthNameSortNumber",
+      "libraryId": "advanced",
+      "availability": {
+        "extension": true,
+        "portfolio": true
+      },
       "label": "Convert Month Name to Number",
       "explanation": "Converts full English month names to numbers from 1 to 12 for calendar-order sorting. Blank or unrecognized names return blank.",
       "fields": [
@@ -322,6 +367,11 @@
     },
     "statusIndicator": {
       "id": "statusIndicator",
+      "libraryId": "advanced",
+      "availability": {
+        "extension": true,
+        "portfolio": true
+      },
       "label": "Schedule Health Indicator",
       "explanation": "Returns Green for completed tasks, Red for overdue tasks or tasks whose start date has passed while their status is not started, and Yellow otherwise. Uses the current row's start date, finish date, and status.",
       "fields": [
@@ -366,6 +416,11 @@
     },
     "multiLineReportLabel": {
       "id": "multiLineReportLabel",
+      "libraryId": "advanced",
+      "availability": {
+        "extension": false,
+        "portfolio": true
+      },
       "label": "Multi-Line Task Assignment Label",
       "explanation": "Creates a fixed multi-line task assignment label containing a task, location, and up to three assignees. Output labels are \"Task Lead:\", \"Task Second:\", and \"Task Third:\"; the second and third assignee lines are omitted when their cells are blank.",
       "fields": [
@@ -410,6 +465,11 @@
     },
     "spendDateAttribute": {
       "id": "spendDateAttribute",
+      "libraryId": "advanced",
+      "availability": {
+        "extension": true,
+        "portfolio": true
+      },
       "label": "Date Attribute for Checked Rows",
       "explanation": "For checked rows, returns the year, calendar quarter, or month number from the preferred date, using the fallback date when the preferred date is blank. Unchecked rows return blank.",
       "fields": [
@@ -465,6 +525,11 @@
     },
     "singleCriteriaLookup": {
       "id": "singleCriteriaLookup",
+      "libraryId": "advanced",
+      "availability": {
+        "extension": true,
+        "portfolio": true
+      },
       "label": "Single-Criteria Cross-Sheet Lookup",
       "explanation": "Looks up a value from another sheet when the current row has a matching ID, name, or other lookup key.",
       "fields": [
@@ -497,6 +562,11 @@
     },
     "joinMatchingValues": {
       "id": "joinMatchingValues",
+      "libraryId": "advanced",
+      "availability": {
+        "extension": true,
+        "portfolio": true
+      },
       "label": "Join Matching Values",
       "explanation": "Collects multiple matching values from another sheet and displays them together in one cell.",
       "fields": [
@@ -564,6 +634,11 @@
     },
     "countRowsMultipleCriteria": {
       "id": "countRowsMultipleCriteria",
+      "libraryId": "advanced",
+      "availability": {
+        "extension": true,
+        "portfolio": true
+      },
       "label": "Count Rows Matching Two Criteria",
       "explanation": "Counts rows from another sheet where both configured text criteria match.",
       "fields": [
@@ -601,6 +676,11 @@
     },
     "sumValuesMultipleCriteria": {
       "id": "sumValuesMultipleCriteria",
+      "libraryId": "advanced",
+      "availability": {
+        "extension": true,
+        "portfolio": true
+      },
       "label": "Sum Values Matching Two Criteria",
       "explanation": "Sums numeric values from another sheet where both configured text criteria match.",
       "fields": [
@@ -644,6 +724,11 @@
     },
     "averageValuesMultipleCriteria": {
       "id": "averageValuesMultipleCriteria",
+      "libraryId": "advanced",
+      "availability": {
+        "extension": true,
+        "portfolio": true
+      },
       "label": "Average Values Matching Two Criteria",
       "explanation": "Averages numeric values from another sheet where both configured text criteria match. Returns blank if the calculation produces an error.",
       "fields": [
@@ -688,6 +773,11 @@
     },
     "matchingDateExtremes": {
       "id": "matchingDateExtremes",
+      "libraryId": "advanced",
+      "availability": {
+        "extension": true,
+        "portfolio": true
+      },
       "label": "Latest or Earliest Matching Date",
       "explanation": "Finds the latest or earliest date related to the current row's lookup value.",
       "fields": [
@@ -738,6 +828,11 @@
     },
     "uniqueCountCriteria": {
       "id": "uniqueCountCriteria",
+      "libraryId": "advanced",
+      "availability": {
+        "extension": true,
+        "portfolio": true
+      },
       "label": "Count Unique Values Matching Two Criteria",
       "explanation": "Counts distinct values from another sheet where both configured text criteria match, without double-counting repeated values.",
       "fields": [
@@ -782,6 +877,11 @@
     },
     "parentChildRollup": {
       "id": "parentChildRollup",
+      "libraryId": "advanced",
+      "availability": {
+        "extension": true,
+        "portfolio": true
+      },
       "label": "Parent/Child Rollup Summary",
       "explanation": "Rolls up child-row values into a parent row.",
       "fields": [
@@ -836,6 +936,11 @@
     },
     "hierarchyLevelHelper": {
       "id": "hierarchyLevelHelper",
+      "libraryId": "advanced",
+      "availability": {
+        "extension": true,
+        "portfolio": true
+      },
       "label": "Hierarchy Level Helper",
       "explanation": "Identifies how deeply a row is indented in the sheet hierarchy.",
       "fields": [
@@ -866,6 +971,11 @@
     },
     "showParentValue": {
       "id": "showParentValue",
+      "libraryId": "advanced",
+      "availability": {
+        "extension": true,
+        "portfolio": true
+      },
       "label": "Show Parent Value",
       "explanation": "Pulls the parent row's value into the current row.",
       "fields": [
@@ -885,6 +995,11 @@
     },
     "multiSelectHasCheck": {
       "id": "multiSelectHasCheck",
+      "libraryId": "advanced",
+      "availability": {
+        "extension": true,
+        "portfolio": true
+      },
       "label": "Multi-Select Contains / HAS Check",
       "explanation": "Checks whether a selected value exists in a multi-select dropdown or multi-contact cell.",
       "fields": [
@@ -933,6 +1048,11 @@
     },
     "textBeforeAfterDelimiter": {
       "id": "textBeforeAfterDelimiter",
+      "libraryId": "advanced",
+      "availability": {
+        "extension": true,
+        "portfolio": true
+      },
       "label": "Text Before / After Delimiter",
       "explanation": "Splits combined text into the portion before or after a selected delimiter.",
       "fields": [
@@ -977,6 +1097,11 @@
     },
     "readyToStartBasedOnPredecessors": {
       "id": "readyToStartBasedOnPredecessors",
+      "libraryId": "advanced",
+      "availability": {
+        "extension": true,
+        "portfolio": true
+      },
       "label": "Task Readiness from Open Predecessor Count",
       "explanation": "Returns a task's complete, ready, or blocked status using an existing open-predecessor count. This formula does not calculate predecessor relationships or the count itself.",
       "fields": [
@@ -1027,6 +1152,11 @@
     },
     "rankedValue": {
       "id": "rankedValue",
+      "libraryId": "advanced",
+      "availability": {
+        "extension": true,
+        "portfolio": true
+      },
       "label": "Nth Highest or Lowest Value",
       "explanation": "Returns one Nth highest or Nth lowest numeric value from a source range, such as the second-highest amount or third-lowest duration. It does not return a list of the top N values.",
       "fields": [

@@ -5,12 +5,72 @@ const { currentLegacyFixtures: fixtures, generalizedFixtures } = require("./help
 const { loadFormulaCore, loadFormulaScript } = require("./helpers/load-formula-core");
 const { createFormulaDocument } = require("./helpers/formula-dom");
 
-function setup(navigator = {}) {
+function setup(navigator = {}, configureCore = () => {}) {
   const dom = createFormulaDocument();
   const context = vm.createContext({ document: dom.document, navigator });
-  loadFormulaCore(context);
+  configureCore(loadFormulaCore(context));
   loadFormulaScript(context, "formula-builder-ui");
   return { ...dom, get: id => dom.document.getElementById(id) };
+}
+
+function unavailableEntry(id, availability) {
+  return {
+    id, label: "Unavailable formula",
+    ...(availability === undefined ? {} : { availability }),
+    get fields() { assert.fail(`Unavailable formula reached field rendering: ${id}`); }
+  };
+}
+
+for (const [name, availability] of [
+  ["false", { portfolio: false, extension: true }],
+  ["missing availability", undefined],
+  ["missing portfolio", { extension: true }],
+  ["string", { portfolio: "true" }],
+  ["number", { portfolio: 1 }],
+  ["object", { portfolio: {} }]
+]) {
+  test(`portfolio excludes ${name} before the first formula without rendering its fields`, () => {
+    const { get } = setup({}, core => {
+      core.catalog = { unavailable: unavailableEntry("unavailable", availability), ...core.catalog };
+    });
+    assert.deepEqual(get("formulaType").children.map(option => [option.value, option.textContent]), fixtures.catalog.map(entry => [entry.id, entry.label]));
+    assert.equal(get("formulaType").value, "appendFinishDateLabel");
+    assert.equal(get("generatedFormula").textContent, generalizedFixtures.cases[0].expected.formula);
+  });
+}
+
+test("portfolio initial selection uses the first enabled entry when the normal first formula is disabled", () => {
+  const { get } = setup({}, core => {
+    core.catalog.appendFinishDateLabel = unavailableEntry("appendFinishDateLabel", { portfolio: false });
+  });
+  assert.deepEqual(get("formulaType").children.map(option => option.value), fixtures.catalog.slice(1).map(entry => entry.id));
+  assert.equal(get("formulaType").value, "scheduleMovedWorkdays");
+  assert.deepEqual(get("formulaInputFields").children.map(wrapper => wrapper.children[1].id), fixtures.catalog[1].fields.map(field => field.id));
+  assert.equal(get("generatedFormula").textContent, generalizedFixtures.cases.find(entry => entry.formulaType === "scheduleMovedWorkdays").expected.formula);
+});
+
+for (const emptyCatalog of [false, true]) {
+  test(`portfolio handles no available formulas safely (empty catalog: ${emptyCatalog})`, () => {
+    const { get, copied } = setup({}, core => {
+      core.catalog = emptyCatalog ? {} : {
+        disabled: unavailableEntry("disabled", { portfolio: false }),
+        missing: unavailableEntry("missing")
+      };
+      core.generateFormula = () => assert.fail("Empty portfolio must not generate a formula");
+    });
+    assert.equal(get("formulaType").children.length, 0);
+    assert.equal(get("formulaType").value, "");
+    assert.equal(get("formulaType").disabled, true);
+    assert.equal(get("copyFormulaButton").disabled, true);
+    assert.equal(get("formulaInputFields").children.length, 0);
+    assert.equal(get("generatedFormula").textContent, "");
+    get("formulaType").dispatch("change");
+    get("copyFormulaButton").dispatch("click");
+    assert.deepEqual(copied, []);
+    let prevented = false;
+    get("formulaBuilderForm").dispatch("submit", { preventDefault() { prevented = true; } });
+    assert.equal(prevented, true);
+  });
 }
 
 test("UI initializes catalog options, first formula, labeled fields, and prevents submission", () => {

@@ -4,12 +4,49 @@ const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
 const { currentLegacyFixtures: fixtures } = require("./helpers/formula-expectations");
+const availabilityFixture = require("./fixtures/formula-availability.json");
 const { loadFormulaCore, loadFormulaScript, coreScripts } = require("./helpers/load-formula-core");
 const plain = value => JSON.parse(JSON.stringify(value));
 const core = loadFormulaCore();
 
+test("reviewed availability fixture covers all 26 Advanced formulas and exact surface exposure", () => {
+  const ids = fixtures.catalog.map(config => config.id);
+  assert.equal(ids.length, 26);
+  assert.deepEqual(Object.keys(availabilityFixture), ids);
+  assert.deepEqual(Object.keys(core.catalog), ids);
+  for (const id of ids) {
+    const expected = availabilityFixture[id];
+    const config = core.catalog[id];
+    assert.equal(expected.libraryId, "advanced");
+    assert.equal(config.libraryId, "advanced");
+    assert.deepEqual(plain(config.availability), expected.availability, id);
+    for (const surface of ["extension", "portfolio"]) {
+      assert.equal(typeof expected.availability[surface], "boolean");
+      assert.equal(typeof config.availability[surface], "boolean");
+    }
+    assert.equal(config.availability.portfolio, true);
+  }
+  assert.equal(ids.filter(id => core.catalog[id].availability.extension).length, 24);
+  assert.deepEqual(ids.filter(id => !core.catalog[id].availability.extension).sort(), ["multiLineReportLabel", "rioIdLookup"]);
+});
+
+test("surface availability never restricts direct deterministic generation", () => {
+  const isolated = loadFormulaCore();
+  for (const config of Object.values(isolated.catalog)) {
+    config.availability = { extension: false, portfolio: false };
+  }
+  for (const entry of fixtures.cases) {
+    assert.deepEqual(plain(isolated.generateFormula(entry.formulaType, entry.rawValues)), entry.expected, entry.name);
+  }
+  for (const config of Object.values(isolated.catalog)) delete config.availability;
+  for (const entry of fixtures.cases) {
+    assert.deepEqual(plain(isolated.generateFormula(entry.formulaType, entry.rawValues)), entry.expected, entry.name);
+  }
+});
+
 test("catalog matches reviewed generalized metadata and valid defaults in dropdown order", () => {
-  assert.deepEqual(plain(Object.values(core.catalog)), fixtures.catalog);
+  const expectedCatalog = fixtures.catalog.map(config => ({ ...config, ...availabilityFixture[config.id] }));
+  assert.deepEqual(plain(Object.values(core.catalog)), expectedCatalog);
   const fieldIds = new Set();
   let combinations = 0;
   for (const [id, config] of Object.entries(core.catalog)) {

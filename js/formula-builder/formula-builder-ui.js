@@ -181,16 +181,22 @@
 
   function initializeFormulaBuilder() {
     const formulaType = document.getElementById("formulaType");
-    Object.values(catalog).forEach((config) => {
+    const availableFormulas = Object.values(catalog).filter(config => config.availability?.portfolio === true);
+    availableFormulas.forEach((config) => {
       const option = document.createElement("option");
       option.value = config.id;
       option.textContent = config.label;
       formulaType.appendChild(option);
     });
-    formulaType.value = Object.values(catalog)[0].id;
+    formulaType.value = availableFormulas[0]?.id || "";
     document.getElementById("formulaBuilderForm").addEventListener("submit", (event) => {
       event.preventDefault();
     });
+    if (availableFormulas.length === 0) {
+      formulaType.disabled = true;
+      document.getElementById("copyFormulaButton").disabled = true;
+      return;
+    }
     formulaType.addEventListener("change", renderFormulaFields);
     document.getElementById("copyFormulaButton").addEventListener("click", copyFormulaToClipboard);
     renderFormulaFields();
