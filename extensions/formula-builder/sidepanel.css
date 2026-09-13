@@ -71,6 +71,11 @@ button, input, select, textarea { font: inherit; }
 input, select, textarea { width: 100%; min-width: 0; color: inherit; background: var(--control); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; }
 input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 input, select { min-height: 38px; }
+.library-selector { min-width: 0; margin: 12px 0 0; padding: 0; border: 0; }
+.library-selector legend { padding: 0; margin-bottom: 6px; font-weight: 600; }
+.library-options { display: flex; flex-wrap: wrap; gap: 8px; }
+.library-options label { display: flex; align-items: center; gap: 8px; margin: 0; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--control); cursor: pointer; }
+.library-selector input[type="radio"] { appearance: auto; flex: none; width: auto; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; accent-color: var(--accent); }
 button { cursor: pointer; color: inherit; }
 button:disabled { cursor: default; }
 :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }

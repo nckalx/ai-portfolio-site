@@ -3,9 +3,60 @@ const test = require("node:test");
 const fs = require("node:fs");
 const path = require("node:path");
 const { setupExtension } = require("./helpers/formula-extension-dom");
+const { discoveryFixture } = require("./helpers/formula-discovery-fixtures");
 const tick = () => new Promise(resolve => setImmediate(resolve));
 const resolved = panel => panel.document.documentElement.getAttribute("data-theme");
 function toggle(panel) { panel.get("theme-toggle").focus(); panel.get("theme-toggle").dispatch("click"); }
+
+test("library selector retains native radio styles, semantics, and visible focus", () => {
+  const base = path.resolve(__dirname, "../extensions/formula-builder");
+  const html = fs.readFileSync(path.join(base, "sidepanel.html"), "utf8");
+  const css = fs.readFileSync(path.join(base, "sidepanel.css"), "utf8");
+  assert.match(html, /<fieldset id="library-selector"[^>]*hidden>[\s\S]*?<legend>Library<\/legend>/);
+  for (const id of ["common", "advanced"]) {
+    assert.match(html, new RegExp(`<label for="library-${id}"><input id="library-${id}" type="radio" name="library" value="${id}"`));
+  }
+  const rule = css.match(/\.library-selector input\[type="radio"\]\s*\{([^}]+)\}/)[1];
+  for (const declaration of [/appearance:\s*auto;/, /width:\s*auto;/, /min-height:\s*0;/, /padding:\s*0;/, /accent-color:\s*var\(--accent\);/]) {
+    assert.match(rule, declaration);
+  }
+  assert.ok(css.indexOf(rule) > css.indexOf("input, select { min-height:"));
+  assert.match(css, /\.library-options\s*\{[^}]*flex-wrap:\s*wrap/);
+  assert.match(css, /:focus-visible\s*\{[^}]*outline: 3px solid var\(--focus\)/);
+  assert.doesNotMatch(rule, /outline:\s*(?:none|0)|forced-color-adjust:\s*none|appearance:\s*none/);
+  assert.doesNotMatch(html, /role="(?:radio|radiogroup|tab|tablist)"/);
+});
+
+test("mixed Common discovery state survives both theme changes with only theme persistence", async () => {
+  const panel = setupExtension({}, {}, core => { Object.assign(core, discoveryFixture()); });
+  await tick();
+  const { get } = panel;
+  get("library-common").checked = true;
+  get("library-common").dispatch("change");
+  get("category").value = "text-labels";
+  get("category").dispatch("change");
+  get("search").value = "  SHARED  caption \t";
+  get("search").dispatch("input");
+  get("results-scroll").scrollTop = 42;
+  const choices = panel.choices();
+  const options = get("category").children.slice();
+  for (const expected of ["dark", "light"]) {
+    toggle(panel); await tick();
+    assert.equal(resolved(panel), expected);
+    assert.equal(get("library-selector").hidden, false);
+    assert.equal(get("library-common").checked, true);
+    assert.equal(get("library-advanced").checked, false);
+    assert.equal(get("search").value, "  SHARED  caption \t");
+    assert.equal(get("category").value, "text-labels");
+    assert.deepEqual(get("category").children, options);
+    assert.deepEqual(panel.choices(), choices);
+    assert.equal(get("result-count").textContent, "1 formula");
+    assert.equal(get("results-scroll").scrollTop, 42);
+    assert.equal(panel.document.activeElement, get("theme-toggle"));
+    assert.equal(panel.generationCount(), 0);
+  }
+  assert.deepEqual(panel.storageWrites, [{ theme: "dark" }, { theme: "light" }]);
+});
 
 for (const saved of ["light", "dark"]) {
   test(`saved ${saved} overrides system and is reflected in the accessible toggle`, async () => {

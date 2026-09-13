@@ -3,6 +3,7 @@ const test = require("node:test");
 const { setupExtension } = require("./helpers/formula-extension-dom");
 const { generalizedFixtures, currentLegacyFixtures } = require("./helpers/formula-expectations");
 const availabilityFixture = require("./fixtures/formula-availability.json");
+const { discoveryFixture } = require("./helpers/formula-discovery-fixtures");
 const excluded = new Set(["multiLineReportLabel", "rioIdLookup"]);
 const tick = () => new Promise(resolve => setImmediate(resolve));
 
@@ -29,12 +30,253 @@ test("panel starts in discovery with canonical categories and exactly 24 choices
   assert.equal(get("build-view").hidden, true);
   assert.equal(get("result-count").textContent, "24 formulas");
   assert.equal(get("clear-filters").disabled, true);
+  assert.equal(get("library-selector").hidden, true);
+  assert.equal(get("library-advanced").checked, true);
+  assert.equal(get("library-common").checked, false);
+  assert.equal(core.categories.length, 5);
   const options = get("category").children.filter(child => child.tagName === "option");
   assert.deepEqual(options.map(option => option.value), ["", ...Array.from(core.categories, category => category.id)]);
   assert.equal(choices().length, 24);
   assert.deepEqual(choices().map(button => button.getAttribute("aria-labelledby")),
     Object.entries(availabilityFixture).filter(([, config]) => config.availability.extension).map(([id]) => `choice-${id}`));
   for (const id of excluded) assert.throws(() => choose(id), /not discoverable/);
+});
+
+function mixedPanel() {
+  return setupExtension({}, {}, core => { Object.assign(core, discoveryFixture()); });
+}
+const resultIds = panel => panel.choices().map(button => button.getAttribute("aria-labelledby").replace("choice-", ""));
+const categoryIds = panel => panel.get("category").children.filter(node => node.tagName === "option").map(node => node.value);
+function switchLibrary(panel, library) {
+  // Supply the checked change and focus a browser would provide. This double
+  // intentionally does not simulate native radio grouping or keyboard behavior.
+  const radio = panel.get(`library-${library}`);
+  radio.focus();
+  radio.checked = true;
+  radio.dispatch("change");
+}
+
+test("mixed startup exposes labeled native radios, defaults to Advanced, and switches ordered results", async () => {
+  const panel = mixedPanel();
+  const { get } = panel;
+  assert.equal(get("library-selector").hidden, false);
+  assert.equal(get("library-selector").tagName, "fieldset");
+  assert.equal(get("library-selector").children.find(node => node.tagName === "legend").textContent, "Library");
+  for (const id of ["common", "advanced"]) {
+    const radio = get(`library-${id}`);
+    assert.equal(radio.tagName, "input");
+    assert.equal(radio.type, "radio");
+    assert.equal(radio.getAttribute("name"), "library");
+    assert.equal(radio.value, id);
+    assert.equal(radio.parent.tagName, "label");
+    assert.equal(radio.parent.getAttribute("for"), radio.id);
+    assert.equal(radio.parent.textContent.trim().toLowerCase(), id);
+    assert.equal(radio.checked, id === "advanced");
+  }
+  assert.deepEqual(resultIds(panel), ["advancedRow", "advancedText", "advancedCount"]);
+  assert.deepEqual(categoryIds(panel), ["", "text-labels", "counts-calculations", "row-hierarchy"]);
+  for (const library of ["common", "advanced"]) {
+    switchLibrary(panel, library);
+    assert.equal(get(`library-${library}`).checked, true);
+    assert.equal(get(`library-${library === "common" ? "advanced" : "common"}`).checked, false);
+    assert.equal(panel.document.activeElement, get(`library-${library}`));
+    assert.equal(get("result-count").textContent, "3 formulas");
+    assert.equal(get("clear-filters").disabled, true);
+    assert.deepEqual(resultIds(panel), library === "common"
+      ? ["commonCount", "commonText", "commonLogic"] : ["advancedRow", "advancedText", "advancedCount"]);
+    assert.deepEqual(categoryIds(panel), ["", "text-labels", "counts-calculations", library === "common" ? "logic-conditions" : "row-hierarchy"]);
+  }
+  assert.equal(panel.generationCount(), 0);
+  await tick();
+  assert.deepEqual(panel.storageWrites, []);
+});
+
+test("library changes preserve raw search and shared category through singular and zero results", () => {
+  const panel = mixedPanel();
+  const { get } = panel;
+  get("category").value = "text-labels";
+  get("category").dispatch("change");
+  const raw = "  ShArEd \t CAPtion \n";
+  get("search").value = raw;
+  get("search").dispatch("input");
+  for (const library of ["common", "advanced", "common"]) {
+    switchLibrary(panel, library);
+    assert.equal(get("search").value, raw);
+    assert.equal(get("category").value, "text-labels");
+    assert.equal(get("result-count").textContent, "1 formula");
+    assert.deepEqual(resultIds(panel), [library + "Text"]);
+    assert.equal(panel.document.activeElement, get(`library-${library}`));
+  }
+  const options = categoryIds(panel);
+  get("search").value = "  No Such Result  ";
+  get("search").dispatch("input");
+  assert.equal(get("result-count").textContent, "0 formulas");
+  assert.equal(get("empty-state").hidden, false);
+  assert.equal(get("library-selector").hidden, false);
+  assert.equal(get("library-common").checked, true);
+  assert.deepEqual(categoryIds(panel), options);
+  switchLibrary(panel, "advanced");
+  assert.equal(get("search").value, "  No Such Result  ");
+  assert.equal(get("category").value, "text-labels");
+  assert.equal(get("library-selector").hidden, false);
+  assert.equal(get("library-advanced").checked, true);
+  assert.equal(get("result-count").textContent, "0 formulas");
+  assert.equal(panel.generationCount(), 0);
+});
+
+test("unavailable category visibly resets and is not remembered on switching back", () => {
+  const panel = mixedPanel();
+  const { get } = panel;
+  get("category").value = "row-hierarchy";
+  get("category").dispatch("change");
+  assert.deepEqual(resultIds(panel), ["advancedRow"]);
+  switchLibrary(panel, "common");
+  assert.equal(get("category").value, "");
+  assert.equal(get("category").children[0].textContent, "All categories");
+  assert.ok(!categoryIds(panel).includes("row-hierarchy"));
+  switchLibrary(panel, "advanced");
+  assert.equal(get("category").value, "");
+  assert.deepEqual(resultIds(panel), ["advancedRow", "advancedText", "advancedCount"]);
+  assert.equal(panel.generationCount(), 0);
+});
+
+for (const clearId of ["clear-filters", "empty-clear"]) {
+  test(`${clearId} clears query/category, retains Common, and focuses search`, () => {
+    const panel = mixedPanel();
+    const { get } = panel;
+    switchLibrary(panel, "common");
+    assert.equal(get("clear-filters").disabled, true);
+    get("category").value = "text-labels";
+    get("category").dispatch("change");
+    get("search").value = clearId === "empty-clear" ? "no such result" : "  ShArEd  ";
+    get("search").dispatch("input");
+    assert.equal(get("clear-filters").disabled, false);
+    get(clearId).dispatch("click");
+    assert.equal(get("search").value, "");
+    assert.equal(get("category").value, "");
+    assert.equal(get("library-common").checked, true);
+    assert.equal(get("library-advanced").checked, false);
+    assert.equal(get("clear-filters").disabled, true);
+    assert.equal(get("empty-state").hidden, true);
+    assert.equal(get("result-count").textContent, "3 formulas");
+    assert.deepEqual(resultIds(panel), ["commonCount", "commonText", "commonLogic"]);
+    assert.equal(panel.document.activeElement, get("search"));
+    assert.equal(panel.generationCount(), 0);
+  });
+}
+
+test("search input clearing only clears query and preserves library/category", () => {
+  const panel = mixedPanel();
+  const { get } = panel;
+  switchLibrary(panel, "common");
+  get("category").value = "text-labels";
+  get("category").dispatch("change");
+  get("search").value = "absent";
+  get("search").dispatch("input");
+  get("search").value = "";
+  get("search").dispatch("input");
+  assert.equal(get("category").value, "text-labels");
+  assert.equal(get("library-common").checked, true);
+  assert.deepEqual(resultIds(panel), ["commonText"]);
+  assert.equal(get("clear-filters").disabled, false);
+  assert.equal(panel.generationCount(), 0);
+});
+
+test("invalid UI selection and changing availability recover visibly without changing raw search", () => {
+  const panel = mixedPanel();
+  const { get, core } = panel;
+  get("search").value = " ShArEd ";
+  get("category").value = "unknown";
+  get("category").dispatch("change");
+  assert.equal(get("category").value, "");
+  get("library-common").value = "unknown";
+  switchLibrary(panel, "common");
+  assert.equal(get("library-advanced").checked, true);
+  assert.equal(get("library-common").checked, false);
+  assert.deepEqual(resultIds(panel), ["advancedRow", "advancedText", "advancedCount"]);
+  get("library-common").value = "common";
+  Object.values(core.catalog).forEach(entry => {
+    if (entry.libraryId === "advanced") entry.availability.extension = false;
+  });
+  get("search").dispatch("input");
+  assert.equal(get("library-selector").hidden, true);
+  assert.equal(get("library-common").checked, true);
+  assert.deepEqual(resultIds(panel), ["commonCount", "commonText", "commonLogic"]);
+  assert.deepEqual(categoryIds(panel), ["", "text-labels", "counts-calculations", "logic-conditions"]);
+  Object.values(core.catalog).forEach(entry => { entry.availability.extension = false; });
+  get("search").dispatch("input");
+  assert.equal(get("library-selector").hidden, true);
+  assert.equal(get("library-common").checked, false);
+  assert.equal(get("library-advanced").checked, false);
+  assert.deepEqual(categoryIds(panel), [""]);
+  assert.equal(get("result-count").textContent, "0 formulas");
+  assert.equal(get("search").value, " ShArEd ");
+  assert.equal(panel.generationCount(), 0);
+});
+
+for (const library of ["common", "advanced", null]) {
+  test(`single/empty library startup synchronizes hidden selector: ${library}`, () => {
+    const panel = setupExtension({}, {}, core => {
+      const fixture = discoveryFixture();
+      Object.values(fixture.catalog).forEach(entry => { entry.availability.extension = entry.libraryId === library; });
+      fixture.catalog.invalid = { ...fixture.catalog.commonLogic, libraryId: "Common", availability: { extension: true } };
+      Object.assign(core, fixture);
+    });
+    assert.equal(panel.get("library-selector").hidden, true);
+    for (const id of ["common", "advanced"]) assert.equal(panel.get(`library-${id}`).checked, id === library);
+    assert.equal(panel.choices().length, library ? 3 : 0);
+    assert.deepEqual(categoryIds(panel), library
+      ? ["", "text-labels", "counts-calculations", library === "common" ? "logic-conditions" : "row-hierarchy"] : [""]);
+    assert.equal(panel.generationCount(), 0);
+  });
+}
+
+test("Advanced Build/Back retains Find DOM, library, raw filters, result focus/scroll, and drafts across library switches", () => {
+  const panel = setupExtension({}, {}, core => {
+    const { catalog } = discoveryFixture();
+    // Keep real Advanced builders for navigation; add only discovery-only Common entries.
+    Object.values(catalog).filter(entry => entry.libraryId === "common").forEach(entry => { core.catalog[entry.id] = entry; });
+  });
+  const { get } = panel;
+  switchLibrary(panel, "common");
+  const generations = panel.generationCount();
+  get("search").value = "caption";
+  get("search").dispatch("input");
+  assert.deepEqual(resultIds(panel), ["commonText"]);
+  assert.equal(panel.generationCount(), generations);
+  get("clear-filters").dispatch("click");
+  switchLibrary(panel, "advanced");
+  get("category").value = "text-labels";
+  get("category").dispatch("change");
+  const raw = "  APPend  date \t";
+  get("search").value = raw;
+  get("search").dispatch("input");
+  get("results-scroll").scrollTop = 123;
+  const findView = get("find-view");
+  const results = panel.choices();
+  const button = panel.choose("appendFinishDateLabel");
+  assert.equal(findView.hidden, true);
+  assert.equal(panel.document.activeElement, get("build-title"));
+  const input = get("field-milestoneLabelColumn");
+  input.value = "  Custom Item  ";
+  input.dispatch("input");
+  const formula = get("formula-output").value;
+  get("back").dispatch("click");
+  assert.equal(get("find-view"), findView);
+  assert.equal(findView.hidden, false);
+  assert.deepEqual(panel.choices(), results);
+  assert.equal(panel.document.activeElement, button);
+  assert.equal(get("results-scroll").scrollTop, 123);
+  assert.equal(get("library-advanced").checked, true);
+  assert.equal(get("category").value, "text-labels");
+  assert.equal(get("search").value, raw);
+  const afterBuild = panel.generationCount();
+  switchLibrary(panel, "common");
+  switchLibrary(panel, "advanced");
+  assert.equal(panel.generationCount(), afterBuild);
+  panel.choose("appendFinishDateLabel");
+  assert.equal(get("field-milestoneLabelColumn").value, "  Custom Item  ");
+  assert.equal(get("formula-output").value, formula);
 });
 
 test("discovery rendering follows changed availability metadata and can select a normally hidden ID", () => {

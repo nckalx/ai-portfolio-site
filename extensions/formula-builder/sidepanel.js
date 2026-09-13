@@ -1,9 +1,10 @@
 // Extension DOM/clipboard adapter. The shared core is unaware of this UI or Chrome.
 (() => {
   const { catalog, categories, generateFormula, utils } = globalThis.SmartsheetFormulaBuilder;
-  const { findFormulas } = globalThis.FormulaDiscovery;
+  const { findFormulas, resolveDiscoveryState } = globalThis.FormulaDiscovery;
   const get = id => document.getElementById(id);
   const drafts = new Map(); // Lifetime of this panel document only.
+  let selectedLibraryId = "advanced";
   let selectedId = null;
   let returnFocus = null;
   let result = null;
@@ -24,7 +25,23 @@
   }
 
   function renderDiscovery() {
-    const matches = findFormulas(catalog, categories, get("search").value, get("category").value);
+    const state = resolveDiscoveryState(catalog, categories, {
+      libraryId: selectedLibraryId, categoryId: get("category").value
+    });
+    selectedLibraryId = state.libraryId;
+    get("library-selector").hidden = state.availableLibraries.length < 2;
+    for (const id of ["common", "advanced"]) get(`library-${id}`).checked = id === selectedLibraryId;
+    get("category").textContent = "";
+    const allCategories = element("option", "All categories");
+    allCategories.value = "";
+    get("category").appendChild(allCategories);
+    state.availableCategories.forEach(category => {
+      const option = element("option", category.label);
+      option.value = category.id;
+      get("category").appendChild(option);
+    });
+    get("category").value = state.categoryId;
+    const matches = findFormulas(catalog, categories, get("search").value, state.categoryId, selectedLibraryId);
     get("results").textContent = "";
     get("result-count").textContent = `${matches.length} ${matches.length === 1 ? "formula" : "formulas"}`;
     get("clear-filters").disabled = !get("search").value && !get("category").value;
@@ -166,11 +183,14 @@
     }
   }
 
-  categories.forEach(category => {
-    const option = element("option", category.label);
-    option.value = category.id;
-    get("category").appendChild(option);
-  });
+  for (const id of ["common", "advanced"]) {
+    const radio = get(`library-${id}`);
+    radio.addEventListener("change", () => {
+      if (!radio.checked) return;
+      selectedLibraryId = radio.value;
+      renderDiscovery();
+    });
+  }
   get("search").addEventListener("input", renderDiscovery);
   get("category").addEventListener("change", renderDiscovery);
   get("clear-filters").addEventListener("click", clearFilters);

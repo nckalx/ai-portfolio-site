@@ -16,6 +16,13 @@
     <section id="find-view" class="find-view" aria-labelledby="find-title">
       <div class="find-controls">
         <h1 id="find-title">Find a formula</h1>
+        <fieldset id="library-selector" class="library-selector" hidden>
+          <legend>Library</legend>
+          <div class="library-options">
+            <label for="library-common"><input id="library-common" type="radio" name="library" value="common"> Common</label>
+            <label for="library-advanced"><input id="library-advanced" type="radio" name="library" value="advanced" checked> Advanced</label>
+          </div>
+        </fieldset>
         <label for="search">Search formulas</label>
         <input id="search" type="search" placeholder="Try lookup, dates, or count" autocomplete="off" spellcheck="false">
         <label for="category">Category</label>

@@ -5,7 +5,7 @@ const { loadFormulaCore } = require("./load-formula-core");
 
 // Small DOM contract double, not a layout/accessibility emulator. Build the tree
 // from the real shell so renamed/missing elements and hidden views are tested.
-function setupExtension(navigator = {}, theme = {}) {
+function setupExtension(navigator = {}, theme = {}, configureCore = () => {}) {
   let document;
   const storageWrites = [];
   const mediaListeners = [];
@@ -21,6 +21,7 @@ function setupExtension(navigator = {}, theme = {}) {
       this.listeners = {};
       this.hidden = false;
       this.disabled = false;
+      this.checked = false;
       this.open = false;
       this.scrollTop = 0;
       this._value = undefined;
@@ -71,7 +72,7 @@ function setupExtension(navigator = {}, theme = {}) {
       node.setAttribute(match[1], match[2]);
       if (["id", "value", "type"].includes(match[1])) node[match[1]] = match[2];
     }
-    for (const name of ["hidden", "disabled", "readonly"]) if (new RegExp(`\\s${name}(?:\\s|>)`).test(token)) node[name] = true;
+    for (const name of ["hidden", "disabled", "readonly", "checked"]) if (new RegExp(`\\s${name}(?:\\s|>)`).test(token)) node[name] = true;
     stack.at(-1).appendChild(node);
     if (!["meta", "link", "input"].includes(tag)) stack.push(node);
   }
@@ -84,6 +85,7 @@ function setupExtension(navigator = {}, theme = {}) {
   });
   vm.runInContext(fs.readFileSync(path.join(directory, "theme.js"), "utf8"), context, { filename: "theme.js" });
   const core = loadFormulaCore(context);
+  configureCore(core);
   let generationCalls = 0;
   const generate = core.generateFormula;
   core.generateFormula = (...args) => { generationCalls++; return generate(...args); };
