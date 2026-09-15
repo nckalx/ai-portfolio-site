@@ -9,8 +9,8 @@ const extensionFiles = [
   "icons/icon-16.png", "icons/icon-24.png", "icons/icon-32.png", "icons/icon-48.png", "icons/icon-128.png"
 ];
 const coreFiles = [
-  "formula-catalog.js", "formula-utils.js", "formula-validation.js",
-  "formula-guidance.js", "formula-engine.js"
+  "formula-catalog.js", "formula-utils.js", "formula-primitives.js", "formula-validation.js",
+  "formula-guidance.js", "formula-common-builders.js", "formula-engine.js"
 ];
 const packageFiles = Object.freeze([
   ...extensionFiles.map(file => Object.freeze({ source: `extensions/formula-builder/${file}`, target: file })),

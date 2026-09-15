@@ -23,6 +23,8 @@ test("copy-only package has exactly the allowlisted files and byte-identical can
   const expected = ["manifest.json", "service-worker.js", "sidepanel.html", "sidepanel.css", "sidepanel.js", "formula-discovery.js", "theme.js",
     ...[16, 24, 32, 48, 128].map(size => `icons/icon-${size}.png`), ...coreScripts.map(name => `core/${name}.js`)].sort();
   assert.deepEqual(files, expected);
+  assert.equal(files.length, 19);
+  assert.ok(!files.some(file => /test|fixture/i.test(file)));
   assert.ok(!files.some(file => file.includes("source/") || file.includes("master")));
   for (const file of packageFiles) {
     assert.ok(fs.readFileSync(path.join(directory, file.target)).equals(fs.readFileSync(path.join(root, file.source))), file.target);
@@ -32,6 +34,9 @@ test("copy-only package has exactly the allowlisted files and byte-identical can
   const context = vm.createContext({});
   for (const name of coreScripts) vm.runInContext(fs.readFileSync(path.join(directory, `core/${name}.js`), "utf8"), context);
   assert.equal(Object.keys(context.SmartsheetFormulaBuilder.catalog).length, 26);
+  assert.ok(Object.values(context.SmartsheetFormulaBuilder.catalog).every(config => config.libraryId === "advanced" && !config.inputContract));
+  assert.ok(Object.isFrozen(context.SmartsheetFormulaBuilder.commonBuilders.registry));
+  assert.deepEqual(Object.keys(context.SmartsheetFormulaBuilder.commonBuilders.registry), []);
   for (const entry of generalizedFixtures.cases) {
     assert.equal(context.SmartsheetFormulaBuilder.generateFormula(entry.formulaType, entry.rawValues).formula, entry.expected.formula);
   }

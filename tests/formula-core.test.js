@@ -9,6 +9,14 @@ const { loadFormulaCore, loadFormulaScript, coreScripts } = require("./helpers/l
 const plain = value => JSON.parse(JSON.stringify(value));
 const core = loadFormulaCore();
 
+test("Phase 4A shared load order and empty production structured registry stay explicit", () => {
+  assert.deepEqual(coreScripts, ["formula-catalog", "formula-utils", "formula-primitives", "formula-validation", "formula-guidance", "formula-common-builders", "formula-engine"]);
+  assert.equal(typeof core.primitives.renderOperand, "function");
+  assert.equal(typeof core.validation.structured.normalizeAndValidate, "function");
+  assert.deepEqual(Object.keys(core.commonBuilders.registry), []);
+  assert.ok(Object.values(core.catalog).every(config => config.libraryId === "advanced" && !Object.hasOwn(config, "inputContract")));
+});
+
 test("reviewed availability fixture covers all 26 Advanced formulas and exact surface exposure", () => {
   const ids = fixtures.catalog.map(config => config.id);
   assert.equal(ids.length, 26);

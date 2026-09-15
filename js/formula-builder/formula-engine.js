@@ -3,6 +3,7 @@
   const { catalog, configuration, utils, validation, guidance } = globalThis.SmartsheetFormulaBuilder;
   const { maxLocationWordsToCheck, monthNameSortValues } = configuration;
   const { rowColumn, sheetReference, smartsheetText, longestLocationWordFormula, nestedEqualsFormula } = utils;
+  const { primitives, commonBuilders } = globalThis.SmartsheetFormulaBuilder;
 
   const builders = {
     appendFinishDateLabel(values) {
@@ -229,9 +230,26 @@
     }
   };
 
+  function generateStructuredFormula(formulaType, config, rawValues) {
+    if (!commonBuilders.familyKeys.includes(config.builderKey)) throw new TypeError(`Structured configuration: unknown builder family ${String(config.builderKey)}.`);
+    if (!Object.hasOwn(commonBuilders.registry, config.builderKey)) throw new TypeError(`Structured configuration: unimplemented builder family ${config.builderKey}.`);
+    const builder = commonBuilders.registry[config.builderKey];
+    const { values, errors } = validation.structured.normalizeAndValidate(config, rawValues, builder);
+    let formula = null, references = [];
+    if (!errors.length) {
+      const rendered = builder.build(values, config.builderOptions, primitives);
+      // Validates the internal fragment boundary, including exactly zero leading '='.
+      references = primitives.collectReferences([rendered]);
+      formula = `=${rendered.expression}`;
+    }
+    return { formulaType, values, explanation: config.explanation, formula, missingFields: [], validationErrors: errors, references, setupNotes: [], instructions: [] };
+  }
+
   // Synchronous generation returns data only. It does not evaluate Smartsheet expressions.
   function generateFormula(formulaType, rawValues) {
     const config = catalog[formulaType];
+    if (config?.inputContract === "structured-v1") return generateStructuredFormula(formulaType, config, rawValues);
+    if (config && Object.hasOwn(config, "inputContract")) throw new TypeError(`Structured configuration: unsupported input contract ${String(config.inputContract)}.`);
     const values = validation.normalizeValues(config, rawValues);
     const missingFields = validation.getMissingFields(config, values);
     const validationErrors = validation.getValidationErrors(config, values);

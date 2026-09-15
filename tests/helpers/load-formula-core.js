@@ -3,7 +3,8 @@ const path = require("node:path");
 const vm = require("node:vm");
 
 const coreScripts = [
-  "formula-catalog", "formula-utils", "formula-validation", "formula-guidance", "formula-engine"
+  "formula-catalog", "formula-utils", "formula-primitives", "formula-validation",
+  "formula-guidance", "formula-common-builders", "formula-engine"
 ];
 
 function loadFormulaScript(context, name) {

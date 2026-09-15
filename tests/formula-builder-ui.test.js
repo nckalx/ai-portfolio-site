@@ -21,6 +21,17 @@ function unavailableEntry(id, availability) {
   };
 }
 
+test("Phase 4A portfolio retains exact Advanced order and initial formula with structured modules loaded", () => {
+  const { get } = setup({}, core => {
+    assert.equal(typeof core.primitives.renderOperand, "function");
+    assert.deepEqual(Object.keys(core.commonBuilders.registry), []);
+  });
+  assert.equal(get("formulaType").children.length, 26);
+  assert.deepEqual(get("formulaType").children.map(option => option.value), fixtures.catalog.map(entry => entry.id));
+  assert.equal(get("formulaType").value, "appendFinishDateLabel");
+  assert.equal(get("generatedFormula").textContent, generalizedFixtures.cases[0].expected.formula);
+});
+
 for (const [name, availability] of [
   ["false", { portfolio: false, extension: true }],
   ["missing availability", undefined],
