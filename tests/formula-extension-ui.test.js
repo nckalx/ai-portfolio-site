@@ -3,6 +3,7 @@ const test = require("node:test");
 const { setupExtension } = require("./helpers/formula-extension-dom");
 const { generalizedFixtures, currentLegacyFixtures } = require("./helpers/formula-expectations");
 const availabilityFixture = require("./fixtures/formula-availability.json");
+const batch1 = require("./fixtures/formula-common-batch1-cases.json");
 const { discoveryFixture } = require("./helpers/formula-discovery-fixtures");
 const excluded = new Set(["multiLineReportLabel", "rioIdLookup"]);
 const tick = () => new Promise(resolve => setImmediate(resolve));
@@ -149,7 +150,7 @@ test("panel starts in discovery with canonical categories and exactly 24 choices
   assert.equal(get("build-view").hidden, true);
   assert.equal(get("result-count").textContent, "24 formulas");
   assert.equal(get("clear-filters").disabled, true);
-  assert.equal(get("library-selector").hidden, true);
+  assert.equal(get("library-selector").hidden, false);
   assert.equal(get("library-advanced").checked, true);
   assert.equal(get("library-common").checked, false);
   assert.equal(core.categories.length, 5);
@@ -174,6 +175,146 @@ function switchLibrary(panel, library) {
   radio.checked = true;
   radio.dispatch("change");
 }
+
+test("production Common navigation exposes eight choices and only the existing calculation category", () => {
+  const panel = setupExtension();
+  assert.equal(panel.get("library-advanced").checked, true);
+  assert.equal(panel.get("library-selector").hidden, false);
+  switchLibrary(panel, "common");
+  assert.deepEqual(resultIds(panel), batch1.formulas.map(config => config.id));
+  assert.deepEqual(categoryIds(panel), ["", "counts-calculations"]);
+  panel.get("category").value = "counts-calculations"; panel.get("category").dispatch("change");
+  assert.equal(panel.get("result-count").textContent, "8 formulas");
+  panel.get("search").value = "  NUMBER stored AS TEXT  "; panel.get("search").dispatch("input");
+  assert.deepEqual(resultIds(panel), ["textToNumber"]);
+  const choices = panel.choices();
+  panel.get("results-scroll").scrollTop = 51;
+  const button = panel.choose("textToNumber");
+  panel.get("back").dispatch("click");
+  assert.deepEqual(panel.choices(), choices);
+  assert.equal(panel.get("search").value, "  NUMBER stored AS TEXT  ");
+  assert.equal(panel.get("results-scroll").scrollTop, 51);
+  assert.equal(panel.document.activeElement, button);
+  panel.get("clear-filters").dispatch("click");
+  assert.deepEqual(resultIds(panel), batch1.formulas.map(config => config.id));
+  switchLibrary(panel, "advanced");
+  assert.equal(panel.get("result-count").textContent, "24 formulas");
+});
+
+for (const config of batch1.formulas) {
+  test(`production Common literal, cell, copy and Build/Back: ${config.id}`, async () => {
+    const copied = [], calls = [];
+    const panel = setupExtension({ clipboard: { writeText: async value => copied.push(value) } }, {}, core => {
+      const generate = core.generateFormula;
+      core.generateFormula = (id, values) => { calls.push(JSON.parse(JSON.stringify(values))); return generate(id, values); };
+    });
+    switchLibrary(panel, "common");
+    const button = panel.choose(config.id);
+    assert.deepEqual(calls.at(-1), {});
+    assert.equal(panel.get("copy").disabled, true);
+    assert.equal(panel.document.activeElement, panel.get("build-title"));
+    const text = config.id === "textToNumber";
+    const multiple = config.builderKey === "multipleRounding";
+    editStructured(panel, text ? "Text kind" : "Number kind", text ? "textLiteral" : "number");
+    editStructured(panel, text ? "Text literal" : "Number", text ? "0012.50" : " 0012.500 ");
+    if (multiple) {
+      editStructured(panel, "Multiple kind", "number");
+      editStructured(panel, "Number", "0.5", 1);
+    }
+    const expected = text ? '=VALUE("0012.50")' : `=${config.label}(12.5${multiple ? ", 0.5" : ""})`;
+    assert.equal(panel.get("formula-output").value, expected);
+    assert.equal(panel.get("reference-notice").hidden, true);
+    assert.equal(panel.get("reference-section").hidden, true);
+    panel.get("copy").dispatch("click"); await tick();
+    assert.deepEqual(copied, [expected]);
+    panel.get("back").dispatch("click");
+    assert.equal(panel.document.activeElement, button);
+    panel.choose(config.id);
+    assert.equal(structuredControl(panel, text ? "Text literal" : "Number").value, text ? "0012.50" : " 0012.500 ");
+    editStructured(panel, text ? "Text kind" : "Number kind", "cellRef");
+    assert.deepEqual(calls.at(-1).value, { type: "cellRef", column: "" });
+    editStructured(panel, "Current-row column", " Amount ");
+    if (multiple) {
+      editStructured(panel, "Multiple kind", "cellRef");
+      assert.deepEqual(calls.at(-1).multiple, { type: "cellRef", column: "" });
+      editStructured(panel, "Current-row column", " Increment ", 1);
+    }
+    assert.equal(panel.get("formula-output").value, `=${config.label}([Amount]@row${multiple ? ", [Increment]@row" : ""})`);
+    assert.equal(JSON.stringify(calls).includes("uiState"), false);
+    assert.equal(JSON.stringify(calls).includes("nextKey"), false);
+    assert.deepEqual(panel.storageWrites, []);
+  });
+}
+
+test("production ROUND preserves raw incomplete drafts, precision presence and independent formula drafts", () => {
+  const calls = [];
+  const panel = setupExtension({}, {}, core => {
+    const generate = core.generateFormula;
+    core.generateFormula = (id, values) => { calls.push(JSON.parse(JSON.stringify(values))); return generate(id, values); };
+  });
+  switchLibrary(panel, "common"); panel.choose("roundValue");
+  editStructured(panel, "Number kind", "number");
+  for (const raw of ["-", "1."]) {
+    const input = editStructured(panel, "Number", raw);
+    assert.equal(input.getAttribute("aria-invalid"), "true");
+    assert.ok(input.getAttribute("aria-describedby"));
+    assert.equal(panel.document.activeElement, input);
+    assert.equal(panel.get("copy").disabled, true);
+    panel.get("back").dispatch("click"); panel.choose("absoluteValue");
+    editStructured(panel, "Number kind", "number"); editStructured(panel, "Number", "99");
+    panel.get("back").dispatch("click"); switchLibrary(panel, "advanced"); panel.choose("appendFinishDateLabel");
+    panel.get("back").dispatch("click"); switchLibrary(panel, "common"); panel.choose("roundValue");
+    assert.equal(structuredControl(panel, "Number").value, raw);
+  }
+  const input = editStructured(panel, "Number", " 0012.500 ");
+  assert.equal(input.getAttribute("aria-invalid"), "false");
+  assert.equal(panel.get("validation").textContent, "");
+  assert.equal(panel.get("formula-output").value, "=ROUND(12.5)");
+  const include = structuredControl(panel, "Include Decimal places");
+  include.checked = true; include.dispatch("change");
+  assert.equal(calls.at(-1).decimalPlaces, "");
+  assert.equal(panel.get("copy").disabled, true);
+  const digits = editStructured(panel, "Decimal places", "0");
+  assert.equal(panel.document.activeElement, digits);
+  assert.equal(panel.get("formula-output").value, "=ROUND(12.5, 0)");
+  editStructured(panel, "Decimal places", "-01");
+  assert.equal(panel.get("formula-output").value, "=ROUND(12.5, -1)");
+  panel.get("back").dispatch("click"); panel.choose("roundValue");
+  assert.equal(structuredControl(panel, "Decimal places").value, "-01");
+  assert.equal(structuredControl(panel, "Number").value, " 0012.500 ");
+  const restored = structuredControl(panel, "Include Decimal places");
+  restored.checked = false; restored.dispatch("change");
+  assert.equal(Object.hasOwn(calls.at(-1), "decimalPlaces"), false);
+  assert.equal(panel.get("formula-output").value, "=ROUND(12.5)");
+  editStructured(panel, "Number kind", "cellRef");
+  editStructured(panel, "Current-row column", "Amount");
+  editStructured(panel, "Number kind", "number");
+  assert.deepEqual(calls.at(-1).value, { type: "number", value: "" });
+});
+
+test("production VALUE shows requiredText errors, preserves literal text and handles copy failure", async () => {
+  const panel = setupExtension({ clipboard: { writeText: async () => { throw new Error("unavailable"); } } });
+  switchLibrary(panel, "common"); panel.choose("textToNumber");
+  editStructured(panel, "Text kind", "textLiteral");
+  for (const raw of ["", "   ", "\u00a0"]) {
+    const input = editStructured(panel, "Text literal", raw);
+    assert.equal(input.getAttribute("aria-invalid"), "true");
+    assert.equal(panel.get("copy").disabled, true);
+    assert.ok(descendants(panel.get("fields")).some(node => node.className === "field-error" && !node.hidden && node.textContent === "Enter text that represents a number."));
+  }
+  const input = editStructured(panel, "Text literal", " 0012.50 ");
+  assert.equal(input.value, " 0012.50 ");
+  assert.equal(input.getAttribute("aria-invalid"), "false");
+  assert.equal(panel.get("formula-output").value, '=VALUE(" 0012.50 ")');
+  assert.equal(panel.get("validation").textContent, "");
+  panel.get("copy").dispatch("click"); await tick();
+  assert.match(panel.get("copy-status").textContent, /Could not copy/);
+  assert.equal(panel.document.activeElement, panel.get("formula-output"));
+  assert.equal(panel.get("formula-output").selected, true);
+  assert.equal(panel.get("copy").disabled, false);
+  editStructured(panel, "Text kind", "cellRef"); editStructured(panel, "Current-row column", "Text");
+  assert.equal(panel.get("formula-output").value, "=VALUE([Text]@row)");
+});
 
 test("mixed startup exposes labeled native radios, defaults to Advanced, and switches ordered results", async () => {
   const panel = mixedPanel();

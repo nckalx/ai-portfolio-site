@@ -1,0 +1,3458 @@
+{
+  "formulas": [
+    {
+      "id": "roundValue",
+      "label": "ROUND",
+      "builderKey": "decimalRounding",
+      "explanation": "Round a number to a chosen number of decimal places.",
+      "keywords": [
+        "round",
+        "rounding",
+        "decimal places",
+        "round a number",
+        "round to whole number"
+      ]
+    },
+    {
+      "id": "absoluteValue",
+      "label": "ABS",
+      "builderKey": "unaryNumeric",
+      "explanation": "Return the absolute value of a number.",
+      "keywords": [
+        "abs",
+        "absolute value",
+        "remove negative sign",
+        "number magnitude"
+      ]
+    },
+    {
+      "id": "textToNumber",
+      "label": "VALUE",
+      "builderKey": "unaryNumeric",
+      "explanation": "Convert text representing a number into a numeric value.",
+      "keywords": [
+        "value",
+        "text to number",
+        "convert text to number",
+        "numeric text",
+        "number stored as text"
+      ]
+    },
+    {
+      "id": "ceilingValue",
+      "label": "CEILING",
+      "builderKey": "multipleRounding",
+      "explanation": "Round a number using a specified multiple.",
+      "keywords": [
+        "ceiling",
+        "round up to a multiple",
+        "round to increment",
+        "significance"
+      ]
+    },
+    {
+      "id": "floorValue",
+      "label": "FLOOR",
+      "builderKey": "multipleRounding",
+      "explanation": "Round a number to a specified multiple using FLOOR.",
+      "keywords": [
+        "floor",
+        "round down to a multiple",
+        "round to increment",
+        "multiple",
+        "significance"
+      ]
+    },
+    {
+      "id": "roundUpValue",
+      "label": "ROUNDUP",
+      "builderKey": "decimalRounding",
+      "explanation": "Round a number up to a chosen number of decimal places.",
+      "keywords": [
+        "roundup",
+        "round up",
+        "round upward",
+        "decimal places"
+      ]
+    },
+    {
+      "id": "roundDownValue",
+      "label": "ROUNDDOWN",
+      "builderKey": "decimalRounding",
+      "explanation": "Round a number down to a chosen number of decimal places.",
+      "keywords": [
+        "rounddown",
+        "round down",
+        "round downward",
+        "decimal places"
+      ]
+    },
+    {
+      "id": "integerPortion",
+      "label": "INT",
+      "builderKey": "unaryNumeric",
+      "explanation": "Return the integer portion of a number.",
+      "keywords": [
+        "int",
+        "integer portion",
+        "whole number portion",
+        "integer part"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "name": "omitted precision",
+      "formulaType": "roundValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12.345"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "12.345"
+          }
+        },
+        "formula": "=ROUND(12.345)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "normalized decimal and precision",
+      "formulaType": "roundValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": " 0012.500 "
+        },
+        "decimalPlaces": "02"
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "12.5"
+          },
+          "decimalPlaces": "2"
+        },
+        "formula": "=ROUND(12.5, 2)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "cell and explicit zero",
+      "formulaType": "roundValue",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": " Amount "
+        },
+        "decimalPlaces": "0"
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "cellRef",
+            "column": "Amount"
+          },
+          "decimalPlaces": "0"
+        },
+        "formula": "=ROUND([Amount]@row, 0)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "negative number and precision",
+      "formulaType": "roundValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "-12.5"
+        },
+        "decimalPlaces": "-1"
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "-12.5"
+          },
+          "decimalPlaces": "-1"
+        },
+        "formula": "=ROUND(-12.5, -1)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "negative zero",
+      "formulaType": "roundValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "-00.000"
+        },
+        "decimalPlaces": "-0"
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "0"
+          },
+          "decimalPlaces": "0"
+        },
+        "formula": "=ROUND(0, 0)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "upper precision endpoint",
+      "formulaType": "roundValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "1"
+        },
+        "decimalPlaces": "9007199254740992"
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "1"
+          },
+          "decimalPlaces": "9007199254740992"
+        },
+        "formula": "=ROUND(1, 9007199254740992)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "lower precision endpoint",
+      "formulaType": "roundValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "1"
+        },
+        "decimalPlaces": "-9007199254740992"
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "1"
+          },
+          "decimalPlaces": "-9007199254740992"
+        },
+        "formula": "=ROUND(1, -9007199254740992)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "omitted precision",
+      "formulaType": "roundUpValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12.345"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "12.345"
+          }
+        },
+        "formula": "=ROUNDUP(12.345)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "normalized decimal and precision",
+      "formulaType": "roundUpValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": " 0012.500 "
+        },
+        "decimalPlaces": "02"
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "12.5"
+          },
+          "decimalPlaces": "2"
+        },
+        "formula": "=ROUNDUP(12.5, 2)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "cell and explicit zero",
+      "formulaType": "roundUpValue",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": " Amount "
+        },
+        "decimalPlaces": "0"
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "cellRef",
+            "column": "Amount"
+          },
+          "decimalPlaces": "0"
+        },
+        "formula": "=ROUNDUP([Amount]@row, 0)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "negative number and precision",
+      "formulaType": "roundUpValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "-12.5"
+        },
+        "decimalPlaces": "-1"
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "-12.5"
+          },
+          "decimalPlaces": "-1"
+        },
+        "formula": "=ROUNDUP(-12.5, -1)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "negative zero",
+      "formulaType": "roundUpValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "-00.000"
+        },
+        "decimalPlaces": "-0"
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "0"
+          },
+          "decimalPlaces": "0"
+        },
+        "formula": "=ROUNDUP(0, 0)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "upper precision endpoint",
+      "formulaType": "roundUpValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "1"
+        },
+        "decimalPlaces": "9007199254740992"
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "1"
+          },
+          "decimalPlaces": "9007199254740992"
+        },
+        "formula": "=ROUNDUP(1, 9007199254740992)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "lower precision endpoint",
+      "formulaType": "roundUpValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "1"
+        },
+        "decimalPlaces": "-9007199254740992"
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "1"
+          },
+          "decimalPlaces": "-9007199254740992"
+        },
+        "formula": "=ROUNDUP(1, -9007199254740992)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "omitted precision",
+      "formulaType": "roundDownValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12.345"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "12.345"
+          }
+        },
+        "formula": "=ROUNDDOWN(12.345)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "normalized decimal and precision",
+      "formulaType": "roundDownValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": " 0012.500 "
+        },
+        "decimalPlaces": "02"
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "12.5"
+          },
+          "decimalPlaces": "2"
+        },
+        "formula": "=ROUNDDOWN(12.5, 2)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "cell and explicit zero",
+      "formulaType": "roundDownValue",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": " Amount "
+        },
+        "decimalPlaces": "0"
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "cellRef",
+            "column": "Amount"
+          },
+          "decimalPlaces": "0"
+        },
+        "formula": "=ROUNDDOWN([Amount]@row, 0)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "negative number and precision",
+      "formulaType": "roundDownValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "-12.5"
+        },
+        "decimalPlaces": "-1"
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "-12.5"
+          },
+          "decimalPlaces": "-1"
+        },
+        "formula": "=ROUNDDOWN(-12.5, -1)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "negative zero",
+      "formulaType": "roundDownValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "-00.000"
+        },
+        "decimalPlaces": "-0"
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "0"
+          },
+          "decimalPlaces": "0"
+        },
+        "formula": "=ROUNDDOWN(0, 0)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "upper precision endpoint",
+      "formulaType": "roundDownValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "1"
+        },
+        "decimalPlaces": "9007199254740992"
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "1"
+          },
+          "decimalPlaces": "9007199254740992"
+        },
+        "formula": "=ROUNDDOWN(1, 9007199254740992)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "lower precision endpoint",
+      "formulaType": "roundDownValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "1"
+        },
+        "decimalPlaces": "-9007199254740992"
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "1"
+          },
+          "decimalPlaces": "-9007199254740992"
+        },
+        "formula": "=ROUNDDOWN(1, -9007199254740992)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "negative decimal normalization",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "-0012.500"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "-12.5"
+          }
+        },
+        "formula": "=ABS(-12.5)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "current-row cell",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": "Amount"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "cellRef",
+            "column": "Amount"
+          }
+        },
+        "formula": "=ABS([Amount]@row)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "zero",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "0"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "0"
+          }
+        },
+        "formula": "=ABS(0)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "upper numeric endpoint",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "9007199254740992"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "9007199254740992"
+          }
+        },
+        "formula": "=ABS(9007199254740992)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "lower numeric endpoint",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "-9007199254740992"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "-9007199254740992"
+          }
+        },
+        "formula": "=ABS(-9007199254740992)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "negative decimal normalization",
+      "formulaType": "integerPortion",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "-0012.500"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "-12.5"
+          }
+        },
+        "formula": "=INT(-12.5)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "current-row cell",
+      "formulaType": "integerPortion",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": "Amount"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "cellRef",
+            "column": "Amount"
+          }
+        },
+        "formula": "=INT([Amount]@row)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "zero",
+      "formulaType": "integerPortion",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "0"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "0"
+          }
+        },
+        "formula": "=INT(0)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "upper numeric endpoint",
+      "formulaType": "integerPortion",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "9007199254740992"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "9007199254740992"
+          }
+        },
+        "formula": "=INT(9007199254740992)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "lower numeric endpoint",
+      "formulaType": "integerPortion",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "-9007199254740992"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "-9007199254740992"
+          }
+        },
+        "formula": "=INT(-9007199254740992)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "positive multiple",
+      "formulaType": "ceilingValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "multiple": {
+          "type": "number",
+          "value": "5"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "12"
+          },
+          "multiple": {
+            "type": "number",
+            "value": "5"
+          }
+        },
+        "formula": "=CEILING(12, 5)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "decimal multiple normalization",
+      "formulaType": "ceilingValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12.250"
+        },
+        "multiple": {
+          "type": "number",
+          "value": "00.500"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "12.25"
+          },
+          "multiple": {
+            "type": "number",
+            "value": "0.5"
+          }
+        },
+        "formula": "=CEILING(12.25, 0.5)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "both current-row cells",
+      "formulaType": "ceilingValue",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": " Amount "
+        },
+        "multiple": {
+          "type": "cellRef",
+          "column": " Increment "
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "cellRef",
+            "column": "Amount"
+          },
+          "multiple": {
+            "type": "cellRef",
+            "column": "Increment"
+          }
+        },
+        "formula": "=CEILING([Amount]@row, [Increment]@row)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "negative value positive multiple",
+      "formulaType": "ceilingValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "-12"
+        },
+        "multiple": {
+          "type": "number",
+          "value": "5"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "-12"
+          },
+          "multiple": {
+            "type": "number",
+            "value": "5"
+          }
+        },
+        "formula": "=CEILING(-12, 5)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "positive value negative multiple",
+      "formulaType": "ceilingValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "multiple": {
+          "type": "number",
+          "value": "-5"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "12"
+          },
+          "multiple": {
+            "type": "number",
+            "value": "-5"
+          }
+        },
+        "formula": "=CEILING(12, -5)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "both negative",
+      "formulaType": "ceilingValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "-12"
+        },
+        "multiple": {
+          "type": "number",
+          "value": "-5"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "-12"
+          },
+          "multiple": {
+            "type": "number",
+            "value": "-5"
+          }
+        },
+        "formula": "=CEILING(-12, -5)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "zero value and multiple",
+      "formulaType": "ceilingValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "0"
+        },
+        "multiple": {
+          "type": "number",
+          "value": "0"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "0"
+          },
+          "multiple": {
+            "type": "number",
+            "value": "0"
+          }
+        },
+        "formula": "=CEILING(0, 0)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "cell value literal multiple",
+      "formulaType": "ceilingValue",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": "Amount"
+        },
+        "multiple": {
+          "type": "number",
+          "value": "5"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "cellRef",
+            "column": "Amount"
+          },
+          "multiple": {
+            "type": "number",
+            "value": "5"
+          }
+        },
+        "formula": "=CEILING([Amount]@row, 5)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "literal value cell multiple",
+      "formulaType": "ceilingValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "multiple": {
+          "type": "cellRef",
+          "column": "Increment"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "12"
+          },
+          "multiple": {
+            "type": "cellRef",
+            "column": "Increment"
+          }
+        },
+        "formula": "=CEILING(12, [Increment]@row)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "positive multiple",
+      "formulaType": "floorValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "multiple": {
+          "type": "number",
+          "value": "5"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "12"
+          },
+          "multiple": {
+            "type": "number",
+            "value": "5"
+          }
+        },
+        "formula": "=FLOOR(12, 5)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "decimal multiple normalization",
+      "formulaType": "floorValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12.250"
+        },
+        "multiple": {
+          "type": "number",
+          "value": "00.500"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "12.25"
+          },
+          "multiple": {
+            "type": "number",
+            "value": "0.5"
+          }
+        },
+        "formula": "=FLOOR(12.25, 0.5)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "both current-row cells",
+      "formulaType": "floorValue",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": " Amount "
+        },
+        "multiple": {
+          "type": "cellRef",
+          "column": " Increment "
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "cellRef",
+            "column": "Amount"
+          },
+          "multiple": {
+            "type": "cellRef",
+            "column": "Increment"
+          }
+        },
+        "formula": "=FLOOR([Amount]@row, [Increment]@row)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "negative value positive multiple",
+      "formulaType": "floorValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "-12"
+        },
+        "multiple": {
+          "type": "number",
+          "value": "5"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "-12"
+          },
+          "multiple": {
+            "type": "number",
+            "value": "5"
+          }
+        },
+        "formula": "=FLOOR(-12, 5)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "positive value negative multiple",
+      "formulaType": "floorValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "multiple": {
+          "type": "number",
+          "value": "-5"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "12"
+          },
+          "multiple": {
+            "type": "number",
+            "value": "-5"
+          }
+        },
+        "formula": "=FLOOR(12, -5)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "both negative",
+      "formulaType": "floorValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "-12"
+        },
+        "multiple": {
+          "type": "number",
+          "value": "-5"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "-12"
+          },
+          "multiple": {
+            "type": "number",
+            "value": "-5"
+          }
+        },
+        "formula": "=FLOOR(-12, -5)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "zero value and multiple",
+      "formulaType": "floorValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "0"
+        },
+        "multiple": {
+          "type": "number",
+          "value": "0"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "0"
+          },
+          "multiple": {
+            "type": "number",
+            "value": "0"
+          }
+        },
+        "formula": "=FLOOR(0, 0)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "cell value literal multiple",
+      "formulaType": "floorValue",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": "Amount"
+        },
+        "multiple": {
+          "type": "number",
+          "value": "5"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "cellRef",
+            "column": "Amount"
+          },
+          "multiple": {
+            "type": "number",
+            "value": "5"
+          }
+        },
+        "formula": "=FLOOR([Amount]@row, 5)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "literal value cell multiple",
+      "formulaType": "floorValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "multiple": {
+          "type": "cellRef",
+          "column": "Increment"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "12"
+          },
+          "multiple": {
+            "type": "cellRef",
+            "column": "Increment"
+          }
+        },
+        "formula": "=FLOOR(12, [Increment]@row)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "leading zeros",
+      "formulaType": "textToNumber",
+      "rawValues": {
+        "value": {
+          "type": "textLiteral",
+          "value": "0012.50"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "textLiteral",
+            "value": "0012.50"
+          }
+        },
+        "formula": "=VALUE(\"0012.50\")",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "negative text",
+      "formulaType": "textToNumber",
+      "rawValues": {
+        "value": {
+          "type": "textLiteral",
+          "value": "-12.5"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "textLiteral",
+            "value": "-12.5"
+          }
+        },
+        "formula": "=VALUE(\"-12.5\")",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "zero text",
+      "formulaType": "textToNumber",
+      "rawValues": {
+        "value": {
+          "type": "textLiteral",
+          "value": "0"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "textLiteral",
+            "value": "0"
+          }
+        },
+        "formula": "=VALUE(\"0\")",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "spaces preserved",
+      "formulaType": "textToNumber",
+      "rawValues": {
+        "value": {
+          "type": "textLiteral",
+          "value": " 0012.50 "
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "textLiteral",
+            "value": " 0012.50 "
+          }
+        },
+        "formula": "=VALUE(\" 0012.50 \")",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "currency",
+      "formulaType": "textToNumber",
+      "rawValues": {
+        "value": {
+          "type": "textLiteral",
+          "value": "$1,000.00"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "textLiteral",
+            "value": "$1,000.00"
+          }
+        },
+        "formula": "=VALUE(\"$1,000.00\")",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "percent",
+      "formulaType": "textToNumber",
+      "rawValues": {
+        "value": {
+          "type": "textLiteral",
+          "value": "12%"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "textLiteral",
+            "value": "12%"
+          }
+        },
+        "formula": "=VALUE(\"12%\")",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "scientific text",
+      "formulaType": "textToNumber",
+      "rawValues": {
+        "value": {
+          "type": "textLiteral",
+          "value": "1e3"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "textLiteral",
+            "value": "1e3"
+          }
+        },
+        "formula": "=VALUE(\"1e3\")",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "locale text",
+      "formulaType": "textToNumber",
+      "rawValues": {
+        "value": {
+          "type": "textLiteral",
+          "value": "1.234,56"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "textLiteral",
+            "value": "1.234,56"
+          }
+        },
+        "formula": "=VALUE(\"1.234,56\")",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "text magnitude not normalized",
+      "formulaType": "textToNumber",
+      "rawValues": {
+        "value": {
+          "type": "textLiteral",
+          "value": "9007199254740993"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "textLiteral",
+            "value": "9007199254740993"
+          }
+        },
+        "formula": "=VALUE(\"9007199254740993\")",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "not a reference",
+      "formulaType": "textToNumber",
+      "rawValues": {
+        "value": {
+          "type": "textLiteral",
+          "value": "{Amounts}"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "textLiteral",
+            "value": "{Amounts}"
+          }
+        },
+        "formula": "=VALUE(\"{Amounts}\")",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "quotes and backslashes",
+      "formulaType": "textToNumber",
+      "rawValues": {
+        "value": {
+          "type": "textLiteral",
+          "value": "1\"2\\3"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "textLiteral",
+            "value": "1\"2\\3"
+          }
+        },
+        "formula": "=VALUE(\"1\\\"2\\\\3\")",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "current-row text cell",
+      "formulaType": "textToNumber",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": "Numeric Text"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "cellRef",
+            "column": "Numeric Text"
+          }
+        },
+        "formula": "=VALUE([Numeric Text]@row)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "escaped column brackets",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": "A[B]"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "cellRef",
+            "column": "A[B]"
+          }
+        },
+        "formula": "=ABS([A\\[B\\]]@row)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "escaped column backslash",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": "A\\B"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "cellRef",
+            "column": "A\\B"
+          }
+        },
+        "formula": "=ABS([A\\\\B]@row)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "missing required fields",
+      "formulaType": "roundValue",
+      "rawValues": {},
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value",
+            "code": "required",
+            "message": "Choose Number."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "missing required fields",
+      "formulaType": "absoluteValue",
+      "rawValues": {},
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value",
+            "code": "required",
+            "message": "Choose Number."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "missing required fields",
+      "formulaType": "textToNumber",
+      "rawValues": {},
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value",
+            "code": "required",
+            "message": "Choose Text."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "missing required fields",
+      "formulaType": "ceilingValue",
+      "rawValues": {},
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value",
+            "code": "required",
+            "message": "Choose Number."
+          },
+          {
+            "path": "multiple",
+            "code": "required",
+            "message": "Choose Multiple."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "missing required fields",
+      "formulaType": "floorValue",
+      "rawValues": {},
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value",
+            "code": "required",
+            "message": "Choose Number."
+          },
+          {
+            "path": "multiple",
+            "code": "required",
+            "message": "Choose Multiple."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "missing required fields",
+      "formulaType": "roundUpValue",
+      "rawValues": {},
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value",
+            "code": "required",
+            "message": "Choose Number."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "missing required fields",
+      "formulaType": "roundDownValue",
+      "rawValues": {},
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value",
+            "code": "required",
+            "message": "Choose Number."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "missing required fields",
+      "formulaType": "integerPortion",
+      "rawValues": {},
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value",
+            "code": "required",
+            "message": "Choose Number."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "missing discriminator",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {}
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.type",
+            "code": "required",
+            "message": "Choose an operand type."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "missing numeric member",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "number"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.value",
+            "code": "required",
+            "message": "Choose value.value."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "operand is a scalar",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": "12"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value",
+            "code": "type",
+            "message": "Choose an operand or reference object."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "missing cell column",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "cellRef"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.column",
+            "code": "required",
+            "message": "Choose value.column."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "empty cell column",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": " "
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.column",
+            "code": "columnName",
+            "message": "Choose a column name."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "column contains control",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": "A\nB"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.column",
+            "code": "columnName",
+            "message": "Expected text without control characters."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "obsolete cell member",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12",
+          "column": "Amount"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.column",
+            "code": "unexpected",
+            "message": "Remove this unexpected property."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "obsolete numeric member",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": "Amount",
+          "value": "12"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.value",
+            "code": "unexpected",
+            "message": "Remove this unexpected property."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "UI state leakage",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "uiState": {}
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "uiState",
+            "code": "unexpected",
+            "message": "Remove this unexpected property."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "null operand",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": null
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value",
+            "code": "invalid",
+            "message": "Choose a valid value; null and undefined are not omission."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "invalid decimal \"\"",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": ""
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.value",
+            "code": "number",
+            "message": "Use decimal syntax."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "invalid decimal \"-\"",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "-"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.value",
+            "code": "number",
+            "message": "Use decimal syntax."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "invalid decimal \"1.\"",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "1."
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.value",
+            "code": "number",
+            "message": "Use decimal syntax."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "invalid decimal \".5\"",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": ".5"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.value",
+            "code": "number",
+            "message": "Use decimal syntax."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "invalid decimal \"+1\"",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "+1"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.value",
+            "code": "number",
+            "message": "Use decimal syntax."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "invalid decimal \"1e3\"",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "1e3"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.value",
+            "code": "number",
+            "message": "Use decimal syntax."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "invalid decimal \"1,000\"",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "1,000"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.value",
+            "code": "number",
+            "message": "Use decimal syntax."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "invalid decimal \"NaN\"",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "NaN"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.value",
+            "code": "number",
+            "message": "Use decimal syntax."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "invalid decimal \"Infinity\"",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "Infinity"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.value",
+            "code": "number",
+            "message": "Use decimal syntax."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "numeric overflow 9007199254740993",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "9007199254740993"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.value",
+            "code": "number",
+            "message": "Use a number from -9007199254740992 through 9007199254740992."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "numeric overflow -9007199254740993",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "-9007199254740993"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.value",
+            "code": "number",
+            "message": "Use a number from -9007199254740992 through 9007199254740992."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "numeric overflow 9007199254740992.000000001",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "9007199254740992.000000001"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.value",
+            "code": "number",
+            "message": "Use a number from -9007199254740992 through 9007199254740992."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "numeric overflow -9007199254740992.000000001",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "-9007199254740992.000000001"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.value",
+            "code": "number",
+            "message": "Use a number from -9007199254740992 through 9007199254740992."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "numeric JS value",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": 12
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.value",
+            "code": "number",
+            "message": "Use a decimal string."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "unsupported textLiteral",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "textLiteral",
+          "value": "12"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.type",
+            "code": "operandType",
+            "message": "Choose a permitted operand type."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "unsupported boolean",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "boolean",
+          "value": false
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.type",
+            "code": "operandType",
+            "message": "Choose a permitted operand type."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "unsupported date",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "date",
+          "value": "2026-09-27"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.type",
+            "code": "operandType",
+            "message": "Choose a permitted operand type."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "unsupported blank",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "blank"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.type",
+            "code": "operandType",
+            "message": "Choose a permitted operand type."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "unsupported columnRef",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "columnRef",
+          "column": "Amount"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.type",
+            "code": "operandType",
+            "message": "Choose a permitted operand type."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "unsupported rangeRef",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "rangeRef",
+          "scope": "crossSheet",
+          "name": "Amounts"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.type",
+            "code": "operandType",
+            "message": "Choose a permitted operand type."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "unsupported expression",
+      "formulaType": "absoluteValue",
+      "rawValues": {
+        "value": {
+          "type": "expression",
+          "expression": "ABS(1)"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.type",
+            "code": "operandType",
+            "message": "Choose a permitted operand type."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "empty text \"\"",
+      "formulaType": "textToNumber",
+      "rawValues": {
+        "value": {
+          "type": "textLiteral",
+          "value": ""
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.value",
+            "code": "requiredText",
+            "message": "Enter text that represents a number."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "empty text \" \"",
+      "formulaType": "textToNumber",
+      "rawValues": {
+        "value": {
+          "type": "textLiteral",
+          "value": " "
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.value",
+            "code": "requiredText",
+            "message": "Enter text that represents a number."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "empty text \" \"",
+      "formulaType": "textToNumber",
+      "rawValues": {
+        "value": {
+          "type": "textLiteral",
+          "value": " "
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.value",
+            "code": "requiredText",
+            "message": "Enter text that represents a number."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "numeric VALUE operand",
+      "formulaType": "textToNumber",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.type",
+            "code": "operandType",
+            "message": "Choose a permitted operand type."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "control text before builder validation",
+      "formulaType": "textToNumber",
+      "rawValues": {
+        "value": {
+          "type": "textLiteral",
+          "value": "\t"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.value",
+            "code": "text",
+            "message": "Expected text without control characters."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "invalid precision \"\"",
+      "formulaType": "roundValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "decimalPlaces": ""
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "decimalPlaces",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "invalid precision \"-\"",
+      "formulaType": "roundValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "decimalPlaces": "-"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "decimalPlaces",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "invalid precision \"1.0\"",
+      "formulaType": "roundValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "decimalPlaces": "1.0"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "decimalPlaces",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "invalid precision \"1e3\"",
+      "formulaType": "roundValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "decimalPlaces": "1e3"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "decimalPlaces",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "precision null",
+      "formulaType": "roundValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "decimalPlaces": null
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "decimalPlaces",
+            "code": "invalid",
+            "message": "Choose a valid value; null and undefined are not omission."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "precision reference rejected",
+      "formulaType": "roundValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "decimalPlaces": {
+          "type": "cellRef",
+          "column": "Digits"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "decimalPlaces",
+            "code": "integer",
+            "message": "Use a decimal string."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "precision overflow",
+      "formulaType": "roundValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "decimalPlaces": "9007199254740993"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "decimalPlaces",
+            "code": "integer",
+            "message": "Use a number from -9007199254740992 through 9007199254740992."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "invalid precision \"\"",
+      "formulaType": "roundUpValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "decimalPlaces": ""
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "decimalPlaces",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "invalid precision \"-\"",
+      "formulaType": "roundUpValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "decimalPlaces": "-"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "decimalPlaces",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "invalid precision \"1.0\"",
+      "formulaType": "roundUpValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "decimalPlaces": "1.0"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "decimalPlaces",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "invalid precision \"1e3\"",
+      "formulaType": "roundUpValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "decimalPlaces": "1e3"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "decimalPlaces",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "precision null",
+      "formulaType": "roundUpValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "decimalPlaces": null
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "decimalPlaces",
+            "code": "invalid",
+            "message": "Choose a valid value; null and undefined are not omission."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "precision reference rejected",
+      "formulaType": "roundUpValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "decimalPlaces": {
+          "type": "cellRef",
+          "column": "Digits"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "decimalPlaces",
+            "code": "integer",
+            "message": "Use a decimal string."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "precision overflow",
+      "formulaType": "roundUpValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "decimalPlaces": "9007199254740993"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "decimalPlaces",
+            "code": "integer",
+            "message": "Use a number from -9007199254740992 through 9007199254740992."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "invalid precision \"\"",
+      "formulaType": "roundDownValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "decimalPlaces": ""
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "decimalPlaces",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "invalid precision \"-\"",
+      "formulaType": "roundDownValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "decimalPlaces": "-"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "decimalPlaces",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "invalid precision \"1.0\"",
+      "formulaType": "roundDownValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "decimalPlaces": "1.0"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "decimalPlaces",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "invalid precision \"1e3\"",
+      "formulaType": "roundDownValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "decimalPlaces": "1e3"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "decimalPlaces",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "precision null",
+      "formulaType": "roundDownValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "decimalPlaces": null
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "decimalPlaces",
+            "code": "invalid",
+            "message": "Choose a valid value; null and undefined are not omission."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "precision reference rejected",
+      "formulaType": "roundDownValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "decimalPlaces": {
+          "type": "cellRef",
+          "column": "Digits"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "decimalPlaces",
+            "code": "integer",
+            "message": "Use a decimal string."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "precision overflow",
+      "formulaType": "roundDownValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "decimalPlaces": "9007199254740993"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "decimalPlaces",
+            "code": "integer",
+            "message": "Use a number from -9007199254740992 through 9007199254740992."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "missing multiple",
+      "formulaType": "ceilingValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "multiple",
+            "code": "required",
+            "message": "Choose Multiple."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "incomplete multiple",
+      "formulaType": "ceilingValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "multiple": {
+          "type": "number",
+          "value": "-"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "multiple.value",
+            "code": "number",
+            "message": "Use decimal syntax."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "overflow multiple",
+      "formulaType": "ceilingValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "multiple": {
+          "type": "number",
+          "value": "-9007199254740993"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "multiple.value",
+            "code": "number",
+            "message": "Use a number from -9007199254740992 through 9007199254740992."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "blank multiple cell",
+      "formulaType": "ceilingValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "multiple": {
+          "type": "cellRef",
+          "column": ""
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "multiple.column",
+            "code": "columnName",
+            "message": "Choose a column name."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "illegal multiple type",
+      "formulaType": "ceilingValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "multiple": {
+          "type": "blank"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "multiple.type",
+            "code": "operandType",
+            "message": "Choose a permitted operand type."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "ordered field errors",
+      "formulaType": "ceilingValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "-"
+        },
+        "multiple": {
+          "type": "number",
+          "value": "1."
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.value",
+            "code": "number",
+            "message": "Use decimal syntax."
+          },
+          {
+            "path": "multiple.value",
+            "code": "number",
+            "message": "Use decimal syntax."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "missing multiple",
+      "formulaType": "floorValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "multiple",
+            "code": "required",
+            "message": "Choose Multiple."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "incomplete multiple",
+      "formulaType": "floorValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "multiple": {
+          "type": "number",
+          "value": "-"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "multiple.value",
+            "code": "number",
+            "message": "Use decimal syntax."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "overflow multiple",
+      "formulaType": "floorValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "multiple": {
+          "type": "number",
+          "value": "-9007199254740993"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "multiple.value",
+            "code": "number",
+            "message": "Use a number from -9007199254740992 through 9007199254740992."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "blank multiple cell",
+      "formulaType": "floorValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "multiple": {
+          "type": "cellRef",
+          "column": ""
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "multiple.column",
+            "code": "columnName",
+            "message": "Choose a column name."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "illegal multiple type",
+      "formulaType": "floorValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "multiple": {
+          "type": "blank"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "multiple.type",
+            "code": "operandType",
+            "message": "Choose a permitted operand type."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "ordered field errors",
+      "formulaType": "floorValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "-"
+        },
+        "multiple": {
+          "type": "number",
+          "value": "1."
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "validationErrors": [
+          {
+            "path": "value.value",
+            "code": "number",
+            "message": "Use decimal syntax."
+          },
+          {
+            "path": "multiple.value",
+            "code": "number",
+            "message": "Use decimal syntax."
+          }
+        ],
+        "references": []
+      }
+    },
+    {
+      "name": "zero multiple nonzero value",
+      "formulaType": "ceilingValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "multiple": {
+          "type": "number",
+          "value": "0"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "12"
+          },
+          "multiple": {
+            "type": "number",
+            "value": "0"
+          }
+        },
+        "formula": "=CEILING(12, 0)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "zero value nonzero multiple",
+      "formulaType": "ceilingValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "0"
+        },
+        "multiple": {
+          "type": "number",
+          "value": "5"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "0"
+          },
+          "multiple": {
+            "type": "number",
+            "value": "5"
+          }
+        },
+        "formula": "=CEILING(0, 5)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "zero multiple nonzero value",
+      "formulaType": "floorValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "12"
+        },
+        "multiple": {
+          "type": "number",
+          "value": "0"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "12"
+          },
+          "multiple": {
+            "type": "number",
+            "value": "0"
+          }
+        },
+        "formula": "=FLOOR(12, 0)",
+        "validationErrors": [],
+        "references": []
+      }
+    },
+    {
+      "name": "zero value nonzero multiple",
+      "formulaType": "floorValue",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "0"
+        },
+        "multiple": {
+          "type": "number",
+          "value": "5"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "number",
+            "value": "0"
+          },
+          "multiple": {
+            "type": "number",
+            "value": "5"
+          }
+        },
+        "formula": "=FLOOR(0, 5)",
+        "validationErrors": [],
+        "references": []
+      }
+    }
+  ]
+}

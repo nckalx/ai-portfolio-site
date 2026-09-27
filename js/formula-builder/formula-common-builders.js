@@ -1,4 +1,4 @@
-// Registry infrastructure only. Production family implementations arrive in Phase 5.
+// Curated structured builders. Mathematical evaluation remains in Smartsheet.
 (() => {
   const namespace = globalThis.SmartsheetFormulaBuilder ||= {};
   const familyKeys = Object.freeze([
@@ -24,5 +24,40 @@
     }
     return Object.freeze(registry);
   }
-  namespace.commonBuilders = Object.freeze({ familyKeys, createRegistry, registry: createRegistry({}) });
+  function validateFunctionOptions(options, names) {
+    try { namespace.primitives.assertRecord(options, ["functionName"]); }
+    catch { throw new TypeError("Structured configuration: expected only functionName in builder options."); }
+    if (!names.includes(options.functionName)) throw new TypeError("Structured configuration: unsupported function for builder family.");
+  }
+  const registry = createRegistry({
+    decimalRounding: {
+      validateOptions(options) { validateFunctionOptions(options, ["ROUND", "ROUNDUP", "ROUNDDOWN"]); },
+      validate() { return []; },
+      build(values, options, p) {
+        const args = [p.renderOperand(values.value)];
+        if (Object.hasOwn(values, "decimalPlaces")) args.push(p.renderOperand({ type: "number", value: values.decimalPlaces }));
+        return p.renderFunctionCall(options.functionName, args);
+      }
+    },
+    multipleRounding: {
+      validateOptions(options) { validateFunctionOptions(options, ["CEILING", "FLOOR"]); },
+      validate() { return []; },
+      build(values, options, p) {
+        return p.renderFunctionCall(options.functionName, [p.renderOperand(values.value), p.renderOperand(values.multiple)]);
+      }
+    },
+    unaryNumeric: {
+      validateOptions(options) { validateFunctionOptions(options, ["ABS", "VALUE", "INT"]); },
+      validate(values, options) {
+        if (options.functionName === "VALUE" && values.value.type === "textLiteral" && !values.value.value.trim()) {
+          return [{ path: "value.value", code: "requiredText", message: "Enter text that represents a number." }];
+        }
+        return [];
+      },
+      build(values, options, p) {
+        return p.renderFunctionCall(options.functionName, [p.renderOperand(values.value)]);
+      }
+    }
+  });
+  namespace.commonBuilders = Object.freeze({ familyKeys, createRegistry, registry });
 })();

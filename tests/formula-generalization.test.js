@@ -3,6 +3,7 @@ const test = require("node:test");
 const { legacyFixtures, generalizedFixtures, currentLegacyFixtures } = require("./helpers/formula-expectations");
 const { loadFormulaCore } = require("./helpers/load-formula-core");
 const core = loadFormulaCore();
+const advanced = Object.values(core.catalog).filter(config => config.libraryId === "advanced");
 const plain = value => JSON.parse(JSON.stringify(value));
 
 test("generalization preserves every legacy explicit-input formula and validation result", () => {
@@ -22,8 +23,8 @@ test("generalization preserves every legacy explicit-input formula and validatio
   assert.deepEqual(currentLegacyFixtures.cases.map(entry => entry.expected.formula), legacyFixtures.cases.map(entry => entry.expected.formula));
 });
 
-test("all formula IDs, field order and types, option values, and formula configuration remain unchanged", () => {
-  assert.deepEqual(Object.keys(core.catalog), legacyFixtures.catalog.map(config => config.id));
+test("all Advanced formula IDs, field order and types, option values, and formula configuration remain unchanged", () => {
+  assert.deepEqual(advanced.map(config => config.id), legacyFixtures.catalog.map(config => config.id));
   const contract = config => config.fields.map(field => ({id: field.id, type: field.type || "text", options: field.options?.map(option => option.value)}));
   for (const config of legacyFixtures.catalog) {
     assert.deepEqual(plain(contract(core.catalog[config.id])), plain(contract(config)), config.id);
@@ -37,7 +38,7 @@ test("all formula IDs, field order and types, option values, and formula configu
 
 test("reviewed new defaults cover exactly all 44 selectable combinations across 26 types", () => {
   const combinations = [];
-  for (const config of Object.values(core.catalog)) {
+  for (const config of advanced) {
     let values = [Object.fromEntries(config.fields.map(field => [field.id, field.defaultValue]))];
     for (const field of config.fields.filter(field => field.options)) {
       values = values.flatMap(value => Array.from(field.options, option => ({...value, [field.id]: option.value})));
@@ -47,7 +48,7 @@ test("reviewed new defaults cover exactly all 44 selectable combinations across 
   assert.equal(generalizedFixtures.cases.length, 44);
   assert.equal(new Set(generalizedFixtures.cases.map(entry => entry.formulaType)).size, 26);
   assert.deepEqual(combinations, generalizedFixtures.cases.map(({formulaType, rawValues}) => ({formulaType, rawValues})));
-  const changed = Object.values(core.catalog).filter(config => {
+  const changed = advanced.filter(config => {
     const old = legacyFixtures.catalog.find(old => old.id === config.id);
     return config.fields.some((field, index) => field.defaultValue !== old.fields[index].defaultValue);
   }).map(config => config.id);
@@ -58,7 +59,7 @@ test("reviewed new defaults cover exactly all 44 selectable combinations across 
   ]);
 });
 
-test("five approved categories cover the catalog with capability-oriented search keywords", () => {
+test("five approved categories preserve Advanced distribution and capability-oriented search keywords", () => {
   assert.deepEqual(plain(core.categories), generalizedFixtures.categories);
   assert.deepEqual(Array.from(core.categories, category => category.label), [
     "Text & labels", "Dates & status", "Lookups & matching", "Counts & calculations", "Row hierarchy"
@@ -66,7 +67,7 @@ test("five approved categories cover the catalog with capability-oriented search
   assert.equal(new Set(core.categories.map(category => category.id)).size, 5);
   const ids = new Set(core.categories.map(category => category.id));
   const formulaIds = Object.keys(core.catalog);
-  for (const config of Object.values(core.catalog)) {
+  for (const config of advanced) {
     assert.ok(ids.has(config.categoryId), config.id);
     assert.ok(config.keywords.length > 0);
     assert.equal(new Set(config.keywords.map(keyword => keyword.toLowerCase())).size, config.keywords.length);
@@ -75,12 +76,12 @@ test("five approved categories cover the catalog with capability-oriented search
       assert.ok(!formulaIds.some(id => keyword.toLowerCase().includes(id.toLowerCase())));
     }
   }
-  assert.deepEqual(Array.from(core.categories, category => Object.values(core.catalog).filter(config => config.categoryId === category.id).length), [6, 5, 6, 6, 3]);
+  assert.deepEqual(Array.from(core.categories, category => advanced.filter(config => config.categoryId === category.id).length), [6, 5, 6, 6, 3]);
 });
 
 test("default user-facing copy and search metadata contain no organization-specific terminology", () => {
   const prohibited = /\brio\b|risk,? issue,? (?:or|and) opportunity|hold kick-off|first month budgeted|renovation|master schedule|project.controls? teams|project-control helper/i;
-  for (const config of Object.values(core.catalog)) {
+  for (const config of advanced) {
     const strings = [config.label, config.explanation, ...config.keywords];
     for (const field of config.fields) strings.push(field.label, field.defaultValue, field.help, ...(field.options || []).map(option => option.label));
     const values = Object.fromEntries(config.fields.map(field => [field.id, field.defaultValue]));

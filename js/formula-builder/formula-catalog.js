@@ -1202,6 +1202,87 @@
     }
   };
 
+  // Phase 5 Batch 1: extension-first Common formulas, after the unchanged Advanced entries.
+  Object.assign(catalog, {
+    roundValue: {
+      id: "roundValue", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "ROUND", explanation: "Round a number to a chosen number of decimal places.",
+      inputContract: "structured-v1", builderKey: "decimalRounding", builderOptions: { functionName: "ROUND" },
+      fields: [
+        { id: "value", label: "Number", type: "numericOperand", required: true, help: "Enter a number or choose a current-row column containing a number." },
+        { id: "decimalPlaces", label: "Decimal places", type: "integer", required: false, help: "Include to specify an integer number of decimal places, including zero or a negative integer. Leave excluded to omit this argument." }
+      ],
+      categoryId: "counts-calculations", keywords: ["round", "rounding", "decimal places", "round a number", "round to whole number"]
+    },
+    absoluteValue: {
+      id: "absoluteValue", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "ABS", explanation: "Return the absolute value of a number.",
+      inputContract: "structured-v1", builderKey: "unaryNumeric", builderOptions: { functionName: "ABS" },
+      fields: [
+        { id: "value", label: "Number", type: "numericOperand", required: true, help: "Enter a number or choose a current-row column containing a number." }
+      ],
+      categoryId: "counts-calculations", keywords: ["abs", "absolute value", "remove negative sign", "number magnitude"]
+    },
+    textToNumber: {
+      id: "textToNumber", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "VALUE", explanation: "Convert text representing a number into a numeric value.",
+      inputContract: "structured-v1", builderKey: "unaryNumeric", builderOptions: { functionName: "VALUE" },
+      fields: [
+        { id: "value", label: "Text", type: "textOperand", required: true, help: "Enter nonempty text representing a number, or choose a current-row column. Smartsheet performs the conversion." }
+      ],
+      categoryId: "counts-calculations", keywords: ["value", "text to number", "convert text to number", "numeric text", "number stored as text"]
+    },
+    ceilingValue: {
+      id: "ceilingValue", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "CEILING", explanation: "Round a number using a specified multiple.",
+      inputContract: "structured-v1", builderKey: "multipleRounding", builderOptions: { functionName: "CEILING" },
+      fields: [
+        { id: "value", label: "Number", type: "numericOperand", required: true, help: "Enter a number or choose a current-row column containing a number." },
+        { id: "multiple", label: "Multiple", type: "numericOperand", required: true, help: "Enter the multiple or choose a current-row column containing it. Smartsheet evaluates the argument combination." }
+      ],
+      categoryId: "counts-calculations", keywords: ["ceiling", "round up to a multiple", "round to increment", "significance"]
+    },
+    floorValue: {
+      id: "floorValue", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "FLOOR", explanation: "Round a number to a specified multiple using FLOOR.",
+      inputContract: "structured-v1", builderKey: "multipleRounding", builderOptions: { functionName: "FLOOR" },
+      fields: [
+        { id: "value", label: "Number", type: "numericOperand", required: true, help: "Enter a number or choose a current-row column containing a number." },
+        { id: "multiple", label: "Multiple", type: "numericOperand", required: true, help: "Enter the multiple or choose a current-row column containing it. Smartsheet evaluates the argument combination." }
+      ],
+      categoryId: "counts-calculations", keywords: ["floor", "round down to a multiple", "round to increment", "multiple", "significance"]
+    },
+    roundUpValue: {
+      id: "roundUpValue", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "ROUNDUP", explanation: "Round a number up to a chosen number of decimal places.",
+      inputContract: "structured-v1", builderKey: "decimalRounding", builderOptions: { functionName: "ROUNDUP" },
+      fields: [
+        { id: "value", label: "Number", type: "numericOperand", required: true, help: "Enter a number or choose a current-row column containing a number." },
+        { id: "decimalPlaces", label: "Decimal places", type: "integer", required: false, help: "Include to specify an integer number of decimal places, including zero or a negative integer. Leave excluded to omit this argument." }
+      ],
+      categoryId: "counts-calculations", keywords: ["roundup", "round up", "round upward", "decimal places"]
+    },
+    roundDownValue: {
+      id: "roundDownValue", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "ROUNDDOWN", explanation: "Round a number down to a chosen number of decimal places.",
+      inputContract: "structured-v1", builderKey: "decimalRounding", builderOptions: { functionName: "ROUNDDOWN" },
+      fields: [
+        { id: "value", label: "Number", type: "numericOperand", required: true, help: "Enter a number or choose a current-row column containing a number." },
+        { id: "decimalPlaces", label: "Decimal places", type: "integer", required: false, help: "Include to specify an integer number of decimal places, including zero or a negative integer. Leave excluded to omit this argument." }
+      ],
+      categoryId: "counts-calculations", keywords: ["rounddown", "round down", "round downward", "decimal places"]
+    },
+    integerPortion: {
+      id: "integerPortion", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "INT", explanation: "Return the integer portion of a number.",
+      inputContract: "structured-v1", builderKey: "unaryNumeric", builderOptions: { functionName: "INT" },
+      fields: [
+        { id: "value", label: "Number", type: "numericOperand", required: true, help: "Enter a number or choose a current-row column containing a number." }
+      ],
+      categoryId: "counts-calculations", keywords: ["int", "integer portion", "whole number portion", "integer part"]
+    }
+  });
+
   const categories = [
     {
       "id": "text-labels",

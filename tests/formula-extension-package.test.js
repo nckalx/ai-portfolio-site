@@ -7,6 +7,7 @@ const vm = require("node:vm");
 const { packageExtension, packageFiles } = require("../scripts/package-formula-builder");
 const { coreScripts } = require("./helpers/load-formula-core");
 const { generalizedFixtures, currentLegacyFixtures } = require("./helpers/formula-expectations");
+const batch1 = require("./fixtures/formula-common-batch1-cases.json");
 const root = path.resolve(__dirname, "..");
 
 function temporaryPackage(t) {
@@ -33,16 +34,23 @@ test("copy-only package has exactly the allowlisted files and byte-identical can
   for (const file of packageFiles) assert.ok(fs.readFileSync(path.join(directory, file.target)).equals(fs.readFileSync(path.join(root, file.source))));
   const context = vm.createContext({});
   for (const name of coreScripts) vm.runInContext(fs.readFileSync(path.join(directory, `core/${name}.js`), "utf8"), context);
-  assert.equal(Object.keys(context.SmartsheetFormulaBuilder.catalog).length, 26);
-  assert.ok(Object.values(context.SmartsheetFormulaBuilder.catalog).every(config => config.libraryId === "advanced" && !config.inputContract));
+  assert.equal(Object.keys(context.SmartsheetFormulaBuilder.catalog).length, 34);
+  assert.equal(Object.values(context.SmartsheetFormulaBuilder.catalog).filter(config => config.libraryId === "advanced" && !config.inputContract).length, 26);
   assert.ok(Object.isFrozen(context.SmartsheetFormulaBuilder.commonBuilders.registry));
-  assert.deepEqual(Object.keys(context.SmartsheetFormulaBuilder.commonBuilders.registry), []);
+  assert.deepEqual(Object.keys(context.SmartsheetFormulaBuilder.commonBuilders.registry), ["decimalRounding", "multipleRounding", "unaryNumeric"]);
   for (const entry of generalizedFixtures.cases) {
     assert.equal(context.SmartsheetFormulaBuilder.generateFormula(entry.formulaType, entry.rawValues).formula, entry.expected.formula);
     assert.deepEqual(JSON.parse(JSON.stringify(context.SmartsheetFormulaBuilder.generateFormula(entry.formulaType, entry.rawValues))), entry.expected);
   }
   for (const entry of currentLegacyFixtures.cases) {
     assert.deepEqual(JSON.parse(JSON.stringify(context.SmartsheetFormulaBuilder.generateFormula(entry.formulaType, entry.rawValues))), entry.expected);
+  }
+  assert.deepEqual(Object.values(context.SmartsheetFormulaBuilder.catalog).filter(config => config.libraryId === "common").map(config => config.id), batch1.formulas.map(config => config.id));
+  for (const entry of batch1.cases) {
+    assert.deepEqual(JSON.parse(JSON.stringify(context.SmartsheetFormulaBuilder.generateFormula(entry.formulaType, entry.rawValues))), {
+      formulaType: entry.formulaType, explanation: batch1.formulas.find(config => config.id === entry.formulaType).explanation,
+      ...entry.expected, missingFields: [], setupNotes: [], instructions: []
+    }, `${entry.formulaType}: ${entry.name}`);
   }
 });
 

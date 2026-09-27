@@ -99,8 +99,8 @@ test("fixtures do not mutate production catalog; Advanced malformed-input except
   const core = loadFormulaCore(), before = JSON.stringify(core.catalog);
   setup();
   assert.equal(JSON.stringify(core.catalog), before);
-  assert.equal(Object.keys(core.catalog).length, 26);
-  assert.ok(Object.values(core.catalog).every(entry => entry.libraryId === "advanced" && !Object.hasOwn(entry, "inputContract")));
+  assert.equal(Object.keys(core.catalog).length, 34);
+  assert.ok(Object.values(core.catalog).filter(entry => entry.libraryId === "advanced").every(entry => !Object.hasOwn(entry, "inputContract")));
   assert.throws(() => core.generateFormula("unknown", {}));
   for (const raw of [null, {}, { finishDateColumn: 1, milestoneLabelColumn: "Task" }]) assert.throws(() => core.generateFormula("appendFinishDateLabel", raw));
 });

@@ -8,20 +8,21 @@ const availabilityFixture = require("./fixtures/formula-availability.json");
 const { loadFormulaCore, loadFormulaScript, coreScripts } = require("./helpers/load-formula-core");
 const plain = value => JSON.parse(JSON.stringify(value));
 const core = loadFormulaCore();
+const advanced = Object.values(core.catalog).filter(config => config.libraryId === "advanced");
 
-test("Phase 4A shared load order and empty production structured registry stay explicit", () => {
+test("shared load order and Batch 1 production structured registry stay explicit", () => {
   assert.deepEqual(coreScripts, ["formula-catalog", "formula-utils", "formula-primitives", "formula-validation", "formula-guidance", "formula-common-builders", "formula-engine"]);
   assert.equal(typeof core.primitives.renderOperand, "function");
   assert.equal(typeof core.validation.structured.normalizeAndValidate, "function");
-  assert.deepEqual(Object.keys(core.commonBuilders.registry), []);
-  assert.ok(Object.values(core.catalog).every(config => config.libraryId === "advanced" && !Object.hasOwn(config, "inputContract")));
+  assert.deepEqual(Object.keys(core.commonBuilders.registry), ["decimalRounding", "multipleRounding", "unaryNumeric"]);
+  assert.ok(advanced.every(config => config.libraryId === "advanced" && !Object.hasOwn(config, "inputContract")));
 });
 
 test("reviewed availability fixture covers all 26 Advanced formulas and exact surface exposure", () => {
   const ids = fixtures.catalog.map(config => config.id);
   assert.equal(ids.length, 26);
   assert.deepEqual(Object.keys(availabilityFixture), ids);
-  assert.deepEqual(Object.keys(core.catalog), ids);
+  assert.deepEqual(advanced.map(config => config.id), ids);
   for (const id of ids) {
     const expected = availabilityFixture[id];
     const config = core.catalog[id];
@@ -54,11 +55,11 @@ test("surface availability never restricts direct deterministic generation", () 
 
 test("catalog matches reviewed generalized metadata and valid defaults in dropdown order", () => {
   const expectedCatalog = fixtures.catalog.map(config => ({ ...config, ...availabilityFixture[config.id] }));
-  assert.deepEqual(plain(Object.values(core.catalog)), expectedCatalog);
+  assert.deepEqual(plain(advanced), expectedCatalog);
   const fieldIds = new Set();
   let combinations = 0;
-  for (const [id, config] of Object.entries(core.catalog)) {
-    assert.equal(config.id, id);
+  for (const config of advanced) {
+    assert.equal(core.catalog[config.id], config);
     combinations += config.fields.reduce((count, field) => count * (field.options?.length || 1), 1);
     for (const field of config.fields) {
       assert.ok(!fieldIds.has(field.id), `Duplicate field ID: ${field.id}`);
@@ -107,7 +108,7 @@ test("utilities load independently of catalog and receive the location word limi
 });
 
 test("normalization trims every field without filling blanks or modifying inputs", () => {
-  for (const config of Object.values(core.catalog)) {
+  for (const config of advanced) {
     const raw = Object.freeze(Object.fromEntries(config.fields.map(field => [field.id, "  value  "])));
     const normalized = core.validation.normalizeValues(config, raw);
     assert.ok(Object.values(normalized).every(value => value === "value"));

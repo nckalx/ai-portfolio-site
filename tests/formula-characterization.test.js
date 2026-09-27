@@ -6,10 +6,10 @@ const { loadFormulaCore } = require("./helpers/load-formula-core");
 const core = loadFormulaCore();
 const plain = (value) => JSON.parse(JSON.stringify(value));
 
-test("characterization includes all 26 types and 44 selectable combinations", () => {
+test("characterization includes all 26 Advanced types and 44 selectable combinations", () => {
   assert.equal(fixtures.catalog.length, 26);
   assert.equal(fixtures.cases.filter(entry => entry.kind === "default").length, 44);
-  assert.deepEqual(Object.keys(core.catalog), fixtures.catalog.map(entry => entry.id));
+  assert.deepEqual(Object.values(core.catalog).filter(config => config.libraryId === "advanced").map(config => config.id), fixtures.catalog.map(entry => entry.id));
 });
 
 for (const entry of [...fixtures.cases, ...generalizedFixtures.cases]) {
