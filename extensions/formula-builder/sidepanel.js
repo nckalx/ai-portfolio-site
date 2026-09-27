@@ -1,9 +1,12 @@
 // Extension DOM/clipboard adapter. The shared core is unaware of this UI or Chrome.
 (() => {
-  const { catalog, categories, generateFormula, utils } = globalThis.SmartsheetFormulaBuilder;
+  const { catalog, categories, generateFormula, utils, validation } = globalThis.SmartsheetFormulaBuilder;
   const { findFormulas, resolveDiscoveryState } = globalThis.FormulaDiscovery;
   const get = id => document.getElementById(id);
   const drafts = new Map(); // Lifetime of this panel document only.
+  const structuredDrafts = new Map(); // Raw values plus UI-only row identities.
+  let structuredController = null;
+  const advancedInstructions = get("form-instructions").textContent;
   let selectedLibraryId = "advanced";
   let selectedId = null;
   let returnFocus = null;
@@ -115,16 +118,35 @@
   }
 
   function openFormula(config, button) {
+    structuredController?.destroy();
+    structuredController = null;
     selectedId = config.id;
     returnFocus = button;
-    if (!drafts.has(selectedId)) {
+    const structured = config.inputContract === "structured-v1";
+    if (structured && !structuredDrafts.has(selectedId)) {
+      const values = validation.structured.createDefaultValues(config);
+      structuredDrafts.set(selectedId, { values, uiState: globalThis.FormulaStructuredFields.createUiState({ config, values }) });
+    } else if (!structured && !drafts.has(selectedId)) {
       drafts.set(selectedId, Object.fromEntries(config.fields.map(field => [field.id, field.defaultValue])));
     }
     get("build-title").textContent = config.label;
     get("build-category").textContent = categories.find(category => category.id === config.categoryId).label;
     get("explanation").textContent = config.explanation;
     get("fields").textContent = "";
-    config.fields.forEach(field => get("fields").appendChild(renderField(field, drafts.get(selectedId)[field.id])));
+    get("form-instructions").textContent = structured
+      ? "Fields can contain groups and repeatable rows. Include optional fields explicitly. Blank is a value, different from leaving a field out."
+      : advancedInstructions;
+    if (structured) {
+      structuredController = globalThis.FormulaStructuredFields.mount({
+        container: get("fields"), config, ...structuredDrafts.get(selectedId), validationErrors: [],
+        onChange({ values, uiState }) {
+          structuredDrafts.set(config.id, { values, uiState });
+          renderOutput();
+        }
+      });
+    } else {
+      config.fields.forEach(field => get("fields").appendChild(renderField(field, drafts.get(selectedId)[field.id])));
+    }
     ["explanation-details", "setup-details", "instructions-details"].forEach(id => { get(id).open = false; });
     get("find-view").hidden = true;
     get("build-view").hidden = false;
@@ -135,26 +157,34 @@
 
   function renderOutput() {
     revision += 1;
-    result = generateFormula(selectedId, drafts.get(selectedId));
+    const structured = catalog[selectedId].inputContract === "structured-v1";
+    result = generateFormula(selectedId, structured ? structuredDrafts.get(selectedId).values : drafts.get(selectedId));
     const missing = new Set(result.missingFields.map(field => field.id));
     const errors = result.validationErrors;
     get("formula-output").value = result.formula || "";
     get("copy").disabled = result.formula === null;
     get("copy-status").textContent = "";
-    get("validation").textContent = missing.size
-      ? `Complete these fields: ${result.missingFields.map(field => field.label).join(", ")}.`
-      : errors.join(" ");
-    // Only the existing rank rule has a field-specific validation error.
-    catalog[selectedId].fields.forEach(field => {
-      const message = missing.has(field.id) ? "This field is required."
-        : field.id === "rankNumber" && errors.length ? errors.join(" ") : "";
-      get(`field-${field.id}`).setAttribute("aria-invalid", message ? "true" : "false");
-      get(`field-${field.id}-error`).textContent = message;
-      get(`field-${field.id}-error`).hidden = !message;
-    });
+    if (structured) {
+      // Never replace raw drafts with normalized result.values.
+      structuredController.update({ ...structuredDrafts.get(selectedId), validationErrors: errors });
+      const summary = errors.length ? `${errors.length} ${errors.length === 1 ? "field error" : "field errors"}. Review the fields above.` : "";
+      if (get("validation").textContent !== summary) get("validation").textContent = summary;
+    } else {
+      get("validation").textContent = missing.size
+        ? `Complete these fields: ${result.missingFields.map(field => field.label).join(", ")}.`
+        : errors.join(" ");
+      // Only the existing rank rule has a field-specific validation error.
+      catalog[selectedId].fields.forEach(field => {
+        const message = missing.has(field.id) ? "This field is required."
+          : field.id === "rankNumber" && errors.length ? errors.join(" ") : "";
+        get(`field-${field.id}`).setAttribute("aria-invalid", message ? "true" : "false");
+        get(`field-${field.id}-error`).textContent = message;
+        get(`field-${field.id}-error`).hidden = !message;
+      });
+    }
     renderList("setup-notes", result.setupNotes);
     renderList("instructions", result.instructions);
-    renderList("references", result.references.map(reference =>
+    renderList("references", structured ? result.references.map(reference => utils.sheetReference(reference.name)) : result.references.map(reference =>
       `${utils.sheetReference(reference.name)}: in "${reference.sheet}", select the "${reference.range}" column.`));
     get("reference-section").hidden = !result.references.length;
     get("reference-notice").hidden = !result.references.length;
@@ -198,6 +228,8 @@
   get("fields-form").addEventListener("submit", event => event.preventDefault());
   get("back").addEventListener("click", () => {
     revision += 1; // Ignore pending clipboard feedback after navigation.
+    structuredController?.destroy();
+    structuredController = null;
     get("build-view").hidden = true;
     get("find-view").hidden = false;
     returnFocus.focus();

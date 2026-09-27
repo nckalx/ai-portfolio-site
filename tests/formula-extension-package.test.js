@@ -6,7 +6,7 @@ const path = require("node:path");
 const vm = require("node:vm");
 const { packageExtension, packageFiles } = require("../scripts/package-formula-builder");
 const { coreScripts } = require("./helpers/load-formula-core");
-const { generalizedFixtures } = require("./helpers/formula-expectations");
+const { generalizedFixtures, currentLegacyFixtures } = require("./helpers/formula-expectations");
 const root = path.resolve(__dirname, "..");
 
 function temporaryPackage(t) {
@@ -20,10 +20,10 @@ test("copy-only package has exactly the allowlisted files and byte-identical can
   const directory = temporaryPackage(t);
   assert.equal(packageExtension(directory), directory);
   const files = fs.readdirSync(directory, { recursive: true }).filter(file => fs.statSync(path.join(directory, file)).isFile()).map(file => file.replaceAll("\\", "/")).sort();
-  const expected = ["manifest.json", "service-worker.js", "sidepanel.html", "sidepanel.css", "sidepanel.js", "formula-discovery.js", "theme.js",
+  const expected = ["manifest.json", "service-worker.js", "sidepanel.html", "sidepanel.css", "sidepanel.js", "formula-discovery.js", "structured-fields.js", "theme.js",
     ...[16, 24, 32, 48, 128].map(size => `icons/icon-${size}.png`), ...coreScripts.map(name => `core/${name}.js`)].sort();
   assert.deepEqual(files, expected);
-  assert.equal(files.length, 19);
+  assert.equal(files.length, 20);
   assert.ok(!files.some(file => /test|fixture/i.test(file)));
   assert.ok(!files.some(file => file.includes("source/") || file.includes("master")));
   for (const file of packageFiles) {
@@ -39,6 +39,10 @@ test("copy-only package has exactly the allowlisted files and byte-identical can
   assert.deepEqual(Object.keys(context.SmartsheetFormulaBuilder.commonBuilders.registry), []);
   for (const entry of generalizedFixtures.cases) {
     assert.equal(context.SmartsheetFormulaBuilder.generateFormula(entry.formulaType, entry.rawValues).formula, entry.expected.formula);
+    assert.deepEqual(JSON.parse(JSON.stringify(context.SmartsheetFormulaBuilder.generateFormula(entry.formulaType, entry.rawValues))), entry.expected);
+  }
+  for (const entry of currentLegacyFixtures.cases) {
+    assert.deepEqual(JSON.parse(JSON.stringify(context.SmartsheetFormulaBuilder.generateFormula(entry.formulaType, entry.rawValues))), entry.expected);
   }
 });
 
@@ -75,7 +79,7 @@ test("manifest uses only sidePanel and storage permissions and resolves all loca
   assert.deepEqual(manifest.side_panel, { default_path: "sidepanel.html" });
   const html = fs.readFileSync(path.join(directory, manifest.side_panel.default_path), "utf8");
   const scripts = [...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map(match => match[1]);
-  assert.deepEqual(scripts, ["theme.js", ...coreScripts.map(name => `core/${name}.js`), "formula-discovery.js", "sidepanel.js"]);
+  assert.deepEqual(scripts, ["theme.js", ...coreScripts.map(name => `core/${name}.js`), "formula-discovery.js", "structured-fields.js", "sidepanel.js"]);
   assert.ok(html.indexOf('<script src="theme.js">') < html.indexOf("<body>"));
   assert.equal((html.match(/<script/g) || []).length, scripts.length);
   assert.doesNotMatch(html, /\son\w+=|<style\b|style=|https?:\/\//i);

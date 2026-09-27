@@ -13,8 +13,11 @@ function loadFormulaScript(context, name) {
 }
 
 // Each test gets an isolated runtime with no browser globals or require shim.
-function loadFormulaCore(context = vm.createContext({})) {
-  coreScripts.forEach(name => loadFormulaScript(context, name));
+function loadFormulaCore(context = vm.createContext({}), beforeEngine = () => {}) {
+  coreScripts.forEach(name => {
+    if (name === "formula-engine") beforeEngine(context.SmartsheetFormulaBuilder);
+    loadFormulaScript(context, name);
+  });
   return context.SmartsheetFormulaBuilder;
 }
 

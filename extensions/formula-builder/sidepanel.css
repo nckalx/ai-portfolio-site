@@ -115,6 +115,16 @@ li + li { margin-top: 6px; }
 .field-help { font-size: 12px; margin: 4px 0 0; }
 .field-help summary { color: var(--muted); }
 .field-error, .validation { color: var(--error); font-size: 13px; overflow-wrap: anywhere; }
+.structured-fields .structured-field { min-width: 0; margin: 12px 0; }
+.structured-fields fieldset { padding: 8px; border: 1px solid var(--border); border-radius: 6px; }
+.structured-fields legend { max-width: 100%; padding: 0 4px; font-weight: 600; overflow-wrap: anywhere; }
+.structured-fields .structured-body, .structured-fields .structured-editor { min-width: 0; }
+.structured-fields .structured-presence { display: flex; align-items: center; gap: 8px; overflow-wrap: anywhere; }
+.structured-fields input[type="checkbox"] { appearance: auto; flex: none; width: auto; min-height: 0; margin: 0; padding: 0; accent-color: var(--accent); }
+.structured-fields button { max-width: 100%; margin-top: 8px; white-space: normal; overflow-wrap: anywhere; }
+.structured-fields button:disabled { color: var(--disabled-text); background: var(--disabled-bg); }
+.structured-fields .structured-help { font-size: 12px; overflow-wrap: anywhere; }
+.structured-fields .field-error { white-space: pre-line; }
 .validation:empty { margin: 0; }
 .output-section { margin-top: 24px; }
 #formula-output { display: block; font: 12px/1.6 ui-monospace, SFMono-Regular, Consolas, monospace; background: var(--output-bg); resize: vertical; min-height: 112px; max-height: 320px; white-space: pre-wrap; overflow-wrap: anywhere; }

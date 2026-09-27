@@ -6,6 +6,125 @@ const availabilityFixture = require("./fixtures/formula-availability.json");
 const { discoveryFixture } = require("./helpers/formula-discovery-fixtures");
 const excluded = new Set(["multiLineReportLabel", "rioIdLookup"]);
 const tick = () => new Promise(resolve => setImmediate(resolve));
+const { installStructuredFixtures, descendants, structuredControl, editStructured } = require("./helpers/formula-structured-ui-fixtures");
+
+function structuredPanel(navigator = {}, configureCore = () => {}, beforeEngine = installStructuredFixtures) {
+  const panel = setupExtension(navigator, {}, configureCore, beforeEngine);
+  switchLibrary(panel, "common");
+  return panel;
+}
+
+test("structured UI uses real engine dispatch, core defaults once, and semantic-only raw inputs", () => {
+  const calls = [], defaults = [];
+  const panel = structuredPanel({}, core => {
+    const generate = core.generateFormula;
+    core.generateFormula = (...args) => { calls.push(JSON.parse(JSON.stringify(args))); return generate(...args); };
+    const original = core.validation.structured;
+    core.validation.structured = { ...original, createDefaultValues(config) { defaults.push(config.id); return original.createDefaultValues(config); } };
+  });
+  panel.choose("syntheticStructured");
+  assert.equal(panel.document.activeElement, panel.get("build-title"));
+  assert.equal(panel.get("formula-output").value, '=COUNTIFS({Statuses}, "Open")');
+  assert.deepEqual(defaults, ["syntheticStructured"]);
+  assert.equal(calls[0].length, 2);
+  assert.deepEqual(Object.keys(calls[0][1]), ["criteria"]);
+  const generationBefore = panel.generationCount();
+  editStructured(panel, "Value kind", "number");
+  editStructured(panel, "Number", "-");
+  assert.equal(panel.generationCount(), generationBefore + 2);
+  assert.deepEqual(calls.at(-1)[1].criteria[0].criterion.value, { type: "number", value: "-" });
+  assert.equal(panel.get("formula-output").value, ""); assert.equal(panel.get("copy").disabled, true);
+  assert.doesNotMatch(panel.get("validation").textContent, /\[object Object\]/);
+  assert.match(panel.get("validation").textContent, /field error/);
+  panel.get("back").dispatch("click"); panel.choose("syntheticStructured");
+  assert.equal(structuredControl(panel, "Number").value, "-");
+  assert.deepEqual(defaults, ["syntheticStructured"]);
+  assert.equal(JSON.stringify(calls).includes("nextKey"), false);
+  assert.equal(JSON.stringify(calls).includes('"r1"'), false);
+});
+
+test("structured dispatch follows inputContract even on an Advanced-library synthetic entry", () => {
+  const panel = setupExtension({}, {}, () => {}, core => {
+    installStructuredFixtures(core); core.catalog.syntheticStructured.libraryId = "advanced";
+  });
+  panel.choose("syntheticStructured");
+  assert.equal(panel.get("formula-output").value, '=COUNTIFS({Statuses}, "Open")');
+});
+
+test("structured drafts, row keys, Advanced drafts and library switches remain independent", () => {
+  const panel = structuredPanel();
+  panel.choose("syntheticStructured"); editStructured(panel, "Text literal", "first");
+  descendants(panel.get("fields")).find(node => node.tagName === "button" && node.textContent === "Add Criteria").dispatch("click");
+  const rowId = structuredControl(panel, "Range kind", 1).id;
+  assert.equal(panel.document.activeElement.id, rowId);
+  panel.get("back").dispatch("click"); panel.choose("syntheticSecond");
+  assert.equal(structuredControl(panel, "Text literal").value, "Open"); editStructured(panel, "Text literal", "second");
+  panel.get("back").dispatch("click"); switchLibrary(panel, "advanced"); panel.choose("appendFinishDateLabel");
+  assert.equal(panel.get("form-instructions").textContent, "Use your sheet's column names. All fields are required.");
+  const advanced = panel.get("field-milestoneLabelColumn"); advanced.value = "Saved Advanced"; advanced.dispatch("input");
+  panel.get("back").dispatch("click"); switchLibrary(panel, "common"); panel.choose("syntheticStructured");
+  assert.equal(structuredControl(panel, "Text literal").value, "first");
+  assert.equal(structuredControl(panel, "Range kind", 1).id, rowId);
+  panel.get("back").dispatch("click"); panel.choose("syntheticSecond"); assert.equal(structuredControl(panel, "Text literal").value, "second");
+  panel.get("back").dispatch("click"); switchLibrary(panel, "advanced"); panel.choose("appendFinishDateLabel");
+  assert.equal(panel.get("field-milestoneLabelColumn").value, "Saved Advanced");
+});
+
+test("structured normalized reference names display alone and raw spelling survives generation", () => {
+  const panel = structuredPanel(); panel.choose("syntheticStructured");
+  editStructured(panel, "Reference name", "{{  Named Range  }}");
+  assert.equal(panel.get("references").textContent, "{Named Range}");
+  assert.doesNotMatch(panel.get("references").textContent, /undefined/);
+  assert.equal(structuredControl(panel, "Reference name").value, "{{  Named Range  }}");
+  editStructured(panel, "Value kind", "number"); editStructured(panel, "Number", "0001.2300");
+  assert.equal(structuredControl(panel, "Number").value, "0001.2300");
+  assert.match(panel.get("formula-output").value, /1\.23/);
+  panel.get("back").dispatch("click"); panel.choose("syntheticStructured");
+  assert.equal(structuredControl(panel, "Number").value, "0001.2300");
+});
+
+test("structured Back preserves Find DOM, scroll and return focus and destroys old controls", () => {
+  const panel = structuredPanel(); const choices = panel.choices();
+  panel.get("results-scroll").scrollTop = 42;
+  const button = panel.choose("syntheticStructured"); const old = structuredControl(panel, "Text literal");
+  const count = panel.generationCount(); panel.get("back").dispatch("click");
+  assert.equal(panel.document.activeElement, button); assert.deepEqual(panel.choices(), choices);
+  assert.equal(panel.get("results-scroll").scrollTop, 42); assert.equal(panel.get("fields").children.length, 0);
+  old.value = "detached"; old.dispatch("input"); assert.equal(panel.generationCount(), count);
+  panel.choose("syntheticStructured"); assert.equal(structuredControl(panel, "Text literal").value, "Open");
+});
+
+test("structured validation count is concise and inline errors clear without moving focus", () => {
+  const panel = structuredPanel(); panel.choose("syntheticStructured");
+  editStructured(panel, "Value kind", "number"); const input = editStructured(panel, "Number", "-");
+  assert.equal(panel.get("validation").textContent, "1 field error. Review the fields above.");
+  assert.equal(panel.document.activeElement, input); assert.equal(input.getAttribute("aria-invalid"), "true");
+  assert.ok(descendants(panel.get("fields")).some(node => node.className === "field-error" && !node.hidden));
+  editStructured(panel, "Number", "1");
+  assert.equal(panel.get("validation").textContent, ""); assert.equal(input.getAttribute("aria-invalid"), "false");
+  assert.equal(panel.document.activeElement, input);
+});
+
+test("structured valid output uses existing Copy Formula and only theme can write storage", async () => {
+  const copied = []; const panel = structuredPanel({ clipboard: { writeText: async value => copied.push(value) } });
+  panel.choose("syntheticStructured");
+  const expected = panel.get("formula-output").value;
+  panel.get("copy").dispatch("click"); await tick();
+  assert.deepEqual(copied, [expected]); assert.equal(panel.get("copy-status").textContent, "Formula copied.");
+  editStructured(panel, "Text literal", "changed");
+  assert.equal(panel.get("copy-status").textContent, "");
+  assert.deepEqual(panel.storageWrites, []);
+});
+
+for (const action of ["edit", "back", "switch"]) {
+  test(`structured pending copy suppresses stale feedback after ${action}`, async () => {
+    let resolve; const panel = structuredPanel({ clipboard: { writeText: () => new Promise(done => { resolve = done; }) } });
+    panel.choose("syntheticStructured"); panel.get("copy").dispatch("click");
+    if (action === "edit") editStructured(panel, "Text literal", "new");
+    else { panel.get("back").dispatch("click"); if (action === "switch") panel.choose("syntheticSecond"); }
+    resolve(); await tick(); assert.notEqual(panel.get("copy-status").textContent, "Formula copied.");
+  });
+}
 
 test("polished discovery removes internal branding and exposes named native result buttons", () => {
   const { get, choose, choices } = setupExtension();

@@ -5,6 +5,24 @@ const path = require("node:path");
 const { setupExtension } = require("./helpers/formula-extension-dom");
 const { discoveryFixture } = require("./helpers/formula-discovery-fixtures");
 const tick = () => new Promise(resolve => setImmediate(resolve));
+const { installStructuredFixtures, descendants, structuredControl, editStructured } = require("./helpers/formula-structured-ui-fixtures");
+
+test("theme changes preserve structured raw drafts, rows, DOM and output with theme-only storage", async () => {
+  const panel = setupExtension({}, {}, () => {}, installStructuredFixtures); await tick();
+  panel.get("library-common").checked = true; panel.get("library-common").dispatch("change");
+  panel.choose("syntheticStructured"); editStructured(panel, "Value kind", "number"); editStructured(panel, "Number", "-");
+  const input = structuredControl(panel, "Number"), nodes = descendants(panel.get("fields"));
+  const count = panel.generationCount(), output = panel.get("formula-output").value;
+  for (const expected of ["dark", "light"]) {
+    toggle(panel); await tick(); assert.equal(resolved(panel), expected);
+    assert.equal(structuredControl(panel, "Number"), input); assert.equal(input.value, "-");
+    assert.deepEqual(descendants(panel.get("fields")), nodes);
+    assert.equal(panel.generationCount(), count); assert.equal(panel.get("formula-output").value, output);
+    assert.equal(panel.document.activeElement, panel.get("theme-toggle"));
+  }
+  assert.deepEqual(panel.storageWrites, [{ theme: "dark" }, { theme: "light" }]);
+  panel.get("back").dispatch("click"); panel.choose("syntheticStructured"); assert.equal(structuredControl(panel, "Number").value, "-");
+});
 const resolved = panel => panel.document.documentElement.getAttribute("data-theme");
 function toggle(panel) { panel.get("theme-toggle").focus(); panel.get("theme-toggle").dispatch("click"); }
 
