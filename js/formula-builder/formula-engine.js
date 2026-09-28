@@ -234,6 +234,7 @@
     if (!commonBuilders.familyKeys.includes(config.builderKey)) throw new TypeError(`Structured configuration: unknown builder family ${String(config.builderKey)}.`);
     if (!Object.hasOwn(commonBuilders.registry, config.builderKey)) throw new TypeError(`Structured configuration: unimplemented builder family ${config.builderKey}.`);
     const builder = commonBuilders.registry[config.builderKey];
+    const structuredGuidance = guidance.getStructuredGuidance(config);
     const { values, errors } = validation.structured.normalizeAndValidate(config, rawValues, builder);
     let formula = null, references = [];
     if (!errors.length) {
@@ -242,7 +243,7 @@
       references = primitives.collectReferences([rendered]);
       formula = `=${rendered.expression}`;
     }
-    return { formulaType, values, explanation: config.explanation, formula, missingFields: [], validationErrors: errors, references, setupNotes: [], instructions: [] };
+    return { formulaType, values, explanation: config.explanation, formula, missingFields: [], validationErrors: errors, references, ...structuredGuidance };
   }
 
   // Synchronous generation returns data only. It does not evaluate Smartsheet expressions.

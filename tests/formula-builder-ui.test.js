@@ -21,10 +21,10 @@ function unavailableEntry(id, availability) {
   };
 }
 
-test("portfolio retains exact Advanced order and initial formula with Batch 1 loaded", () => {
+test("portfolio retains exact Advanced order and initial formula with both Common batches loaded", () => {
   const { get } = setup({}, core => {
     assert.equal(typeof core.primitives.renderOperand, "function");
-    assert.deepEqual(Object.keys(core.commonBuilders.registry), ["decimalRounding", "multipleRounding", "unaryNumeric"]);
+    assert.deepEqual(Object.keys(core.commonBuilders.registry), ["decimalRounding", "multipleRounding", "unaryNumeric", "textSlice", "textUnary", "textSearch", "textReplace"]);
   });
   assert.equal(get("formulaType").children.length, 26);
   assert.deepEqual(get("formulaType").children.map(option => option.value), fixtures.catalog.map(entry => entry.id));

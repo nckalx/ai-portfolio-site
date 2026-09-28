@@ -12,7 +12,7 @@
     valueOrRange: [...scalars, "columnRef", "rangeRef"], range: ["columnRef", "rangeRef"],
     cellRef: ["cellRef"], columnRef: ["columnRef"], rangeRef: ["rangeRef"]
   };
-  const names = { textLiteral: "Text literal", number: "Number", boolean: "Boolean", date: "Date",
+  const names = { textLiteral: "Specific text string", number: "Number", boolean: "Boolean", date: "Date",
     cellRef: "Current-row cell", blank: "Blank", columnRef: "Whole column", rangeRef: "Range",
     currentSheet: "Current sheet", crossSheet: "Cross-sheet named reference" };
   const operators = ["=", "<>", ">", "<", ">=", "<="];
@@ -46,7 +46,7 @@
   }
   // Reconcile only present arrays. A removed parent cannot leave descendant keys.
   function reconcile(config, values, prior = { nextKey: 1, rows: {} }) {
-    const state = { nextKey: prior.nextKey, rows: {} };
+    const state = { nextKey: prior.nextKey, rows: {}, touched: clone(prior.touched || {}) };
     function visit(schema, value, address) {
       const rule = expand(schema);
       if (rule.type === "array" && Array.isArray(value)) {
@@ -64,6 +64,8 @@
 
   function mount({ container, config, values, uiState, validationErrors = [], onChange }) {
     let current = clone(values), state = clone(uiState), errors = clone(validationErrors), destroyed = false;
+    state.touched ||= {};
+    let visibleErrorCount = 0;
     const paths = new Map(), addresses = new Map(), anchors = new Set();
     const removeControls = new WeakSet();
     const id = (address, role) => "structured-" + Array.from(JSON.stringify([config.id, address, role]), character => character.codePointAt(0).toString(16)).join("-");
@@ -89,7 +91,7 @@
         host.appendChild(note);
         helpIds.push(note.id);
       }
-      return { node, error, helpIds };
+      return { node, error, helpIds, address };
     }
     function register(target, parts, address) {
       anchors.add(target);
@@ -122,6 +124,21 @@
       write(next, parts, value, remove);
       commit(next, state, focusTarget);
     }
+    const within = (key, address) => !address || key === address || key.startsWith(`${address}.`) || key.startsWith(`${address}[`);
+    function clearTouched(address, keep = []) {
+      for (const key of Object.keys(state.touched)) if (within(key, address) && !keep.includes(key)) delete state.touched[key];
+    }
+    function interaction(node, event, handler, address) {
+      const change = () => { state.touched[address] = true; handler(); };
+      const blur = () => {
+        if (destroyed || state.touched[address]) return;
+        state.touched[address] = true;
+        commit(current, state, null);
+      };
+      node.addEventListener(event, change);
+      node.addEventListener("blur", blur);
+      return () => { node.removeEventListener(event, change); node.removeEventListener("blur", blur); };
+    }
     function commit(next, nextState, focusTarget) {
       if (destroyed) return;
       current = clone(next);
@@ -145,7 +162,10 @@
         const label = element("label", `Include ${labelText}`, "structured-presence");
         label.setAttribute("for", include.id);
         label.appendChild(include); node.appendChild(label);
-        listen(record, include, "change", () => edit(record.parts, starter(rule), !include.checked));
+        listen(record, include, "change", () => {
+          clearTouched(address);
+          edit(record.parts, starter(rule), !include.checked);
+        });
       }
       const body = element("div", undefined, "structured-body"); node.appendChild(body);
       const group = anchor(node, node, address, "group", composite ? rule.help : "");
@@ -170,13 +190,16 @@
             const nextState = reconcile(config, next, state);
             commit(next, nextState, `${address}[${nextState.rows[address].at(-1)}]`);
           };
-          add.addEventListener("click", handler); record.bodyCleanup.push(() => add?.removeEventListener("click", handler));
+          record.bodyCleanup.push(interaction(add, "click", handler, address));
         } else if (families[rule.type]) {
           const permitted = rule.allowedTypes || families[rule.type];
           typeControl = control(body, address, "type", `${labelText} kind`, permitted.map(type => [type, names[type]]));
           const selector = typeControl.node;
-          const handler = () => edit(record.parts, typedStarter(selector.value), false, `${address}.type`);
-          selector.addEventListener("change", handler); record.bodyCleanup.push(() => selector.removeEventListener("change", handler));
+          const handler = () => {
+            clearTouched(address, [`${address}.type`]);
+            edit(record.parts, typedStarter(selector.value), false, `${address}.type`);
+          };
+          record.bodyCleanup.push(interaction(selector, "change", handler, `${address}.type`));
           record.editorHost = element("div", undefined, "structured-editor"); body.appendChild(record.editorHost);
           record.editorKind = null;
         } else {
@@ -191,7 +214,7 @@
           const editor = input.node;
           const handler = () => edit(record.parts, rule.type === "boolean" && editor.value !== "" ? editor.value === "true" : editor.value);
           const event = choices ? "change" : "input";
-          editor.addEventListener(event, handler); record.bodyCleanup.push(() => editor.removeEventListener(event, handler));
+          record.bodyCleanup.push(interaction(editor, event, handler, address));
         }
       }
       function syncOperand(value) {
@@ -207,16 +230,17 @@
             scopeControl = control(record.editorHost, address, "scope", `${labelText} scope`, ["currentSheet", "crossSheet"].map(scope => [scope, names[scope]]));
             const selector = scopeControl.node;
             const handler = () => {
+              clearTouched(address, [`${address}.type`, `${address}.scope`]);
               const scope = selector.value;
               const next = scope === "currentSheet" ? { type, scope, startColumn: "", endColumn: "" }
                 : scope === "crossSheet" ? { type, scope, name: "" } : { type };
               edit(record.parts, next, false, `${address}.scope`);
             };
-            selector.addEventListener("change", handler); record.scopeCleanup = () => selector.removeEventListener("change", handler);
+            record.scopeCleanup = interaction(selector, "change", handler, `${address}.scope`);
             record.scopeHost = element("div"); record.editorHost.appendChild(record.scopeHost);
           } else {
             const field = ["cellRef", "columnRef"].includes(type) ? member("column", "columnName", type === "cellRef" ? "Current-row column" : "Whole column")
-              : ["textLiteral", "number", "date", "boolean"].includes(type) ? member("value", type === "textLiteral" ? "text" : type, names[type]) : null;
+              : ["textLiteral", "number", "date", "boolean"].includes(type) ? member("value", type === "textLiteral" ? "text" : type, type === "textLiteral" ? "Text" : names[type]) : null;
             if (field) record.children.push(makeField(field, childAddress(address, field.id), record.editorHost));
           }
         }
@@ -307,6 +331,10 @@
       paths.clear(); addresses.clear(); anchors.clear();
       register(fallback, [], "");
       fields.forEach(field => field.sync([field.fieldId]));
+      // Stable UI addresses survive row reindexing; removed editors retain no interaction state.
+      for (const key of Object.keys(state.touched)) if (!addresses.has(key)) delete state.touched[key];
+      const touched = Object.keys(state.touched).filter(key => state.touched[key]);
+      visibleErrorCount = 0;
       const messages = new Map();
       for (const error of errors) {
         let path = error.path;
@@ -316,6 +344,8 @@
           path = parent === path ? "" : parent;
         }
         const target = paths.get(path) || fallback;
+        if (!touched.some(key => within(key, target.address))) continue;
+        visibleErrorCount += 1;
         if (!messages.has(target)) messages.set(target, []);
         messages.get(target).push(error.message);
       }
@@ -349,11 +379,12 @@
       update(next) {
         if (destroyed) return;
         if (Object.hasOwn(next, "values")) current = clone(next.values);
-        if (Object.hasOwn(next, "uiState")) state = clone(next.uiState);
+        if (Object.hasOwn(next, "uiState")) { state = clone(next.uiState); state.touched ||= {}; }
         if (Object.hasOwn(next, "validationErrors")) errors = clone(next.validationErrors);
         sync();
       },
       focus,
+      getVisibleErrorCount: () => visibleErrorCount,
       destroy() {
         if (destroyed) return;
         destroyed = true; fields.forEach(field => field.destroy()); root.remove();

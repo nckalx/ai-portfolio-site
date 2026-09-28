@@ -1208,6 +1208,16 @@
       id: "roundValue", libraryId: "common", availability: { extension: true, portfolio: false },
       label: "ROUND", explanation: "Round a number to a chosen number of decimal places.",
       inputContract: "structured-v1", builderKey: "decimalRounding", builderOptions: { functionName: "ROUND" },
+      guidance: {
+        "setupNotes": [
+          "No special setup is required. Enter the number directly or choose a current-row cell containing it."
+        ],
+        "instructions": [
+          "Enter a number or choose a current-row cell containing it.",
+          "Include Decimal places to specify an integer precision, or leave it excluded to omit that argument.",
+          "Copy the formula to the cell where you want the rounded value."
+        ]
+      },
       fields: [
         { id: "value", label: "Number", type: "numericOperand", required: true, help: "Enter a number or choose a current-row column containing a number." },
         { id: "decimalPlaces", label: "Decimal places", type: "integer", required: false, help: "Include to specify an integer number of decimal places, including zero or a negative integer. Leave excluded to omit this argument." }
@@ -1218,6 +1228,15 @@
       id: "absoluteValue", libraryId: "common", availability: { extension: true, portfolio: false },
       label: "ABS", explanation: "Return the absolute value of a number.",
       inputContract: "structured-v1", builderKey: "unaryNumeric", builderOptions: { functionName: "ABS" },
+      guidance: {
+        "setupNotes": [
+          "No special setup is required. Enter a number directly or choose a current-row cell."
+        ],
+        "instructions": [
+          "Enter the number or choose its current-row cell.",
+          "Copy the formula to the cell where you want the absolute value."
+        ]
+      },
       fields: [
         { id: "value", label: "Number", type: "numericOperand", required: true, help: "Enter a number or choose a current-row column containing a number." }
       ],
@@ -1227,6 +1246,16 @@
       id: "textToNumber", libraryId: "common", availability: { extension: true, portfolio: false },
       label: "VALUE", explanation: "Convert text representing a number into a numeric value.",
       inputContract: "structured-v1", builderKey: "unaryNumeric", builderOptions: { functionName: "VALUE" },
+      guidance: {
+        "setupNotes": [
+          "No special setup is required. The source should contain text that Smartsheet can convert to a number."
+        ],
+        "instructions": [
+          "Choose Specific text string and enter the numeric text, or choose a current-row cell containing it.",
+          "Entered text must contain more than spaces.",
+          "Copy the formula to the cell where you want the numeric value."
+        ]
+      },
       fields: [
         { id: "value", label: "Text", type: "textOperand", required: true, help: "Enter nonempty text representing a number, or choose a current-row column. Smartsheet performs the conversion." }
       ],
@@ -1236,6 +1265,16 @@
       id: "ceilingValue", libraryId: "common", availability: { extension: true, portfolio: false },
       label: "CEILING", explanation: "Round a number using a specified multiple.",
       inputContract: "structured-v1", builderKey: "multipleRounding", builderOptions: { functionName: "CEILING" },
+      guidance: {
+        "setupNotes": [
+          "No special setup is required. The value and rounding multiple can be entered directly or selected from current-row cells."
+        ],
+        "instructions": [
+          "Choose the number to round.",
+          "Enter the multiple or select the cell containing it.",
+          "Copy the formula to the cell where you want the CEILING result."
+        ]
+      },
       fields: [
         { id: "value", label: "Number", type: "numericOperand", required: true, help: "Enter a number or choose a current-row column containing a number." },
         { id: "multiple", label: "Multiple", type: "numericOperand", required: true, help: "Enter the multiple or choose a current-row column containing it. Smartsheet evaluates the argument combination." }
@@ -1246,6 +1285,16 @@
       id: "floorValue", libraryId: "common", availability: { extension: true, portfolio: false },
       label: "FLOOR", explanation: "Round a number to a specified multiple using FLOOR.",
       inputContract: "structured-v1", builderKey: "multipleRounding", builderOptions: { functionName: "FLOOR" },
+      guidance: {
+        "setupNotes": [
+          "No special setup is required. The value and rounding multiple can be entered directly or selected from current-row cells."
+        ],
+        "instructions": [
+          "Choose the number to round.",
+          "Enter the multiple or select the cell containing it.",
+          "Copy the formula to the cell where you want the FLOOR result."
+        ]
+      },
       fields: [
         { id: "value", label: "Number", type: "numericOperand", required: true, help: "Enter a number or choose a current-row column containing a number." },
         { id: "multiple", label: "Multiple", type: "numericOperand", required: true, help: "Enter the multiple or choose a current-row column containing it. Smartsheet evaluates the argument combination." }
@@ -1256,6 +1305,16 @@
       id: "roundUpValue", libraryId: "common", availability: { extension: true, portfolio: false },
       label: "ROUNDUP", explanation: "Round a number up to a chosen number of decimal places.",
       inputContract: "structured-v1", builderKey: "decimalRounding", builderOptions: { functionName: "ROUNDUP" },
+      guidance: {
+        "setupNotes": [
+          "No special setup is required. Enter the number directly or choose a current-row cell containing it."
+        ],
+        "instructions": [
+          "Enter a number or choose a current-row cell containing it.",
+          "Include Decimal places to specify an integer precision, or leave it excluded to omit that argument.",
+          "Copy the formula to the cell where you want the ROUNDUP result."
+        ]
+      },
       fields: [
         { id: "value", label: "Number", type: "numericOperand", required: true, help: "Enter a number or choose a current-row column containing a number." },
         { id: "decimalPlaces", label: "Decimal places", type: "integer", required: false, help: "Include to specify an integer number of decimal places, including zero or a negative integer. Leave excluded to omit this argument." }
@@ -1266,6 +1325,16 @@
       id: "roundDownValue", libraryId: "common", availability: { extension: true, portfolio: false },
       label: "ROUNDDOWN", explanation: "Round a number down to a chosen number of decimal places.",
       inputContract: "structured-v1", builderKey: "decimalRounding", builderOptions: { functionName: "ROUNDDOWN" },
+      guidance: {
+        "setupNotes": [
+          "No special setup is required. Enter the number directly or choose a current-row cell containing it."
+        ],
+        "instructions": [
+          "Enter a number or choose a current-row cell containing it.",
+          "Include Decimal places to specify an integer precision, or leave it excluded to omit that argument.",
+          "Copy the formula to the cell where you want the ROUNDDOWN result."
+        ]
+      },
       fields: [
         { id: "value", label: "Number", type: "numericOperand", required: true, help: "Enter a number or choose a current-row column containing a number." },
         { id: "decimalPlaces", label: "Decimal places", type: "integer", required: false, help: "Include to specify an integer number of decimal places, including zero or a negative integer. Leave excluded to omit this argument." }
@@ -1276,10 +1345,223 @@
       id: "integerPortion", libraryId: "common", availability: { extension: true, portfolio: false },
       label: "INT", explanation: "Return the integer portion of a number.",
       inputContract: "structured-v1", builderKey: "unaryNumeric", builderOptions: { functionName: "INT" },
+      guidance: {
+        "setupNotes": [
+          "No special setup is required. Enter the number directly or choose a current-row cell."
+        ],
+        "instructions": [
+          "Enter the number or choose its current-row cell.",
+          "Copy the formula to the cell where you want the integer result."
+        ]
+      },
       fields: [
         { id: "value", label: "Number", type: "numericOperand", required: true, help: "Enter a number or choose a current-row column containing a number." }
       ],
       categoryId: "counts-calculations", keywords: ["int", "integer portion", "whole number portion", "integer part"]
+    }
+  });
+
+  // Phase 5 Batch 2: text formulas use existing structured operands and controls.
+  Object.assign(catalog, {
+    leftText: {
+      id: "leftText", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "LEFT", explanation: "Extract characters from the beginning of text.",
+      inputContract: "structured-v1", builderKey: "textSlice", builderOptions: { functionName: "LEFT" },
+      guidance: {
+        "setupNotes": [
+          "No special setup is required. The source can be entered text or a current-row cell."
+        ],
+        "instructions": [
+          "Choose Specific text string or a current-row cell for the source.",
+          "Include Number of characters to specify a whole-number count of zero or more, or leave it excluded to omit that argument.",
+          "Copy the formula to the cell where you want the extracted text."
+        ]
+      },
+      fields: [
+        { id: "text", label: "Text", type: "textOperand", required: true, help: "Enter text, including empty text or spaces, or choose a current-row column." },
+        { id: "numChars", label: "Number of characters", type: "integer", required: false, min: "0", help: "Include a whole-number character count of zero or more. Leave excluded to omit this argument." }
+      ],
+      categoryId: "text-labels", keywords: ["left", "first characters", "beginning of text", "extract text prefix"]
+    },
+    rightText: {
+      id: "rightText", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "RIGHT", explanation: "Extract characters from the end of text.",
+      inputContract: "structured-v1", builderKey: "textSlice", builderOptions: { functionName: "RIGHT" },
+      guidance: {
+        "setupNotes": [
+          "No special setup is required. The source can be entered text or a current-row cell."
+        ],
+        "instructions": [
+          "Choose Specific text string or a current-row cell for the source.",
+          "Include Number of characters to specify a whole-number count of zero or more, or leave it excluded to omit that argument.",
+          "Copy the formula to the cell where you want the extracted text."
+        ]
+      },
+      fields: [
+        { id: "text", label: "Text", type: "textOperand", required: true, help: "Enter text, including empty text or spaces, or choose a current-row column." },
+        { id: "numChars", label: "Number of characters", type: "integer", required: false, min: "0", help: "Include a whole-number character count of zero or more. Leave excluded to omit this argument." }
+      ],
+      categoryId: "text-labels", keywords: ["right", "last characters", "end of text", "extract text suffix"]
+    },
+    midText: {
+      id: "midText", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "MID", explanation: "Extract a section of text using a starting position and character count.",
+      inputContract: "structured-v1", builderKey: "textSlice", builderOptions: { functionName: "MID" },
+      guidance: {
+        "setupNotes": [
+          "No special setup is required. The source can be entered text or a current-row cell."
+        ],
+        "instructions": [
+          "Choose Specific text string or a current-row cell for the source.",
+          "Enter a Start position of at least 1 and a Number of characters of zero or more.",
+          "Copy the formula to the cell where you want the extracted section."
+        ]
+      },
+      fields: [
+        { id: "text", label: "Text", type: "textOperand", required: true, help: "Enter text, including empty text or spaces, or choose a current-row column." },
+        { id: "startPosition", label: "Start position", type: "integer", required: true, min: "1", help: "Enter a whole-number starting position of one or more." },
+        { id: "numChars", label: "Number of characters", type: "integer", required: true, min: "0", help: "Enter a whole-number character count of zero or more. Smartsheet evaluates the requested text section." }
+      ],
+      categoryId: "text-labels", keywords: ["mid", "middle of text", "extract substring", "text starting position"]
+    },
+    textLength: {
+      id: "textLength", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "LEN", explanation: "Count characters in text, including spaces.",
+      inputContract: "structured-v1", builderKey: "textUnary", builderOptions: { functionName: "LEN" },
+      guidance: {
+        "setupNotes": [
+          "No special setup is required. The source can be entered text or a current-row cell."
+        ],
+        "instructions": [
+          "Choose Specific text string or a current-row cell containing the text to measure.",
+          "Copy the formula to the cell where you want the character count."
+        ]
+      },
+      fields: [
+        { id: "text", label: "Text", type: "textOperand", required: true, help: "Enter text, including empty text or spaces, or choose a current-row column." }
+      ],
+      categoryId: "text-labels", keywords: ["len", "text length", "count characters", "number of characters"]
+    },
+    findTextPosition: {
+      id: "findTextPosition", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "FIND", explanation: "Find the starting position of text within another text value.",
+      inputContract: "structured-v1", builderKey: "textSearch", builderOptions: { functionName: "FIND" },
+      guidance: {
+        "setupNotes": [
+          "No special setup is required. Both the search text and the text being searched can be entered directly or selected from current-row cells."
+        ],
+        "instructions": [
+          "Set Text to find and Text to search using entered text or current-row cells.",
+          "Include Start position to specify where the search begins, or leave it excluded to omit that argument.",
+          "Copy the formula to the cell where you want the position result."
+        ]
+      },
+      fields: [
+        { id: "searchFor", label: "Text to find", type: "textOperand", required: true, help: "Enter search text, including empty text or spaces, or choose a current-row column." },
+        { id: "textToSearch", label: "Text to search", type: "textOperand", required: true, help: "Enter the text to search or choose a current-row column. Empty text and spaces are allowed." },
+        { id: "startPosition", label: "Start position", type: "integer", required: false, min: "1", help: "Include a whole-number starting position of one or more. Leave excluded to omit this argument." }
+      ],
+      categoryId: "text-labels", keywords: ["find", "find text position", "locate substring", "search within text"]
+    },
+    containsText: {
+      id: "containsText", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "CONTAINS", explanation: "Check whether text occurs in a cell or range and return True or False.",
+      inputContract: "structured-v1", builderKey: "textSearch", builderOptions: { functionName: "CONTAINS" },
+      guidance: {
+        "setupNotes": [
+          "No special setup is required for current-row cells, whole columns, or current-sheet ranges. For a cross-sheet target, create the named reference in Smartsheet before using the formula."
+        ],
+        "instructions": [
+          "Enter the Text to find or choose a current-row cell containing it.",
+          "Choose the Cell or range to search and complete its column or reference fields.",
+          "Copy the formula to the cell where you want the True or False result."
+        ]
+      },
+      fields: [
+        { id: "searchFor", label: "Text to find", type: "textOperand", required: true, help: "Enter search text, including empty text or spaces, or choose a current-row column." },
+        { id: "range", label: "Cell or range to search", type: "valueOrRange", required: true, allowedTypes: ["cellRef", "columnRef", "rangeRef"], help: "Choose a current-row cell, whole column, current-sheet column span, or cross-sheet named reference. Create named references in Smartsheet before using the formula." }
+      ],
+      categoryId: "text-labels", keywords: ["contains", "contains text", "search text in cells", "text in a range"]
+    },
+    lowerText: {
+      id: "lowerText", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "LOWER", explanation: "Convert text to lowercase.",
+      inputContract: "structured-v1", builderKey: "textUnary", builderOptions: { functionName: "LOWER" },
+      guidance: {
+        "setupNotes": [
+          "No special setup is required. The source can be entered text or a current-row cell."
+        ],
+        "instructions": [
+          "Choose Specific text string or a current-row cell containing the source.",
+          "Copy the formula to the cell where you want the lowercase text."
+        ]
+      },
+      fields: [
+        { id: "text", label: "Text", type: "textOperand", required: true, help: "Enter text, including empty text or spaces, or choose a current-row column. Smartsheet performs the case conversion." }
+      ],
+      categoryId: "text-labels", keywords: ["lower", "lowercase", "convert to lowercase", "small letters"]
+    },
+    upperText: {
+      id: "upperText", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "UPPER", explanation: "Convert text to uppercase.",
+      inputContract: "structured-v1", builderKey: "textUnary", builderOptions: { functionName: "UPPER" },
+      guidance: {
+        "setupNotes": [
+          "No special setup is required. The source can be entered text or a current-row cell."
+        ],
+        "instructions": [
+          "Choose Specific text string or a current-row cell containing the source.",
+          "Copy the formula to the cell where you want the uppercase text."
+        ]
+      },
+      fields: [
+        { id: "text", label: "Text", type: "textOperand", required: true, help: "Enter text, including empty text or spaces, or choose a current-row column. Smartsheet performs the case conversion." }
+      ],
+      categoryId: "text-labels", keywords: ["upper", "uppercase", "convert to uppercase", "capital letters"]
+    },
+    substituteText: {
+      id: "substituteText", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "SUBSTITUTE", explanation: "Replace matching text within a text value.",
+      inputContract: "structured-v1", builderKey: "textReplace", builderOptions: { functionName: "SUBSTITUTE" },
+      guidance: {
+        "setupNotes": [
+          "No special setup is required. Source text, text to replace, and replacement text can each use entered text or a current-row cell."
+        ],
+        "instructions": [
+          "Set Source text, Text to replace, and Replacement text. Replacement text may be empty.",
+          "Include Occurrence number to specify an occurrence of 1 or more, or leave it excluded to omit that argument.",
+          "Copy the formula to the cell where you want the substituted text."
+        ]
+      },
+      fields: [
+        { id: "text", label: "Source text", type: "textOperand", required: true, help: "Enter source text, including empty text or spaces, or choose a current-row column." },
+        { id: "oldText", label: "Text to replace", type: "textOperand", required: true, help: "Enter the text to replace or choose a current-row column. Empty text and spaces are allowed." },
+        { id: "newText", label: "Replacement text", type: "textOperand", required: true, help: "Enter replacement text or choose a current-row column. Empty replacement text can remove matching text." },
+        { id: "instanceNumber", label: "Occurrence number", type: "integer", required: false, min: "1", help: "Include a whole-number occurrence of one or more. Leave excluded to omit this argument. Smartsheet performs the replacement." }
+      ],
+      categoryId: "text-labels", keywords: ["substitute", "replace matching text", "replace text occurrence", "find and replace text"]
+    },
+    replaceTextByPosition: {
+      id: "replaceTextByPosition", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "REPLACE", explanation: "Replace text using a starting position and character count.",
+      inputContract: "structured-v1", builderKey: "textReplace", builderOptions: { functionName: "REPLACE" },
+      guidance: {
+        "setupNotes": [
+          "No special setup is required. Source text and replacement text can be entered directly or selected from current-row cells."
+        ],
+        "instructions": [
+          "Set Source text and Replacement text using entered text or current-row cells. Replacement text may be empty.",
+          "Enter a Start position of at least 1 and a Number of characters of zero or more.",
+          "Copy the formula to the cell where you want the replaced text."
+        ]
+      },
+      fields: [
+        { id: "text", label: "Source text", type: "textOperand", required: true, help: "Enter source text, including empty text or spaces, or choose a current-row column." },
+        { id: "startPosition", label: "Start position", type: "integer", required: true, min: "1", help: "Enter a whole-number starting position of one or more." },
+        { id: "numChars", label: "Number of characters", type: "integer", required: true, min: "0", help: "Enter a whole-number character count of zero or more. Smartsheet evaluates the requested replacement." },
+        { id: "newText", label: "Replacement text", type: "textOperand", required: true, help: "Enter replacement text or choose a current-row column. Empty replacement text can remove characters." }
+      ],
+      categoryId: "text-labels", keywords: ["replace", "replace by position", "replace characters", "positional text replacement"]
     }
   });
 

@@ -1,3 +1,4 @@
+const commonGuidance = require("./fixtures/formula-common-guidance.json");
 const assert = require("node:assert/strict");
 const test = require("node:test");
 const vm = require("node:vm");
@@ -11,8 +12,8 @@ const commonIds = fixtures.formulas.map(config => config.id);
 
 test("Batch 1 has exactly eight approved entries after the unchanged Advanced catalog", () => {
   assert.deepEqual(commonIds, ["roundValue", "absoluteValue", "textToNumber", "ceilingValue", "floorValue", "roundUpValue", "roundDownValue", "integerPortion"]);
-  assert.deepEqual(Object.keys(core.catalog), [...currentLegacyFixtures.catalog.map(config => config.id), ...commonIds]);
-  assert.deepEqual(Object.keys(core.commonBuilders.registry), ["decimalRounding", "multipleRounding", "unaryNumeric"]);
+  assert.deepEqual(Object.keys(core.catalog).slice(0, 34), [...currentLegacyFixtures.catalog.map(config => config.id), ...commonIds]);
+  assert.deepEqual(Object.keys(core.commonBuilders.registry).slice(0, 3), ["decimalRounding", "multipleRounding", "unaryNumeric"]);
   assert.equal(fixtures.cases.length, 144);
   assert.equal(fixtures.cases.filter(entry => entry.expected.formula !== null).length, 67);
   assert.equal(new Set(fixtures.cases.map(entry => `${entry.formulaType}: ${entry.name}`)).size, fixtures.cases.length);
@@ -28,7 +29,7 @@ for (const expected of fixtures.formulas) {
     assert.deepEqual(plain({ ...config, fields: config.fields.map(({ help, ...field }) => field) }), {
       id: expected.id, label: expected.label, explanation: expected.explanation, keywords: expected.keywords,
       libraryId: "common", availability: { extension: true, portfolio: false }, categoryId: "counts-calculations",
-      inputContract: "structured-v1", builderKey: expected.builderKey, builderOptions: { functionName: expected.label }, fields
+      inputContract: "structured-v1", builderKey: expected.builderKey, builderOptions: { functionName: expected.label }, fields, guidance: commonGuidance[expected.id]
     });
     for (const field of config.fields) assert.ok(typeof field.help === "string" && field.help.trim());
     const first = core.validation.structured.createDefaultValues(config);
@@ -45,7 +46,7 @@ for (const entry of fixtures.cases) {
     const expected = {
       formulaType: entry.formulaType,
       explanation: fixtures.formulas.find(config => config.id === entry.formulaType).explanation,
-      ...entry.expected, missingFields: [], setupNotes: [], instructions: []
+      ...entry.expected, missingFields: [], ...commonGuidance[entry.formulaType]
     };
     assert.deepEqual(plain(core.generateFormula(entry.formulaType, raw)), expected);
     assert.deepEqual(plain(core.generateFormula(entry.formulaType, raw)), expected);
@@ -73,7 +74,7 @@ for (const id of ["roundValue", "roundUpValue", "roundDownValue"]) {
     const result = core.generateFormula(id, { value: { type: "number", value: "12" }, decimalPlaces: undefined });
     assert.deepEqual(plain(result), {
       formulaType: id, explanation: fixtures.formulas.find(config => config.id === id).explanation,
-      values: null, formula: null, missingFields: [], references: [], setupNotes: [], instructions: [],
+      values: null, formula: null, missingFields: [], references: [], ...commonGuidance[id],
       validationErrors: [{ path: "decimalPlaces", code: "invalid", message: "Choose a valid value; null and undefined are not omission." }]
     });
   });

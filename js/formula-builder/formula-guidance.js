@@ -565,5 +565,26 @@
     };
   }
 
-  globalThis.SmartsheetFormulaBuilder.guidance = { getGuidance };
+  function getStructuredGuidance(config) {
+    if (!Object.hasOwn(config, "guidance")) return { setupNotes: [], instructions: [] };
+    const { assertRecord, assertDenseArray } = globalThis.SmartsheetFormulaBuilder.primitives;
+    try {
+      const descriptor = Object.getOwnPropertyDescriptor(config, "guidance");
+      if (!descriptor.enumerable || !Object.hasOwn(descriptor, "value")) throw new TypeError("Expected plain guidance metadata.");
+      const metadata = descriptor.value;
+      assertRecord(metadata, ["setupNotes", "instructions"]);
+      const copy = items => {
+        assertDenseArray(items);
+        return items.map(item => {
+          if (typeof item !== "string" || !item.trim()) throw new TypeError("Guidance items must be nonempty strings.");
+          return item;
+        });
+      };
+      return { setupNotes: copy(metadata.setupNotes), instructions: copy(metadata.instructions) };
+    } catch (error) {
+      throw new TypeError(`Structured configuration: invalid guidance metadata. ${error.message}`);
+    }
+  }
+
+  globalThis.SmartsheetFormulaBuilder.guidance = { getGuidance, getStructuredGuidance };
 })();

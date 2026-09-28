@@ -6,6 +6,7 @@ const vm = require("node:vm");
 const { loadFormulaCore } = require("./helpers/load-formula-core");
 const availabilityFixture = require("./fixtures/formula-availability.json");
 const batch1 = require("./fixtures/formula-common-batch1-cases.json");
+const batch2 = require("./fixtures/formula-common-batch2-cases.json");
 const { discoveryFixture, deepFreeze } = require("./helpers/formula-discovery-fixtures");
 const context = vm.createContext({});
 const core = loadFormulaCore(context);
@@ -14,7 +15,7 @@ const find = (query, category) => Array.from(context.FormulaDiscovery.findFormul
 const visible = Object.entries(availabilityFixture).filter(([, config]) => config.availability.extension).map(([id]) => id);
 
 test("extension discovery preserves order and excludes exactly two formulas without changing the catalog", () => {
-  assert.equal(Object.keys(core.catalog).length, 34);
+  assert.equal(Object.keys(core.catalog).length, 44);
   assert.equal(find().length, 24);
   assert.deepEqual(find(), visible);
   assert.deepEqual(find("Multi-Line Task Assignment Label"), []);
@@ -89,20 +90,20 @@ test("production resolver retains Advanced and all five categories with Common a
   assert.deepEqual(ids(state.availableCategories), ids(core.categories));
 });
 
-test("production Common discovery exposes exactly Batch 1, its category and every approved keyword", () => {
-  const expected = batch1.formulas.map(config => config.id);
+test("production Common discovery exposes both batches, exact categories and every approved keyword", () => {
+  const expected = [...batch1.formulas, ...batch2.formulas].map(config => config.id);
   assert.deepEqual(ids(discover(core, "", "", "common")), expected);
-  assert.deepEqual(ids(discover(core, "", "counts-calculations", "common")), expected);
-  assert.deepEqual(ids(discover(core, "", "text-labels", "common")), []);
-  assert.deepEqual(ids(resolve(core, { libraryId: "common" }).availableCategories), ["counts-calculations"]);
-  for (const config of batch1.formulas) {
+  assert.deepEqual(ids(discover(core, "", "counts-calculations", "common")), batch1.formulas.map(config => config.id));
+  assert.deepEqual(ids(discover(core, "", "text-labels", "common")), batch2.formulas.map(config => config.id));
+  assert.deepEqual(ids(resolve(core, { libraryId: "common" }).availableCategories), ["text-labels", "counts-calculations"]);
+  for (const config of [...batch1.formulas, ...batch2.formulas]) {
     for (const query of [config.label, ...config.keywords]) {
       assert.ok(ids(discover(core, `  ${query.toUpperCase().replaceAll(" ", "  ")}  `, "", "common")).includes(config.id));
     }
     assert.deepEqual(ids(discover(core, config.id, "", "common")), []);
     assert.ok(!find().includes(config.id));
   }
-  assert.equal(Object.values(core.catalog).filter(config => config.availability.extension).length, 32);
+  assert.equal(Object.values(core.catalog).filter(config => config.availability.extension).length, 42);
   assert.deepEqual(Object.values(core.catalog).filter(config => config.availability.portfolio).map(config => config.id), Object.keys(availabilityFixture));
 });
 

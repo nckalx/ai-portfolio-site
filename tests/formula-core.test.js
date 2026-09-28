@@ -5,16 +5,60 @@ const path = require("node:path");
 const vm = require("node:vm");
 const { currentLegacyFixtures: fixtures } = require("./helpers/formula-expectations");
 const availabilityFixture = require("./fixtures/formula-availability.json");
+const commonGuidance = require("./fixtures/formula-common-guidance.json");
 const { loadFormulaCore, loadFormulaScript, coreScripts } = require("./helpers/load-formula-core");
 const plain = value => JSON.parse(JSON.stringify(value));
 const core = loadFormulaCore();
 const advanced = Object.values(core.catalog).filter(config => config.libraryId === "advanced");
 
-test("shared load order and Batch 1 production structured registry stay explicit", () => {
+test("structured guidance reads exact independent arrays without mutating frozen metadata", () => {
+  assert.deepEqual(Object.keys(commonGuidance), Object.values(core.catalog).filter(config => config.inputContract === "structured-v1").map(config => config.id));
+  for (const [id, expected] of Object.entries(commonGuidance)) {
+    const metadata = Object.freeze({ setupNotes: Object.freeze([...expected.setupNotes]), instructions: Object.freeze([...expected.instructions]) });
+    const config = Object.freeze({ guidance: metadata });
+    const first = core.guidance.getStructuredGuidance(config);
+    assert.deepEqual(plain(first), expected);
+    assert.notEqual(first.setupNotes, metadata.setupNotes);
+    assert.notEqual(first.instructions, metadata.instructions);
+    first.setupNotes[0] = "changed"; first.instructions.push("changed");
+    assert.deepEqual(plain(core.guidance.getStructuredGuidance(config)), expected, id);
+    assert.deepEqual(plain(metadata), expected);
+  }
+});
+
+test("missing or explicitly empty structured guidance retains independent empty fallbacks", () => {
+  for (const config of [{}, { guidance: { setupNotes: [], instructions: [] } }]) {
+    const first = core.guidance.getStructuredGuidance(config);
+    assert.deepEqual(plain(first), { setupNotes: [], instructions: [] });
+    first.setupNotes.push("changed"); first.instructions.push("changed");
+    assert.deepEqual(plain(core.guidance.getStructuredGuidance(config)), { setupNotes: [], instructions: [] });
+  }
+});
+
+test("malformed structured guidance is a configuration fault and never executes accessors", () => {
+  const valid = { setupNotes: ["Setup"], instructions: ["Use"] };
+  for (const guidance of [undefined, null, "text", [], {}, { setupNotes: [] }, { ...valid, references: [] },
+    { ...valid, setupNotes: "Setup" }, { ...valid, instructions: [1] }, { ...valid, setupNotes: [null] },
+    { ...valid, instructions: [""] }, { ...valid, instructions: ["  "] }, { ...valid, instructions: new Array(1) },
+    { ...valid, instructions: Object.assign(["Use"], { extra: true }) }]) {
+    assert.throws(() => core.guidance.getStructuredGuidance({ guidance }), /Structured configuration: invalid guidance metadata/);
+  }
+  let reads = 0;
+  const getter = { enumerable: true, get() { reads++; return valid; } };
+  const config = Object.defineProperty({}, "guidance", getter);
+  const metadata = Object.defineProperty({ instructions: [] }, "setupNotes", getter);
+  const items = Object.defineProperty([], "0", getter);
+  for (const candidate of [config, { guidance: metadata }, { guidance: { ...valid, instructions: items } }]) {
+    assert.throws(() => core.guidance.getStructuredGuidance(candidate), /Structured configuration: invalid guidance metadata/);
+  }
+  assert.equal(reads, 0);
+});
+
+test("shared load order and Batch 1/2 production structured registry stay explicit", () => {
   assert.deepEqual(coreScripts, ["formula-catalog", "formula-utils", "formula-primitives", "formula-validation", "formula-guidance", "formula-common-builders", "formula-engine"]);
   assert.equal(typeof core.primitives.renderOperand, "function");
   assert.equal(typeof core.validation.structured.normalizeAndValidate, "function");
-  assert.deepEqual(Object.keys(core.commonBuilders.registry), ["decimalRounding", "multipleRounding", "unaryNumeric"]);
+  assert.deepEqual(Object.keys(core.commonBuilders.registry), ["decimalRounding", "multipleRounding", "unaryNumeric", "textSlice", "textUnary", "textSearch", "textReplace"]);
   assert.ok(advanced.every(config => config.libraryId === "advanced" && !Object.hasOwn(config, "inputContract")));
 });
 

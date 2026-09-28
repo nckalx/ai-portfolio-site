@@ -167,7 +167,8 @@
     if (structured) {
       // Never replace raw drafts with normalized result.values.
       structuredController.update({ ...structuredDrafts.get(selectedId), validationErrors: errors });
-      const summary = errors.length ? `${errors.length} ${errors.length === 1 ? "field error" : "field errors"}. Review the fields above.` : "";
+      const visibleErrors = structuredController.getVisibleErrorCount();
+      const summary = visibleErrors ? `${visibleErrors} ${visibleErrors === 1 ? "field error" : "field errors"}. Review the fields above.` : "";
       if (get("validation").textContent !== summary) get("validation").textContent = summary;
     } else {
       get("validation").textContent = missing.size
@@ -184,6 +185,8 @@
     }
     renderList("setup-notes", result.setupNotes);
     renderList("instructions", result.instructions);
+    get("setup-details").hidden = !result.setupNotes.length && !result.references.length;
+    get("instructions-details").hidden = !result.instructions.length;
     renderList("references", structured ? result.references.map(reference => utils.sheetReference(reference.name)) : result.references.map(reference =>
       `${utils.sheetReference(reference.name)}: in "${reference.sheet}", select the "${reference.range}" column.`));
     get("reference-section").hidden = !result.references.length;

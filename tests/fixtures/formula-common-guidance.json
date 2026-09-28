@@ -1,0 +1,177 @@
+{
+  "roundValue": {
+    "setupNotes": [
+      "No special setup is required. Enter the number directly or choose a current-row cell containing it."
+    ],
+    "instructions": [
+      "Enter a number or choose a current-row cell containing it.",
+      "Include Decimal places to specify an integer precision, or leave it excluded to omit that argument.",
+      "Copy the formula to the cell where you want the rounded value."
+    ]
+  },
+  "absoluteValue": {
+    "setupNotes": [
+      "No special setup is required. Enter a number directly or choose a current-row cell."
+    ],
+    "instructions": [
+      "Enter the number or choose its current-row cell.",
+      "Copy the formula to the cell where you want the absolute value."
+    ]
+  },
+  "textToNumber": {
+    "setupNotes": [
+      "No special setup is required. The source should contain text that Smartsheet can convert to a number."
+    ],
+    "instructions": [
+      "Choose Specific text string and enter the numeric text, or choose a current-row cell containing it.",
+      "Entered text must contain more than spaces.",
+      "Copy the formula to the cell where you want the numeric value."
+    ]
+  },
+  "ceilingValue": {
+    "setupNotes": [
+      "No special setup is required. The value and rounding multiple can be entered directly or selected from current-row cells."
+    ],
+    "instructions": [
+      "Choose the number to round.",
+      "Enter the multiple or select the cell containing it.",
+      "Copy the formula to the cell where you want the CEILING result."
+    ]
+  },
+  "floorValue": {
+    "setupNotes": [
+      "No special setup is required. The value and rounding multiple can be entered directly or selected from current-row cells."
+    ],
+    "instructions": [
+      "Choose the number to round.",
+      "Enter the multiple or select the cell containing it.",
+      "Copy the formula to the cell where you want the FLOOR result."
+    ]
+  },
+  "roundUpValue": {
+    "setupNotes": [
+      "No special setup is required. Enter the number directly or choose a current-row cell containing it."
+    ],
+    "instructions": [
+      "Enter a number or choose a current-row cell containing it.",
+      "Include Decimal places to specify an integer precision, or leave it excluded to omit that argument.",
+      "Copy the formula to the cell where you want the ROUNDUP result."
+    ]
+  },
+  "roundDownValue": {
+    "setupNotes": [
+      "No special setup is required. Enter the number directly or choose a current-row cell containing it."
+    ],
+    "instructions": [
+      "Enter a number or choose a current-row cell containing it.",
+      "Include Decimal places to specify an integer precision, or leave it excluded to omit that argument.",
+      "Copy the formula to the cell where you want the ROUNDDOWN result."
+    ]
+  },
+  "integerPortion": {
+    "setupNotes": [
+      "No special setup is required. Enter the number directly or choose a current-row cell."
+    ],
+    "instructions": [
+      "Enter the number or choose its current-row cell.",
+      "Copy the formula to the cell where you want the integer result."
+    ]
+  },
+  "leftText": {
+    "setupNotes": [
+      "No special setup is required. The source can be entered text or a current-row cell."
+    ],
+    "instructions": [
+      "Choose Specific text string or a current-row cell for the source.",
+      "Include Number of characters to specify a whole-number count of zero or more, or leave it excluded to omit that argument.",
+      "Copy the formula to the cell where you want the extracted text."
+    ]
+  },
+  "rightText": {
+    "setupNotes": [
+      "No special setup is required. The source can be entered text or a current-row cell."
+    ],
+    "instructions": [
+      "Choose Specific text string or a current-row cell for the source.",
+      "Include Number of characters to specify a whole-number count of zero or more, or leave it excluded to omit that argument.",
+      "Copy the formula to the cell where you want the extracted text."
+    ]
+  },
+  "midText": {
+    "setupNotes": [
+      "No special setup is required. The source can be entered text or a current-row cell."
+    ],
+    "instructions": [
+      "Choose Specific text string or a current-row cell for the source.",
+      "Enter a Start position of at least 1 and a Number of characters of zero or more.",
+      "Copy the formula to the cell where you want the extracted section."
+    ]
+  },
+  "textLength": {
+    "setupNotes": [
+      "No special setup is required. The source can be entered text or a current-row cell."
+    ],
+    "instructions": [
+      "Choose Specific text string or a current-row cell containing the text to measure.",
+      "Copy the formula to the cell where you want the character count."
+    ]
+  },
+  "findTextPosition": {
+    "setupNotes": [
+      "No special setup is required. Both the search text and the text being searched can be entered directly or selected from current-row cells."
+    ],
+    "instructions": [
+      "Set Text to find and Text to search using entered text or current-row cells.",
+      "Include Start position to specify where the search begins, or leave it excluded to omit that argument.",
+      "Copy the formula to the cell where you want the position result."
+    ]
+  },
+  "containsText": {
+    "setupNotes": [
+      "No special setup is required for current-row cells, whole columns, or current-sheet ranges. For a cross-sheet target, create the named reference in Smartsheet before using the formula."
+    ],
+    "instructions": [
+      "Enter the Text to find or choose a current-row cell containing it.",
+      "Choose the Cell or range to search and complete its column or reference fields.",
+      "Copy the formula to the cell where you want the True or False result."
+    ]
+  },
+  "lowerText": {
+    "setupNotes": [
+      "No special setup is required. The source can be entered text or a current-row cell."
+    ],
+    "instructions": [
+      "Choose Specific text string or a current-row cell containing the source.",
+      "Copy the formula to the cell where you want the lowercase text."
+    ]
+  },
+  "upperText": {
+    "setupNotes": [
+      "No special setup is required. The source can be entered text or a current-row cell."
+    ],
+    "instructions": [
+      "Choose Specific text string or a current-row cell containing the source.",
+      "Copy the formula to the cell where you want the uppercase text."
+    ]
+  },
+  "substituteText": {
+    "setupNotes": [
+      "No special setup is required. Source text, text to replace, and replacement text can each use entered text or a current-row cell."
+    ],
+    "instructions": [
+      "Set Source text, Text to replace, and Replacement text. Replacement text may be empty.",
+      "Include Occurrence number to specify an occurrence of 1 or more, or leave it excluded to omit that argument.",
+      "Copy the formula to the cell where you want the substituted text."
+    ]
+  },
+  "replaceTextByPosition": {
+    "setupNotes": [
+      "No special setup is required. Source text and replacement text can be entered directly or selected from current-row cells."
+    ],
+    "instructions": [
+      "Set Source text and Replacement text using entered text or current-row cells. Replacement text may be empty.",
+      "Enter a Start position of at least 1 and a Number of characters of zero or more.",
+      "Copy the formula to the cell where you want the replaced text."
+    ]
+  }
+}

@@ -167,10 +167,10 @@ for (const [type, minimum] of [["criteria[]", 1], ["condition[]", 1], ["valueOrR
   test(`${type} minimum ${minimum}: no silent rows, fresh starters, explicit Add and removal guard`, () => {
     const schema = { id: "rows", label: "Rows", type, minItems: minimum, ...(type === "array" ? { items: { type: "boolean" } } : {}) };
     const ui = mount([schema]); assert.deepEqual(ui.snapshot().values, {});
-    assert.deepEqual(ui.snapshot().uiState, { nextKey: 1, rows: {} });
+    assert.deepEqual(ui.snapshot().uiState, { nextKey: 1, rows: {}, touched: {} });
     ui.at("rows:add").dispatch("click");
     assert.deepEqual(ui.snapshot().values.rows, [type === "array" ? "" : {}]);
-    assert.deepEqual(ui.snapshot().uiState, { nextKey: 2, rows: { rows: ["r1"] } });
+    assert.deepEqual(ui.snapshot().uiState, { nextKey: 2, rows: { rows: ["r1"] }, touched: { rows: true } });
     assert.equal(ui.document.activeElement, ui.at("rows[r1]"));
     assert.ok(validate([schema], ui.snapshot().values).errors.length);
     const remove = walk(ui.container).find(node => node.getAttribute("aria-label") === "Remove Rows 1");
@@ -212,7 +212,7 @@ test("nested repeatables remove descendant keys and preserve sibling state and s
   const fields = [{ id: "groups", type: "array", items: { type: "object", fields: [{ id: "rows", type: "array", items: { type: "text" } }] } }];
   const original = { groups: [{ rows: ["a"] }, { rows: ["b"] }] };
   const ui = mount(fields, original);
-  assert.deepEqual(ui.snapshot().uiState, { nextKey: 5, rows: { groups: ["r1", "r2"], "groups[r1].rows": ["r3"], "groups[r2].rows": ["r4"] } });
+  assert.deepEqual(ui.snapshot().uiState, { nextKey: 5, rows: { groups: ["r1", "r2"], "groups[r1].rows": ["r3"], "groups[r2].rows": ["r4"] }, touched: {} });
   const sibling = ui.at("groups[r2].rows[r4]");
   walk(ui.container).find(node => node.getAttribute("aria-label") === "Remove groups 1").dispatch("click");
   assert.deepEqual(ui.snapshot().uiState.rows, { groups: ["r2"], "groups[r2].rows": ["r4"] });
@@ -242,7 +242,7 @@ test("destroy removes every listener and owned DOM, update never emits", () => {
   const detached = controls(ui.container);
   ui.controller.update(ui.snapshot()); assert.equal(ui.changes.length, 0);
   ui.controller.destroy(); ui.controller.destroy();
-  detached.forEach(node => { node.dispatch("input"); node.dispatch("change"); node.dispatch("click"); });
+  detached.forEach(node => { node.dispatch("input"); node.dispatch("change"); node.dispatch("click"); node.dispatch("blur"); });
   assert.equal(ui.changes.length, 0); assert.equal(ui.container.children.length, 0);
   assert.equal(ui.controller.focus("rows"), false);
 });
@@ -250,6 +250,7 @@ test("destroy removes every listener and owned DOM, update never emits", () => {
 test("errors resolve exact, group, row, array, ancestor and form paths in order as literal text", () => {
   const ui = mount([{ id: "criteria", type: "criteria[]" }], { criteria: [pair(), pair()] });
   const focus = ui.at("criteria[r1].criterion.value.value");
+  focus.dispatch("blur");
   const paths = ["criteria[0].criterion.value.value", "criteria[0].criterion.value", "criteria[0]", "criteria", "criteria[0].criterion.missing", "", "unmatched"];
   const errors = paths.map((path, index) => ({ path, code: "test", message: `<b>${index}</b>` }));
   errors.push({ path: paths[0], code: "second", message: "second" });
@@ -264,12 +265,13 @@ test("errors resolve exact, group, row, array, ancestor and form paths in order 
   ui.controller.update({ validationErrors: [] });
   assert.ok(walk(ui.container).filter(node => node.className === "field-error").every(node => node.hidden));
   assert.equal(focus.getAttribute("aria-invalid"), "false");
-  assert.equal(ui.changes.length, 0);
+  assert.equal(ui.changes.length, 1);
 });
 
 test("error paths reindex after removal while DOM and error IDs remain stable", () => {
   const ui = mount([{ id: "rows", label: "Rows", type: "array", items: { type: "number" } }], { rows: ["1", "-"] });
   const input = ui.at("rows[r2]");
+  input.dispatch("blur");
   ui.controller.update({ validationErrors: validate(ui.metadata.fields, ui.snapshot().values).errors });
   const errorId = input.getAttribute("aria-describedby").split(" ").at(-1);
   walk(ui.container).find(node => node.getAttribute("aria-label") === "Remove Rows 1").dispatch("click");
@@ -307,9 +309,9 @@ test("explicit nested Include removes descendant row state and never reuses keys
   const ui = mount(fields, { group: { rows: ["first"] } });
   const include = ui.at("group.rows:include"); include.checked = false; include.dispatch("change");
   assert.deepEqual(ui.snapshot().values, { group: {} });
-  assert.deepEqual(ui.snapshot().uiState, { nextKey: 2, rows: {} });
+  assert.deepEqual(ui.snapshot().uiState, { nextKey: 2, rows: {}, touched: {} });
   include.checked = true; include.dispatch("change"); ui.at("group.rows:add").dispatch("click");
-  assert.deepEqual(ui.snapshot().uiState, { nextKey: 3, rows: { "group.rows": ["r2"] } });
+  assert.deepEqual(ui.snapshot().uiState, { nextKey: 3, rows: { "group.rows": ["r2"] }, touched: { "group.rows": true } });
 });
 
 test("repeatable rows emit complete validator-compatible criteria, conditions and values", () => {
@@ -353,12 +355,14 @@ test("row labels reindex along with Remove names without replacing inputs", () =
 
 test("unrecognized builder path syntax reaches form fallback and stale optional errors disappear", () => {
   const ui = mount([{ id: "note", type: "text", required: false }]);
+  const include = ui.at("note:include"); include.checked = true; include.dispatch("change");
+  ui.at("note").dispatch("blur");
   ui.controller.update({ validationErrors: [
     { path: "unknown[thing]", code: "custom", message: "Unmatched" },
     { path: "note", code: "custom", message: "Include a note" }
   ] });
   assert.match(ui.container.textContent, /Unmatched/);
-  const include = ui.at("note:include"); include.checked = true; include.dispatch("change");
+  include.checked = false; include.dispatch("change");
   ui.controller.update({ validationErrors: [] });
   assert.ok(walk(ui.container).filter(node => node.className === "field-error").every(node => node.hidden && !node.textContent));
   assert.ok(walk(ui.container).every(node => node.getAttribute("aria-invalid") !== "true"));
@@ -370,4 +374,78 @@ test("range row scope labels use the current position even after editor replacem
   ui.set("rows[r2].type", "rangeRef");
   const scope = ui.at("rows[r2].scope");
   assert.equal(walk(ui.container).find(node => node.getAttribute("for") === scope.id).textContent, "Rows 1 scope");
+});
+
+test("friendly text labels preserve semantic types, control IDs, legends and touched addresses", () => {
+  const ui = mount([{ id: "source", label: "Source text", type: "textOperand" }]);
+  const selector = ui.at("source.type"), selectorId = selector.id;
+  assert.deepEqual(selector.children.map(node => [node.value, node.textContent]).slice(1), [
+    ["textLiteral", "Specific text string"], ["cellRef", "Current-row cell"]
+  ]);
+  ui.set("source.type", "textLiteral");
+  const input = ui.at("source.value"), inputId = input.id;
+  assert.equal(walk(ui.container).find(node => node.getAttribute("for") === input.id).textContent, "Text");
+  assert.ok(walk(ui.container).some(node => node.tagName === "legend" && node.textContent === "Source text"));
+  ui.set("source.value", '  "raw"  ');
+  assert.deepEqual(ui.snapshot().values, { source: { type: "textLiteral", value: '  "raw"  ' } });
+  assert.deepEqual(ui.snapshot().uiState.touched, { "source.type": true, "source.value": true });
+  ui.set("source.type", "cellRef");
+  assert.deepEqual(ui.snapshot().values, { source: { type: "cellRef", column: "" } });
+  ui.set("source.type", "textLiteral");
+  assert.deepEqual(ui.snapshot().values, { source: { type: "textLiteral", value: "" } });
+  assert.equal(ui.at("source.type").id, selectorId);
+  assert.equal(ui.at("source.value").id, inputId);
+  assert.deepEqual(ui.snapshot().uiState.touched, { "source.type": true });
+});
+
+test("untouched fields stay clean; blur and input reveal only their associated errors", () => {
+  const ui = mount([{ id: "first", type: "integer", help: "First help" }, { id: "second", type: "integer" }]);
+  const refresh = () => ui.controller.update({ validationErrors: validate(ui.metadata.fields, ui.snapshot().values).errors });
+  refresh();
+  const first = ui.at("first"), help = first.getAttribute("aria-describedby");
+  assert.equal(first.getAttribute("aria-invalid"), "false");
+  assert.equal(ui.controller.getVisibleErrorCount(), 0);
+  assert.deepEqual(ui.snapshot().uiState.touched, {});
+  first.dispatch("blur");
+  assert.equal(first.getAttribute("aria-invalid"), "true");
+  assert.equal(ui.controller.getVisibleErrorCount(), 1);
+  assert.equal(ui.at("second").getAttribute("aria-invalid"), "false");
+  assert.deepEqual(ui.snapshot().values, {});
+  assert.deepEqual(ui.snapshot().uiState.touched, { first: true });
+  ui.set("first", "-"); refresh();
+  const expected = validate(ui.metadata.fields, ui.snapshot().values).errors.find(error => error.path === "first").message;
+  assert.equal(ui.document.getElementById(first.getAttribute("aria-describedby").split(" ").at(-1)).textContent, expected);
+  ui.set("first", " 003 "); refresh();
+  assert.equal(first.getAttribute("aria-invalid"), "false");
+  assert.equal(first.getAttribute("aria-describedby"), help);
+  assert.equal(ui.controller.getVisibleErrorCount(), 0);
+  assert.equal(first.value, " 003 ");
+});
+
+test("type and scope replacements reset only replaced input interaction; detached blur is inert", () => {
+  const ui = mount([{ id: "value", type: "typedOperand" }]);
+  ui.set("value.type", "number"); const old = ui.set("value.value", "-");
+  ui.set("value.type", "date");
+  assert.deepEqual(ui.snapshot().uiState.touched, { "value.type": true });
+  ui.controller.update({ validationErrors: validate(ui.metadata.fields, ui.snapshot().values).errors });
+  assert.equal(ui.at("value.value").getAttribute("aria-invalid"), "false");
+  const count = ui.changes.length; old.dispatch("blur"); assert.equal(ui.changes.length, count);
+  const range = mount([{ id: "range", type: "range" }]);
+  range.set("range.type", "rangeRef"); range.set("range.scope", "currentSheet");
+  range.at("range.startColumn").dispatch("blur");
+  range.set("range.scope", "crossSheet"); range.at("range.name").dispatch("blur");
+  range.set("range.scope", "currentSheet");
+  assert.deepEqual(range.snapshot().uiState.touched, { "range.type": true, "range.scope": true });
+});
+
+test("repeatable touched state survives reindexing without touching siblings and is pruned on removal", () => {
+  const ui = mount([{ id: "rows", label: "Rows", type: "array", items: { type: "integer" } }], { rows: ["", "", ""] });
+  ui.at("rows[r2]").dispatch("blur");
+  walk(ui.container).find(node => node.getAttribute("aria-label") === "Remove Rows 1").dispatch("click");
+  ui.controller.update({ validationErrors: validate(ui.metadata.fields, ui.snapshot().values).errors });
+  assert.deepEqual(ui.snapshot().uiState.touched, { "rows[r2]": true });
+  assert.equal(ui.at("rows[r2]").getAttribute("aria-invalid"), "true");
+  assert.equal(ui.at("rows[r3]").getAttribute("aria-invalid"), "false");
+  walk(ui.container).find(node => node.getAttribute("aria-label") === "Remove Rows 1").dispatch("click");
+  assert.deepEqual(ui.snapshot().uiState.touched, {});
 });

@@ -1,4 +1,4 @@
-// Curated structured builders. Mathematical evaluation remains in Smartsheet.
+// Curated structured builders. Evaluation remains in Smartsheet.
 (() => {
   const namespace = globalThis.SmartsheetFormulaBuilder ||= {};
   const familyKeys = Object.freeze([
@@ -56,6 +56,52 @@
       },
       build(values, options, p) {
         return p.renderFunctionCall(options.functionName, [p.renderOperand(values.value)]);
+      }
+    },
+    textSlice: {
+      validateOptions(options) { validateFunctionOptions(options, ["LEFT", "RIGHT", "MID"]); },
+      validate() { return []; },
+      build(values, options, p) {
+        const args = [p.renderOperand(values.text)];
+        if (options.functionName === "MID") args.push(p.renderOperand({ type: "number", value: values.startPosition }));
+        if (Object.hasOwn(values, "numChars")) args.push(p.renderOperand({ type: "number", value: values.numChars }));
+        return p.renderFunctionCall(options.functionName, args);
+      }
+    },
+    textUnary: {
+      validateOptions(options) { validateFunctionOptions(options, ["LEN", "LOWER", "UPPER"]); },
+      validate() { return []; },
+      build(values, options, p) {
+        return p.renderFunctionCall(options.functionName, [p.renderOperand(values.text)]);
+      }
+    },
+    textSearch: {
+      validateOptions(options) { validateFunctionOptions(options, ["FIND", "CONTAINS"]); },
+      validate() { return []; },
+      build(values, options, p) {
+        const args = [p.renderOperand(values.searchFor)];
+        if (options.functionName === "CONTAINS") {
+          args.push(values.range.type === "cellRef" ? p.renderOperand(values.range) : p.renderRange(values.range));
+        } else {
+          args.push(p.renderOperand(values.textToSearch));
+          if (Object.hasOwn(values, "startPosition")) args.push(p.renderOperand({ type: "number", value: values.startPosition }));
+        }
+        return p.renderFunctionCall(options.functionName, args);
+      }
+    },
+    textReplace: {
+      validateOptions(options) { validateFunctionOptions(options, ["SUBSTITUTE", "REPLACE"]); },
+      validate() { return []; },
+      build(values, options, p) {
+        const args = [p.renderOperand(values.text)];
+        if (options.functionName === "SUBSTITUTE") {
+          args.push(p.renderOperand(values.oldText), p.renderOperand(values.newText));
+          if (Object.hasOwn(values, "instanceNumber")) args.push(p.renderOperand({ type: "number", value: values.instanceNumber }));
+        } else {
+          args.push(p.renderOperand({ type: "number", value: values.startPosition }),
+            p.renderOperand({ type: "number", value: values.numChars }), p.renderOperand(values.newText));
+        }
+        return p.renderFunctionCall(options.functionName, args);
       }
     }
   });

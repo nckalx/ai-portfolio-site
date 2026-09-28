@@ -8,10 +8,10 @@ for (const name of ["formula-primitives", "formula-common-builders"]) loadFormul
 const builders = context.SmartsheetFormulaBuilder.commonBuilders;
 const approved = ["comparisonReturn", "duplicateFlag", "singleCriterionAggregate", "criteriaAggregate", "variadicAggregate", "percentMatch", "todayOffset", "dateDelta", "workdayCalculation", "overdueFlag", "textCombine", "booleanGroup", "booleanTest", "decimalRounding", "multipleRounding", "unaryNumeric", "textSlice", "textUnary", "textSearch", "dateConstructor", "textReplace"];
 
-test("production registry contains only Batch 1 families, is frozen and has no mutable registration API", () => {
+test("production registry contains exactly Batch 1 and Batch 2 families, is frozen and has no mutable registration API", () => {
   assert.deepEqual(Array.from(builders.familyKeys), approved);
   assert.equal(Object.getPrototypeOf(builders.registry), null);
-  assert.deepEqual(Object.keys(builders.registry), ["decimalRounding", "multipleRounding", "unaryNumeric"]);
+  assert.deepEqual(Object.keys(builders.registry), ["decimalRounding", "multipleRounding", "unaryNumeric", "textSlice", "textUnary", "textSearch", "textReplace"]);
   assert.ok(Object.isFrozen(builders)); assert.ok(Object.isFrozen(builders.familyKeys)); assert.ok(Object.isFrozen(builders.registry));
   assert.deepEqual(Object.keys(builders), ["familyKeys", "createRegistry", "registry"]);
 });
@@ -24,7 +24,7 @@ for (const key of approved) test(`isolated registry recognizes ${key}`, () => {
   assert.ok(Object.isFrozen(registry)); assert.ok(Object.isFrozen(registry[key]));
   assert.equal(Object.hasOwn(registry, key), true);
   assert.equal(Object.hasOwn(registry, "toString"), false);
-  assert.deepEqual(Object.keys(builders.registry), ["decimalRounding", "multipleRounding", "unaryNumeric"]);
+  assert.deepEqual(Object.keys(builders.registry), ["decimalRounding", "multipleRounding", "unaryNumeric", "textSlice", "textUnary", "textSearch", "textReplace"]);
 });
 for (const key of ["unknown", "toString", "constructor", "__proto__", "CriteriaAggregate", "criteriaAggregate "]) test(`registry rejects unknown exact key ${key}`, () => assert.throws(() => builders.createRegistry({ [key]: descriptor() }), /configuration/));
 for (const value of [null, undefined, {}, { validateOptions() {}, validate() {} }, { ...descriptor(), build: "SUM" }, { ...descriptor(), extra: true }]) test(`registry rejects malformed descriptor ${String(value)}`, () => assert.throws(() => builders.createRegistry({ criteriaAggregate: value }), /configuration/));
@@ -36,13 +36,17 @@ test("registry rejects inherited and accessor definitions without invoking gette
 for (const [key, names] of Object.entries({
   decimalRounding: ["ROUND", "ROUNDUP", "ROUNDDOWN"],
   multipleRounding: ["CEILING", "FLOOR"],
-  unaryNumeric: ["ABS", "VALUE", "INT"]
+  unaryNumeric: ["ABS", "VALUE", "INT"],
+  textSlice: ["LEFT", "RIGHT", "MID"],
+  textUnary: ["LEN", "LOWER", "UPPER"],
+  textSearch: ["FIND", "CONTAINS"],
+  textReplace: ["SUBSTITUTE", "REPLACE"]
 })) {
   test(`production ${key} accepts only exact own functionName options`, () => {
     const builder = builders.registry[key];
     assert.ok(Object.isFrozen(builder));
     for (const functionName of names) assert.equal(builder.validateOptions({ functionName }), undefined);
-    for (const functionName of ["SUM", "TODAY", "round", "ROUND ", "ROUND(1)", ...["ROUND", "CEILING", "ABS"].filter(name => !names.includes(name))]) {
+    for (const functionName of ["SUM", "TODAY", "round", "ROUND ", "ROUND(1)", ...["ROUND", "CEILING", "ABS", "LEFT", "RIGHT", "MID", "LEN", "LOWER", "UPPER", "FIND", "CONTAINS", "SUBSTITUTE", "REPLACE"].filter(name => !names.includes(name))]) {
       assert.throws(() => builder.validateOptions({ functionName }), /Structured configuration/);
     }
     for (const options of [undefined, null, {}, [], { functionName: names[0], extra: true }, Object.create({ functionName: names[0] }), { get functionName() { assert.fail("must not invoke getter"); } }]) {
