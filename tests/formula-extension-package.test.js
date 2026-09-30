@@ -10,6 +10,7 @@ const { coreScripts } = require("./helpers/load-formula-core");
 const { generalizedFixtures, currentLegacyFixtures } = require("./helpers/formula-expectations");
 const batch1 = require("./fixtures/formula-common-batch1-cases.json");
 const batch2 = require("./fixtures/formula-common-batch2-cases.json");
+const batch3 = require("./fixtures/formula-common-batch3-cases.json");
 const root = path.resolve(__dirname, "..");
 
 function temporaryPackage(t) {
@@ -36,10 +37,10 @@ test("copy-only package has exactly the allowlisted files and byte-identical can
   for (const file of packageFiles) assert.ok(fs.readFileSync(path.join(directory, file.target)).equals(fs.readFileSync(path.join(root, file.source))));
   const context = vm.createContext({});
   for (const name of coreScripts) vm.runInContext(fs.readFileSync(path.join(directory, `core/${name}.js`), "utf8"), context);
-  assert.equal(Object.keys(context.SmartsheetFormulaBuilder.catalog).length, 44);
+  assert.equal(Object.keys(context.SmartsheetFormulaBuilder.catalog).length, 47);
   assert.equal(Object.values(context.SmartsheetFormulaBuilder.catalog).filter(config => config.libraryId === "advanced" && !config.inputContract).length, 26);
   assert.ok(Object.isFrozen(context.SmartsheetFormulaBuilder.commonBuilders.registry));
-  assert.deepEqual(Object.keys(context.SmartsheetFormulaBuilder.commonBuilders.registry), ["decimalRounding", "multipleRounding", "unaryNumeric", "textSlice", "textUnary", "textSearch", "textReplace"]);
+  assert.deepEqual(Object.keys(context.SmartsheetFormulaBuilder.commonBuilders.registry), ["decimalRounding", "multipleRounding", "unaryNumeric", "textSlice", "textUnary", "textSearch", "textReplace", "todayOffset", "dateConstructor", "booleanTest"]);
   for (const entry of generalizedFixtures.cases) {
     assert.equal(context.SmartsheetFormulaBuilder.generateFormula(entry.formulaType, entry.rawValues).formula, entry.expected.formula);
     assert.deepEqual(JSON.parse(JSON.stringify(context.SmartsheetFormulaBuilder.generateFormula(entry.formulaType, entry.rawValues))), entry.expected);
@@ -47,8 +48,8 @@ test("copy-only package has exactly the allowlisted files and byte-identical can
   for (const entry of currentLegacyFixtures.cases) {
     assert.deepEqual(JSON.parse(JSON.stringify(context.SmartsheetFormulaBuilder.generateFormula(entry.formulaType, entry.rawValues))), entry.expected);
   }
-  assert.deepEqual(Object.values(context.SmartsheetFormulaBuilder.catalog).filter(config => config.libraryId === "common").map(config => config.id), [...batch1.formulas, ...batch2.formulas].map(config => config.id));
-  for (const batch of [batch1, batch2]) for (const entry of batch.cases) {
+  assert.deepEqual(Object.values(context.SmartsheetFormulaBuilder.catalog).filter(config => config.libraryId === "common").map(config => config.id), [...batch1.formulas, ...batch2.formulas, ...batch3.formulas].map(config => config.id));
+  for (const batch of [batch1, batch2, batch3]) for (const entry of batch.cases) {
     assert.deepEqual(JSON.parse(JSON.stringify(context.SmartsheetFormulaBuilder.generateFormula(entry.formulaType, entry.rawValues))), {
       formulaType: entry.formulaType, explanation: batch.formulas.find(config => config.id === entry.formulaType).explanation,
       ...entry.expected, missingFields: [], ...commonGuidance[entry.formulaType]

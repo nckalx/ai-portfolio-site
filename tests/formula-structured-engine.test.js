@@ -18,12 +18,12 @@ test("structured guidance faults throw before building even with incomplete sema
 for (const [id, expected] of Object.entries(commonGuidance)) {
   test(`Common guidance on complete/incomplete results remains independent: ${id}`, () => {
     const core = loadFormulaCore();
-    const batches = [require("./fixtures/formula-common-batch1-cases.json"), require("./fixtures/formula-common-batch2-cases.json")];
+    const batches = [require("./fixtures/formula-common-batch1-cases.json"), require("./fixtures/formula-common-batch2-cases.json"), require("./fixtures/formula-common-batch3-cases.json")];
     const success = batches.flatMap(batch => batch.cases).find(entry => entry.formulaType === id && entry.expected.formula !== null);
-    for (const raw of [success.rawValues, {}]) {
+    for (const raw of [success.rawValues, id === "todayDate" ? { offsetDays: "-" } : {}]) {
       const result = core.generateFormula(id, raw);
       assert.deepEqual(plain({ setupNotes: result.setupNotes, instructions: result.instructions }), expected);
-      if (!Object.keys(raw).length) {
+      if (raw !== success.rawValues) {
         assert.equal(result.formula, null); assert.equal(result.values, null);
         assert.deepEqual(plain(result.references), []); assert.ok(result.validationErrors.length);
       }
@@ -88,7 +88,7 @@ test("library and availability do not opt a formula into structured dispatch", (
   assert.throws(() => core.generateFormula(fixture.id, { criteria: [pair()] }));
   assert.deepEqual(calls, []);
 });
-for (const builderKey of ["unknown", "toString", "constructor", "__proto__", "todayOffset"]) test(`unknown or unimplemented builder fails clearly ${builderKey}`, () => {
+for (const builderKey of ["unknown", "toString", "constructor", "__proto__", "dateDelta"]) test(`unknown or unimplemented builder fails clearly ${builderKey}`, () => {
   const { core } = setup({ builderKey });
   assert.throws(() => core.generateFormula("syntheticStructured", { criteria: [pair()] }), /Structured configuration: (unknown|unimplemented) builder family/);
 });
@@ -128,7 +128,7 @@ test("fixtures do not mutate production catalog; Advanced malformed-input except
   const core = loadFormulaCore(), before = JSON.stringify(core.catalog);
   setup();
   assert.equal(JSON.stringify(core.catalog), before);
-  assert.equal(Object.keys(core.catalog).length, 44);
+  assert.equal(Object.keys(core.catalog).length, 47);
   assert.ok(Object.values(core.catalog).filter(entry => entry.libraryId === "advanced").every(entry => !Object.hasOwn(entry, "inputContract")));
   assert.throws(() => core.generateFormula("unknown", {}));
   for (const raw of [null, {}, { finishDateColumn: 1, milestoneLabelColumn: "Task" }]) assert.throws(() => core.generateFormula("appendFinishDateLabel", raw));

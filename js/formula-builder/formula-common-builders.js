@@ -103,6 +103,29 @@
         }
         return p.renderFunctionCall(options.functionName, args);
       }
+    },
+    todayOffset: {
+      validateOptions(options) { validateFunctionOptions(options, ["TODAY"]); },
+      validate() { return []; },
+      build(values, options, p) {
+        const args = [];
+        if (Object.hasOwn(values, "offsetDays")) args.push(p.renderOperand({ type: "number", value: values.offsetDays }));
+        return p.renderFunctionCall(options.functionName, args);
+      }
+    },
+    dateConstructor: {
+      validateOptions(options) { validateFunctionOptions(options, ["DATE"]); },
+      validate() { return []; },
+      build(values, options, p) {
+        return p.renderFunctionCall(options.functionName, [values.year, values.month, values.day].map(value => p.renderOperand({ type: "number", value })));
+      }
+    },
+    booleanTest: {
+      validateOptions(options) { validateFunctionOptions(options, ["ISBLANK"]); },
+      validate() { return []; },
+      build(values, options, p) {
+        return p.renderFunctionCall(options.functionName, [p.renderOperand(values.value)]);
+      }
     }
   });
   namespace.commonBuilders = Object.freeze({ familyKeys, createRegistry, registry });

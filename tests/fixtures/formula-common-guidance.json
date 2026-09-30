@@ -173,5 +173,35 @@
       "Enter a Start position of at least 1 and a Number of characters of zero or more.",
       "Copy the formula to the cell where you want the replaced text."
     ]
+  },
+  "todayDate": {
+    "setupNotes": [
+      "No special setup is required. TODAY does not use cell or cross-sheet references."
+    ],
+    "instructions": [
+      "Leave Days offset excluded to return the current date, or include it to shift the date by a whole number of days.",
+      "Use a positive offset for days after today, zero for today, or a negative offset for days before today.",
+      "Copy the formula into a Date column.",
+      "Smartsheet refreshes TODAY when the sheet is opened and saved or another supported sheet update occurs; displaying a report or dashboard alone does not necessarily refresh it."
+    ]
+  },
+  "dateFromParts": {
+    "setupNotes": [
+      "No special setup is required. Enter the date parts directly; this builder does not use cell or cross-sheet references."
+    ],
+    "instructions": [
+      "Enter a Year from 1000 through 9999, a Month from 1 through 12, and a Day from 1 through 31.",
+      "Smartsheet evaluates the resulting date, including days beyond the chosen month's length.",
+      "Copy the formula into a Date column that is not used for dependencies."
+    ]
+  },
+  "isBlank": {
+    "setupNotes": [
+      "No special setup is required. Choose Current-row cell and enter the source column name; no cross-sheet reference is needed."
+    ],
+    "instructions": [
+      "Select Current-row cell and enter the column containing the value to check.",
+      "Copy the formula into a Checkbox column to flag rows whose source cell is blank. Use a different column from the source."
+    ]
   }
 }

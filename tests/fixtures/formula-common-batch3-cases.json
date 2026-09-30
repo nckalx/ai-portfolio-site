@@ -1,0 +1,2728 @@
+{
+  "formulas": [
+    {
+      "id": "todayDate",
+      "label": "TODAY",
+      "explanation": "Return the current date, optionally offset by a number of days.",
+      "keywords": [
+        "today",
+        "current date",
+        "today's date",
+        "date offset",
+        "days from today"
+      ],
+      "builderKey": "todayOffset",
+      "fields": [
+        {
+          "id": "offsetDays",
+          "label": "Days offset",
+          "type": "integer",
+          "required": false,
+          "help": "Enter whole days before today as a negative number or after today as a positive number."
+        }
+      ]
+    },
+    {
+      "id": "dateFromParts",
+      "label": "DATE",
+      "explanation": "Create a date from year, month, and day numbers.",
+      "keywords": [
+        "date",
+        "year month day",
+        "date from parts",
+        "create date"
+      ],
+      "builderKey": "dateConstructor",
+      "fields": [
+        {
+          "id": "year",
+          "label": "Year",
+          "type": "integer",
+          "required": true,
+          "min": "1000",
+          "max": "9999",
+          "help": "Enter a year from 1000 through 9999."
+        },
+        {
+          "id": "month",
+          "label": "Month",
+          "type": "integer",
+          "required": true,
+          "min": "1",
+          "max": "12",
+          "help": "Enter a month number from 1 through 12."
+        },
+        {
+          "id": "day",
+          "label": "Day",
+          "type": "integer",
+          "required": true,
+          "min": "1",
+          "max": "31",
+          "help": "Enter a day number from 1 through 31. Smartsheet evaluates days beyond the chosen month's length."
+        }
+      ]
+    },
+    {
+      "id": "isBlank",
+      "label": "ISBLANK",
+      "explanation": "Check whether a current-row cell is blank.",
+      "keywords": [
+        "isblank",
+        "blank cell",
+        "empty cell",
+        "missing value",
+        "checkbox"
+      ],
+      "builderKey": "booleanTest",
+      "fields": [
+        {
+          "id": "value",
+          "label": "Cell to check",
+          "type": "cellRef",
+          "required": true,
+          "help": "Choose Current-row cell and enter the source column name."
+        }
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "formulaType": "todayDate",
+      "name": "omitted offset",
+      "rawValues": {},
+      "expected": {
+        "values": {},
+        "formula": "=TODAY()",
+        "references": [],
+        "validationErrors": []
+      }
+    },
+    {
+      "formulaType": "todayDate",
+      "name": "offset '0'",
+      "rawValues": {
+        "offsetDays": "0"
+      },
+      "expected": {
+        "values": {
+          "offsetDays": "0"
+        },
+        "formula": "=TODAY(0)",
+        "references": [],
+        "validationErrors": []
+      }
+    },
+    {
+      "formulaType": "todayDate",
+      "name": "offset '7'",
+      "rawValues": {
+        "offsetDays": "7"
+      },
+      "expected": {
+        "values": {
+          "offsetDays": "7"
+        },
+        "formula": "=TODAY(7)",
+        "references": [],
+        "validationErrors": []
+      }
+    },
+    {
+      "formulaType": "todayDate",
+      "name": "offset '-7'",
+      "rawValues": {
+        "offsetDays": "-7"
+      },
+      "expected": {
+        "values": {
+          "offsetDays": "-7"
+        },
+        "formula": "=TODAY(-7)",
+        "references": [],
+        "validationErrors": []
+      }
+    },
+    {
+      "formulaType": "todayDate",
+      "name": "offset ' 007 '",
+      "rawValues": {
+        "offsetDays": " 007 "
+      },
+      "expected": {
+        "values": {
+          "offsetDays": "7"
+        },
+        "formula": "=TODAY(7)",
+        "references": [],
+        "validationErrors": []
+      }
+    },
+    {
+      "formulaType": "todayDate",
+      "name": "offset ' -007 '",
+      "rawValues": {
+        "offsetDays": " -007 "
+      },
+      "expected": {
+        "values": {
+          "offsetDays": "-7"
+        },
+        "formula": "=TODAY(-7)",
+        "references": [],
+        "validationErrors": []
+      }
+    },
+    {
+      "formulaType": "todayDate",
+      "name": "offset '-000'",
+      "rawValues": {
+        "offsetDays": "-000"
+      },
+      "expected": {
+        "values": {
+          "offsetDays": "0"
+        },
+        "formula": "=TODAY(0)",
+        "references": [],
+        "validationErrors": []
+      }
+    },
+    {
+      "formulaType": "todayDate",
+      "name": "offset '9007199254740992'",
+      "rawValues": {
+        "offsetDays": "9007199254740992"
+      },
+      "expected": {
+        "values": {
+          "offsetDays": "9007199254740992"
+        },
+        "formula": "=TODAY(9007199254740992)",
+        "references": [],
+        "validationErrors": []
+      }
+    },
+    {
+      "formulaType": "todayDate",
+      "name": "offset '-9007199254740992'",
+      "rawValues": {
+        "offsetDays": "-9007199254740992"
+      },
+      "expected": {
+        "values": {
+          "offsetDays": "-9007199254740992"
+        },
+        "formula": "=TODAY(-9007199254740992)",
+        "references": [],
+        "validationErrors": []
+      }
+    },
+    {
+      "formulaType": "todayDate",
+      "name": "invalid integer '1.5'",
+      "rawValues": {
+        "offsetDays": "1.5"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "offsetDays",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "todayDate",
+      "name": "invalid integer '1.0'",
+      "rawValues": {
+        "offsetDays": "1.0"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "offsetDays",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "todayDate",
+      "name": "invalid integer '1e2'",
+      "rawValues": {
+        "offsetDays": "1e2"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "offsetDays",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "todayDate",
+      "name": "invalid integer '+7'",
+      "rawValues": {
+        "offsetDays": "+7"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "offsetDays",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "todayDate",
+      "name": "invalid integer '-'",
+      "rawValues": {
+        "offsetDays": "-"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "offsetDays",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "todayDate",
+      "name": "invalid integer ''",
+      "rawValues": {
+        "offsetDays": ""
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "offsetDays",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "todayDate",
+      "name": "invalid integer '   '",
+      "rawValues": {
+        "offsetDays": "   "
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "offsetDays",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "todayDate",
+      "name": "invalid integer 'NaN'",
+      "rawValues": {
+        "offsetDays": "NaN"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "offsetDays",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "todayDate",
+      "name": "invalid integer 'Infinity'",
+      "rawValues": {
+        "offsetDays": "Infinity"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "offsetDays",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "todayDate",
+      "name": "non-string 7",
+      "rawValues": {
+        "offsetDays": 7
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "offsetDays",
+            "code": "integer",
+            "message": "Use a decimal string."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "todayDate",
+      "name": "non-string False",
+      "rawValues": {
+        "offsetDays": false
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "offsetDays",
+            "code": "integer",
+            "message": "Use a decimal string."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "todayDate",
+      "name": "non-string {}",
+      "rawValues": {
+        "offsetDays": {}
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "offsetDays",
+            "code": "integer",
+            "message": "Use a decimal string."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "todayDate",
+      "name": "non-string []",
+      "rawValues": {
+        "offsetDays": []
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "offsetDays",
+            "code": "integer",
+            "message": "Use a decimal string."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "todayDate",
+      "name": "non-string {'type': 'cellRef', 'column': 'Offset'}",
+      "rawValues": {
+        "offsetDays": {
+          "type": "cellRef",
+          "column": "Offset"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "offsetDays",
+            "code": "integer",
+            "message": "Use a decimal string."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "todayDate",
+      "name": "null offset",
+      "rawValues": {
+        "offsetDays": null
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "offsetDays",
+            "code": "invalid",
+            "message": "Choose a valid value; null and undefined are not omission."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "todayDate",
+      "name": "magnitude 9007199254740993",
+      "rawValues": {
+        "offsetDays": "9007199254740993"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "offsetDays",
+            "code": "integer",
+            "message": "Use a number from -9007199254740992 through 9007199254740992."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "todayDate",
+      "name": "magnitude -9007199254740993",
+      "rawValues": {
+        "offsetDays": "-9007199254740993"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "offsetDays",
+            "code": "integer",
+            "message": "Use a number from -9007199254740992 through 9007199254740992."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "todayDate",
+      "name": "extra {'offset': '0'}",
+      "rawValues": {
+        "offset": "0"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "offset",
+            "code": "unexpected",
+            "message": "Remove this unexpected property."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "todayDate",
+      "name": "extra {'uiState': {'touched': {}}}",
+      "rawValues": {
+        "uiState": {
+          "touched": {}
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "uiState",
+            "code": "unexpected",
+            "message": "Remove this unexpected property."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "todayDate",
+      "name": "extra {'z': 0, 'a': 0}",
+      "rawValues": {
+        "z": 0,
+        "a": 0
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "a",
+            "code": "unexpected",
+            "message": "Remove this unexpected property."
+          },
+          {
+            "path": "z",
+            "code": "unexpected",
+            "message": "Remove this unexpected property."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "todayDate",
+      "name": "root None",
+      "rawValues": null,
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "",
+            "code": "invalid",
+            "message": "Choose a valid value; null and undefined are not omission."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "todayDate",
+      "name": "root []",
+      "rawValues": [],
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "",
+            "code": "type",
+            "message": "Choose an object value."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "todayDate",
+      "name": "root 0",
+      "rawValues": 0,
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "",
+            "code": "type",
+            "message": "Choose an object value."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "todayDate",
+      "name": "root ''",
+      "rawValues": "",
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "",
+            "code": "type",
+            "message": "Choose an object value."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "ordinary",
+      "rawValues": {
+        "year": "2026",
+        "month": "9",
+        "day": "29"
+      },
+      "expected": {
+        "values": {
+          "year": "2026",
+          "month": "9",
+          "day": "29"
+        },
+        "formula": "=DATE(2026, 9, 29)",
+        "references": [],
+        "validationErrors": []
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "leading zeros",
+      "rawValues": {
+        "year": " 02026 ",
+        "month": "009",
+        "day": "029"
+      },
+      "expected": {
+        "values": {
+          "year": "2026",
+          "month": "9",
+          "day": "29"
+        },
+        "formula": "=DATE(2026, 9, 29)",
+        "references": [],
+        "validationErrors": []
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "minimum",
+      "rawValues": {
+        "year": "1000",
+        "month": "1",
+        "day": "1"
+      },
+      "expected": {
+        "values": {
+          "year": "1000",
+          "month": "1",
+          "day": "1"
+        },
+        "formula": "=DATE(1000, 1, 1)",
+        "references": [],
+        "validationErrors": []
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "maximum",
+      "rawValues": {
+        "year": "9999",
+        "month": "12",
+        "day": "31"
+      },
+      "expected": {
+        "values": {
+          "year": "9999",
+          "month": "12",
+          "day": "31"
+        },
+        "formula": "=DATE(9999, 12, 31)",
+        "references": [],
+        "validationErrors": []
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "leap day",
+      "rawValues": {
+        "year": "2024",
+        "month": "2",
+        "day": "29"
+      },
+      "expected": {
+        "values": {
+          "year": "2024",
+          "month": "2",
+          "day": "29"
+        },
+        "formula": "=DATE(2024, 2, 29)",
+        "references": [],
+        "validationErrors": []
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "non-leap day",
+      "rawValues": {
+        "year": "2025",
+        "month": "2",
+        "day": "29"
+      },
+      "expected": {
+        "values": {
+          "year": "2025",
+          "month": "2",
+          "day": "29"
+        },
+        "formula": "=DATE(2025, 2, 29)",
+        "references": [],
+        "validationErrors": []
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "November 31",
+      "rawValues": {
+        "year": "2026",
+        "month": "11",
+        "day": "31"
+      },
+      "expected": {
+        "values": {
+          "year": "2026",
+          "month": "11",
+          "day": "31"
+        },
+        "formula": "=DATE(2026, 11, 31)",
+        "references": [],
+        "validationErrors": []
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "February 31",
+      "rawValues": {
+        "year": "2026",
+        "month": "2",
+        "day": "31"
+      },
+      "expected": {
+        "values": {
+          "year": "2026",
+          "month": "2",
+          "day": "31"
+        },
+        "formula": "=DATE(2026, 2, 31)",
+        "references": [],
+        "validationErrors": []
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "all absent",
+      "rawValues": {},
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "year",
+            "code": "required",
+            "message": "Choose Year."
+          },
+          {
+            "path": "month",
+            "code": "required",
+            "message": "Choose Month."
+          },
+          {
+            "path": "day",
+            "code": "required",
+            "message": "Choose Day."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "missing year",
+      "rawValues": {
+        "month": "9",
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "year",
+            "code": "required",
+            "message": "Choose Year."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "year syntax '1.5'",
+      "rawValues": {
+        "year": "1.5",
+        "month": "9",
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "year",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "year syntax '1e2'",
+      "rawValues": {
+        "year": "1e2",
+        "month": "9",
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "year",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "year syntax '+1'",
+      "rawValues": {
+        "year": "+1",
+        "month": "9",
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "year",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "year syntax '-'",
+      "rawValues": {
+        "year": "-",
+        "month": "9",
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "year",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "year syntax ''",
+      "rawValues": {
+        "year": "",
+        "month": "9",
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "year",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "year non-string 2026",
+      "rawValues": {
+        "year": 2026,
+        "month": "9",
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "year",
+            "code": "integer",
+            "message": "Use a decimal string."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "year non-string True",
+      "rawValues": {
+        "year": true,
+        "month": "9",
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "year",
+            "code": "integer",
+            "message": "Use a decimal string."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "year non-string {}",
+      "rawValues": {
+        "year": {},
+        "month": "9",
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "year",
+            "code": "integer",
+            "message": "Use a decimal string."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "year non-string []",
+      "rawValues": {
+        "year": [],
+        "month": "9",
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "year",
+            "code": "integer",
+            "message": "Use a decimal string."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "year null",
+      "rawValues": {
+        "year": null,
+        "month": "9",
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "year",
+            "code": "invalid",
+            "message": "Choose a valid value; null and undefined are not omission."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "year magnitude 9007199254740993",
+      "rawValues": {
+        "year": "9007199254740993",
+        "month": "9",
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "year",
+            "code": "integer",
+            "message": "Use a number from -9007199254740992 through 9007199254740992."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "year magnitude -9007199254740993",
+      "rawValues": {
+        "year": "-9007199254740993",
+        "month": "9",
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "year",
+            "code": "integer",
+            "message": "Use a number from -9007199254740992 through 9007199254740992."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "missing month",
+      "rawValues": {
+        "year": "2026",
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "month",
+            "code": "required",
+            "message": "Choose Month."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "month syntax '1.5'",
+      "rawValues": {
+        "year": "2026",
+        "month": "1.5",
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "month",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "month syntax '1e2'",
+      "rawValues": {
+        "year": "2026",
+        "month": "1e2",
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "month",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "month syntax '+1'",
+      "rawValues": {
+        "year": "2026",
+        "month": "+1",
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "month",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "month syntax '-'",
+      "rawValues": {
+        "year": "2026",
+        "month": "-",
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "month",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "month syntax ''",
+      "rawValues": {
+        "year": "2026",
+        "month": "",
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "month",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "month non-string 2026",
+      "rawValues": {
+        "year": "2026",
+        "month": 2026,
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "month",
+            "code": "integer",
+            "message": "Use a decimal string."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "month non-string True",
+      "rawValues": {
+        "year": "2026",
+        "month": true,
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "month",
+            "code": "integer",
+            "message": "Use a decimal string."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "month non-string {}",
+      "rawValues": {
+        "year": "2026",
+        "month": {},
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "month",
+            "code": "integer",
+            "message": "Use a decimal string."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "month non-string []",
+      "rawValues": {
+        "year": "2026",
+        "month": [],
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "month",
+            "code": "integer",
+            "message": "Use a decimal string."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "month null",
+      "rawValues": {
+        "year": "2026",
+        "month": null,
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "month",
+            "code": "invalid",
+            "message": "Choose a valid value; null and undefined are not omission."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "month magnitude 9007199254740993",
+      "rawValues": {
+        "year": "2026",
+        "month": "9007199254740993",
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "month",
+            "code": "integer",
+            "message": "Use a number from -9007199254740992 through 9007199254740992."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "month magnitude -9007199254740993",
+      "rawValues": {
+        "year": "2026",
+        "month": "-9007199254740993",
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "month",
+            "code": "integer",
+            "message": "Use a number from -9007199254740992 through 9007199254740992."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "missing day",
+      "rawValues": {
+        "year": "2026",
+        "month": "9"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "day",
+            "code": "required",
+            "message": "Choose Day."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "day syntax '1.5'",
+      "rawValues": {
+        "year": "2026",
+        "month": "9",
+        "day": "1.5"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "day",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "day syntax '1e2'",
+      "rawValues": {
+        "year": "2026",
+        "month": "9",
+        "day": "1e2"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "day",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "day syntax '+1'",
+      "rawValues": {
+        "year": "2026",
+        "month": "9",
+        "day": "+1"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "day",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "day syntax '-'",
+      "rawValues": {
+        "year": "2026",
+        "month": "9",
+        "day": "-"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "day",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "day syntax ''",
+      "rawValues": {
+        "year": "2026",
+        "month": "9",
+        "day": ""
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "day",
+            "code": "integer",
+            "message": "Use integer syntax."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "day non-string 2026",
+      "rawValues": {
+        "year": "2026",
+        "month": "9",
+        "day": 2026
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "day",
+            "code": "integer",
+            "message": "Use a decimal string."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "day non-string True",
+      "rawValues": {
+        "year": "2026",
+        "month": "9",
+        "day": true
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "day",
+            "code": "integer",
+            "message": "Use a decimal string."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "day non-string {}",
+      "rawValues": {
+        "year": "2026",
+        "month": "9",
+        "day": {}
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "day",
+            "code": "integer",
+            "message": "Use a decimal string."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "day non-string []",
+      "rawValues": {
+        "year": "2026",
+        "month": "9",
+        "day": []
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "day",
+            "code": "integer",
+            "message": "Use a decimal string."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "day null",
+      "rawValues": {
+        "year": "2026",
+        "month": "9",
+        "day": null
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "day",
+            "code": "invalid",
+            "message": "Choose a valid value; null and undefined are not omission."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "day magnitude 9007199254740993",
+      "rawValues": {
+        "year": "2026",
+        "month": "9",
+        "day": "9007199254740993"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "day",
+            "code": "integer",
+            "message": "Use a number from -9007199254740992 through 9007199254740992."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "day magnitude -9007199254740993",
+      "rawValues": {
+        "year": "2026",
+        "month": "9",
+        "day": "-9007199254740993"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "day",
+            "code": "integer",
+            "message": "Use a number from -9007199254740992 through 9007199254740992."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "year bound 999",
+      "rawValues": {
+        "year": "999",
+        "month": "9",
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "year",
+            "code": "min",
+            "message": "Value must be at least 1000."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "year bound 10000",
+      "rawValues": {
+        "year": "10000",
+        "month": "9",
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "year",
+            "code": "max",
+            "message": "Value must be at most 9999."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "year bound 0000",
+      "rawValues": {
+        "year": "0000",
+        "month": "9",
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "year",
+            "code": "min",
+            "message": "Value must be at least 1000."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "year bound 9007199254740992",
+      "rawValues": {
+        "year": "9007199254740992",
+        "month": "9",
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "year",
+            "code": "max",
+            "message": "Value must be at most 9999."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "year bound -9007199254740992",
+      "rawValues": {
+        "year": "-9007199254740992",
+        "month": "9",
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "year",
+            "code": "min",
+            "message": "Value must be at least 1000."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "month bound 0",
+      "rawValues": {
+        "year": "2026",
+        "month": "0",
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "month",
+            "code": "min",
+            "message": "Value must be at least 1."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "month bound 13",
+      "rawValues": {
+        "year": "2026",
+        "month": "13",
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "month",
+            "code": "max",
+            "message": "Value must be at most 12."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "month bound -1",
+      "rawValues": {
+        "year": "2026",
+        "month": "-1",
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "month",
+            "code": "min",
+            "message": "Value must be at least 1."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "day bound 0",
+      "rawValues": {
+        "year": "2026",
+        "month": "9",
+        "day": "0"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "day",
+            "code": "min",
+            "message": "Value must be at least 1."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "day bound 32",
+      "rawValues": {
+        "year": "2026",
+        "month": "9",
+        "day": "32"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "day",
+            "code": "max",
+            "message": "Value must be at most 31."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "day bound -0",
+      "rawValues": {
+        "year": "2026",
+        "month": "9",
+        "day": "-0"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "day",
+            "code": "min",
+            "message": "Value must be at least 1."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "cell operand",
+      "rawValues": {
+        "year": {
+          "type": "cellRef",
+          "column": "Year"
+        },
+        "month": "9",
+        "day": "29"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "year",
+            "code": "integer",
+            "message": "Use a decimal string."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "extra offset",
+      "rawValues": {
+        "year": "2026",
+        "month": "9",
+        "day": "29",
+        "offset": "1"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "offset",
+            "code": "unexpected",
+            "message": "Remove this unexpected property."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "extra uiState",
+      "rawValues": {
+        "year": "2026",
+        "month": "9",
+        "day": "29",
+        "uiState": {}
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "uiState",
+            "code": "unexpected",
+            "message": "Remove this unexpected property."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "dateFromParts",
+      "name": "ordered bounds",
+      "rawValues": {
+        "year": "999",
+        "month": "13",
+        "day": "32"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "year",
+            "code": "min",
+            "message": "Value must be at least 1000."
+          },
+          {
+            "path": "month",
+            "code": "max",
+            "message": "Value must be at most 12."
+          },
+          {
+            "path": "day",
+            "code": "max",
+            "message": "Value must be at most 31."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "ordinary",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": "Task Name"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "cellRef",
+            "column": "Task Name"
+          }
+        },
+        "formula": "=ISBLANK([Task Name]@row)",
+        "references": [],
+        "validationErrors": []
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "trimmed",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": "  Task Name  "
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "cellRef",
+            "column": "Task Name"
+          }
+        },
+        "formula": "=ISBLANK([Task Name]@row)",
+        "references": [],
+        "validationErrors": []
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "brackets",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": "A[B]"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "cellRef",
+            "column": "A[B]"
+          }
+        },
+        "formula": "=ISBLANK([A\\[B\\]]@row)",
+        "references": [],
+        "validationErrors": []
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "backslash",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": "A\\B"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "cellRef",
+            "column": "A\\B"
+          }
+        },
+        "formula": "=ISBLANK([A\\\\B]@row)",
+        "references": [],
+        "validationErrors": []
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "braces",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": "{Statuses}"
+        }
+      },
+      "expected": {
+        "values": {
+          "value": {
+            "type": "cellRef",
+            "column": "{Statuses}"
+          }
+        },
+        "formula": "=ISBLANK([{Statuses}]@row)",
+        "references": [],
+        "validationErrors": []
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "missing",
+      "rawValues": {},
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "value",
+            "code": "required",
+            "message": "Choose Cell to check."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "null",
+      "rawValues": {
+        "value": null
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "value",
+            "code": "invalid",
+            "message": "Choose a valid value; null and undefined are not omission."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "primitive",
+      "rawValues": {
+        "value": "Task Name"
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "value",
+            "code": "type",
+            "message": "Choose an operand or reference object."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "array",
+      "rawValues": {
+        "value": []
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "value",
+            "code": "type",
+            "message": "Choose an operand or reference object."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "missing type",
+      "rawValues": {
+        "value": {}
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "value.type",
+            "code": "required",
+            "message": "Choose an operand type."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "null type",
+      "rawValues": {
+        "value": {
+          "type": null
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "value.type",
+            "code": "operandType",
+            "message": "Choose a permitted operand type."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "missing column",
+      "rawValues": {
+        "value": {
+          "type": "cellRef"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "value.column",
+            "code": "required",
+            "message": "Choose value.column."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "column ''",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": ""
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "value.column",
+            "code": "columnName",
+            "message": "Choose a column name."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "column '   '",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": "   "
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "value.column",
+            "code": "columnName",
+            "message": "Choose a column name."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "column 'Task\\nName'",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": "Task\nName"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "value.column",
+            "code": "columnName",
+            "message": "Expected text without control characters."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "column 'Task\\tName'",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": "Task\tName"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "value.column",
+            "code": "columnName",
+            "message": "Expected text without control characters."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "column 123",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": 123
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "value.column",
+            "code": "columnName",
+            "message": "Expected text without control characters."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "column None",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": null
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "value.column",
+            "code": "invalid",
+            "message": "Choose a valid value; null and undefined are not omission."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "excluded {'type': 'textLiteral', 'value': ''}",
+      "rawValues": {
+        "value": {
+          "type": "textLiteral",
+          "value": ""
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "value.type",
+            "code": "operandType",
+            "message": "Choose a permitted operand type."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "excluded {'type': 'number', 'value': '0'}",
+      "rawValues": {
+        "value": {
+          "type": "number",
+          "value": "0"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "value.type",
+            "code": "operandType",
+            "message": "Choose a permitted operand type."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "excluded {'type': 'boolean', 'value': False}",
+      "rawValues": {
+        "value": {
+          "type": "boolean",
+          "value": false
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "value.type",
+            "code": "operandType",
+            "message": "Choose a permitted operand type."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "excluded {'type': 'date', 'value': '2026-09-29'}",
+      "rawValues": {
+        "value": {
+          "type": "date",
+          "value": "2026-09-29"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "value.type",
+            "code": "operandType",
+            "message": "Choose a permitted operand type."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "excluded {'type': 'blank'}",
+      "rawValues": {
+        "value": {
+          "type": "blank"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "value.type",
+            "code": "operandType",
+            "message": "Choose a permitted operand type."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "excluded {'type': 'columnRef', 'column': 'Task Name'}",
+      "rawValues": {
+        "value": {
+          "type": "columnRef",
+          "column": "Task Name"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "value.type",
+            "code": "operandType",
+            "message": "Choose a permitted operand type."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "excluded {'type': 'rangeRef', 'scope': 'currentSheet', 'startColumn': 'A', 'endColumn': 'B'}",
+      "rawValues": {
+        "value": {
+          "type": "rangeRef",
+          "scope": "currentSheet",
+          "startColumn": "A",
+          "endColumn": "B"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "value.type",
+            "code": "operandType",
+            "message": "Choose a permitted operand type."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "excluded {'type': 'rangeRef', 'scope': 'crossSheet', 'name': '{Broken'}",
+      "rawValues": {
+        "value": {
+          "type": "rangeRef",
+          "scope": "crossSheet",
+          "name": "{Broken"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "value.type",
+            "code": "operandType",
+            "message": "Choose a permitted operand type."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "stale {'value': 'old'}",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": "Task Name",
+          "value": "old"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "value.value",
+            "code": "unexpected",
+            "message": "Remove this unexpected property."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "stale {'scope': 'crossSheet'}",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": "Task Name",
+          "scope": "crossSheet"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "value.scope",
+            "code": "unexpected",
+            "message": "Remove this unexpected property."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "stale {'name': 'Old'}",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": "Task Name",
+          "name": "Old"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "value.name",
+            "code": "unexpected",
+            "message": "Remove this unexpected property."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "stale {'scope': 'crossSheet', 'name': 'Old'}",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": "Task Name",
+          "scope": "crossSheet",
+          "name": "Old"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "value.name",
+            "code": "unexpected",
+            "message": "Remove this unexpected property."
+          },
+          {
+            "path": "value.scope",
+            "code": "unexpected",
+            "message": "Remove this unexpected property."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "stale {'key': 'r1'}",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": "Task Name",
+          "key": "r1"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "value.key",
+            "code": "unexpected",
+            "message": "Remove this unexpected property."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "column and stale",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": "",
+          "name": "Old"
+        }
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "value.column",
+            "code": "columnName",
+            "message": "Choose a column name."
+          },
+          {
+            "path": "value.name",
+            "code": "unexpected",
+            "message": "Remove this unexpected property."
+          }
+        ]
+      }
+    },
+    {
+      "formulaType": "isBlank",
+      "name": "uiState",
+      "rawValues": {
+        "value": {
+          "type": "cellRef",
+          "column": "Task Name"
+        },
+        "uiState": {}
+      },
+      "expected": {
+        "values": null,
+        "formula": null,
+        "references": [],
+        "validationErrors": [
+          {
+            "path": "uiState",
+            "code": "unexpected",
+            "message": "Remove this unexpected property."
+          }
+        ]
+      }
+    }
+  ]
+}

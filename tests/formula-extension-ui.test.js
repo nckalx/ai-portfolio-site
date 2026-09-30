@@ -6,6 +6,7 @@ const { generalizedFixtures, currentLegacyFixtures } = require("./helpers/formul
 const availabilityFixture = require("./fixtures/formula-availability.json");
 const batch1 = require("./fixtures/formula-common-batch1-cases.json");
 const batch2 = require("./fixtures/formula-common-batch2-cases.json");
+const batch3 = require("./fixtures/formula-common-batch3-cases.json");
 const { discoveryFixture } = require("./helpers/formula-discovery-fixtures");
 const excluded = new Set(["multiLineReportLabel", "rioIdLookup"]);
 const tick = () => new Promise(resolve => setImmediate(resolve));
@@ -185,17 +186,20 @@ function switchLibrary(panel, library) {
   radio.dispatch("change");
 }
 
-test("production Common navigation exposes eighteen choices and exact text/calculation categories", () => {
+test("production Common navigation exposes twenty-one choices and exact text/date/calculation categories", () => {
   const panel = setupExtension();
   assert.equal(panel.get("library-advanced").checked, true);
   assert.equal(panel.get("library-selector").hidden, false);
   switchLibrary(panel, "common");
-  assert.deepEqual(resultIds(panel), [...batch1.formulas, ...batch2.formulas].map(config => config.id));
-  assert.equal(panel.get("result-count").textContent, "18 formulas");
-  assert.deepEqual(categoryIds(panel), ["", "text-labels", "counts-calculations"]);
+  assert.deepEqual(resultIds(panel), [...batch1.formulas, ...batch2.formulas, ...batch3.formulas].map(config => config.id));
+  assert.equal(panel.get("result-count").textContent, "21 formulas");
+  assert.deepEqual(categoryIds(panel), ["", "text-labels", "dates-status", "counts-calculations"]);
   panel.get("category").value = "text-labels"; panel.get("category").dispatch("change");
   assert.deepEqual(resultIds(panel), batch2.formulas.map(config => config.id));
   assert.equal(panel.get("result-count").textContent, "10 formulas");
+  panel.get("category").value = "dates-status"; panel.get("category").dispatch("change");
+  assert.deepEqual(resultIds(panel), ["todayDate", "dateFromParts", "isBlank"]);
+  assert.equal(panel.get("result-count").textContent, "3 formulas");
   panel.get("category").value = "counts-calculations"; panel.get("category").dispatch("change");
   assert.equal(panel.get("result-count").textContent, "8 formulas");
   panel.get("search").value = "  NUMBER stored AS TEXT  "; panel.get("search").dispatch("input");
@@ -209,7 +213,7 @@ test("production Common navigation exposes eighteen choices and exact text/calcu
   assert.equal(panel.get("results-scroll").scrollTop, 51);
   assert.equal(panel.document.activeElement, button);
   panel.get("clear-filters").dispatch("click");
-  assert.deepEqual(resultIds(panel), [...batch1.formulas, ...batch2.formulas].map(config => config.id));
+  assert.deepEqual(resultIds(panel), [...batch1.formulas, ...batch2.formulas, ...batch3.formulas].map(config => config.id));
   switchLibrary(panel, "advanced");
   assert.equal(panel.get("result-count").textContent, "24 formulas");
 });
@@ -259,6 +263,133 @@ for (const config of batch1.formulas) {
     assert.deepEqual(panel.storageWrites, []);
   });
 }
+
+test("production TODAY optional offset preserves omission, zero, touched drafts, copy and Configure", async () => {
+  const calls = [], copied = [];
+  const panel = setupExtension({ clipboard: { writeText: async value => copied.push(value) } }, {}, core => {
+    const generate = core.generateFormula;
+    core.generateFormula = (id, values) => { calls.push(JSON.parse(JSON.stringify(values))); return generate(id, values); };
+  });
+  switchLibrary(panel, "common"); const button = panel.choose("todayDate");
+  assert.equal(panel.document.activeElement, panel.get("build-title"));
+  assert.equal(panel.get("fields-form").hidden, false);
+  assert.equal(structuredControl(panel, "Include Days offset").checked, false);
+  assert.deepEqual(calls.at(-1), {});
+  assert.equal(panel.get("formula-output").value, "=TODAY()");
+  assert.equal(panel.get("copy").disabled, false);
+  assertCommonGuidance(panel, "todayDate");
+  panel.get("copy").dispatch("click"); await tick();
+  const include = structuredControl(panel, "Include Days offset");
+  include.checked = true; include.dispatch("change");
+  assert.deepEqual(calls.at(-1), { offsetDays: "" });
+  assert.equal(panel.get("copy").disabled, true);
+  assert.deepEqual(visibleStructuredErrors(panel), []);
+  const empty = structuredControl(panel, "Days offset"); empty.focus(); empty.dispatch("blur");
+  assert.equal(empty.getAttribute("aria-invalid"), "true");
+  for (const [raw, formula] of [["7", "=TODAY(7)"], ["-7", "=TODAY(-7)"], ["0", "=TODAY(0)"], [" 007 ", "=TODAY(7)"]]) {
+    const input = editStructured(panel, "Days offset", raw);
+    assert.equal(input, empty); assert.equal(input.value, raw);
+    assert.equal(input.getAttribute("aria-invalid"), "false");
+    assert.equal(panel.document.activeElement, input);
+    assert.equal(panel.get("formula-output").value, formula);
+    assertCommonGuidance(panel, "todayDate");
+    panel.get("copy").dispatch("click"); await tick();
+  }
+  assert.deepEqual(copied, ["=TODAY()", "=TODAY(7)", "=TODAY(-7)", "=TODAY(0)", "=TODAY(7)"]);
+  editStructured(panel, "Days offset", "-");
+  assert.equal(panel.get("copy").disabled, true);
+  assert.equal(visibleStructuredErrors(panel).length, 1);
+  assertCommonGuidance(panel, "todayDate");
+  panel.get("back").dispatch("click"); assert.equal(panel.document.activeElement, button);
+  panel.choose("dateFromParts"); assert.equal(panel.get("fields-form").hidden, false);
+  panel.get("back").dispatch("click"); switchLibrary(panel, "advanced"); panel.choose("appendFinishDateLabel");
+  assert.equal(panel.get("fields-form").hidden, false);
+  assert.equal(panel.get("form-instructions").textContent, "Use your sheet's column names. All fields are required.");
+  panel.get("back").dispatch("click"); switchLibrary(panel, "common"); panel.choose("todayDate");
+  assert.equal(structuredControl(panel, "Days offset").value, "-");
+  assert.equal(visibleStructuredErrors(panel).length, 1);
+  const restored = structuredControl(panel, "Include Days offset");
+  restored.checked = false; restored.dispatch("change");
+  assert.deepEqual(calls.at(-1), {});
+  assert.equal(panel.get("formula-output").value, "=TODAY()");
+  assert.equal(panel.get("copy").disabled, false);
+  assert.deepEqual(visibleStructuredErrors(panel), []);
+  restored.checked = true; restored.dispatch("change");
+  assert.equal(structuredControl(panel, "Days offset").value, "");
+  assert.deepEqual(visibleStructuredErrors(panel), []);
+  restored.checked = false; restored.dispatch("change");
+  empty.value = "99"; empty.dispatch("input");
+  assert.deepEqual(calls.at(-1), {});
+  assert.equal(panel.get("formula-output").value, "=TODAY()");
+});
+
+test("production DATE retains raw scalar drafts, touched bounds and calendar syntax through Build/Back", async () => {
+  const copied = [];
+  const panel = setupExtension({ clipboard: { writeText: async value => copied.push(value) } });
+  switchLibrary(panel, "common"); panel.choose("dateFromParts");
+  assert.equal(descendants(panel.get("fields")).filter(node => node.tagName === "select").length, 0);
+  assert.deepEqual(visibleStructuredErrors(panel), []);
+  assert.equal(panel.get("copy").disabled, true);
+  const year = structuredControl(panel, "Year"); year.focus(); year.dispatch("blur");
+  assert.equal(visibleStructuredErrors(panel).length, 1);
+  assert.equal(year.getAttribute("aria-required"), "true");
+  editStructured(panel, "Year", " 02026 ");
+  editStructured(panel, "Month", "013"); editStructured(panel, "Day", "031");
+  assert.deepEqual(visibleStructuredErrors(panel), ["Value must be at most 12."]);
+  assertCommonGuidance(panel, "dateFromParts");
+  panel.get("back").dispatch("click"); panel.choose("dateFromParts");
+  assert.equal(structuredControl(panel, "Year").value, " 02026 ");
+  assert.equal(structuredControl(panel, "Month").value, "013");
+  assert.deepEqual(visibleStructuredErrors(panel), ["Value must be at most 12."]);
+  const month = editStructured(panel, "Month", "002");
+  assert.equal(month.value, "002"); assert.equal(panel.document.activeElement, month);
+  assert.equal(month.getAttribute("aria-invalid"), "false");
+  assert.deepEqual(visibleStructuredErrors(panel), []);
+  assert.equal(panel.get("formula-output").value, "=DATE(2026, 2, 31)");
+  panel.get("copy").dispatch("click"); await tick();
+  assert.deepEqual(copied, ["=DATE(2026, 2, 31)"]);
+  editStructured(panel, "Year", "999");
+  assert.deepEqual(visibleStructuredErrors(panel), ["Value must be at least 1000."]);
+  editStructured(panel, "Year", "2026");
+  assert.equal(panel.get("copy").disabled, false);
+  assertCommonGuidance(panel, "dateFromParts");
+});
+
+test("production ISBLANK restricts kind, clears stale cells and preserves local references and Copy", async () => {
+  const calls = [], copied = [];
+  const panel = setupExtension({ clipboard: { writeText: async value => copied.push(value) } }, {}, core => {
+    const generate = core.generateFormula;
+    core.generateFormula = (id, values) => { calls.push(JSON.parse(JSON.stringify(values))); return generate(id, values); };
+  });
+  switchLibrary(panel, "common"); panel.choose("isBlank");
+  assert.deepEqual(structuredControl(panel, "Cell to check kind").children.map(option => option.value), ["", "cellRef"]);
+  assert.equal(panel.get("copy").disabled, true);
+  assert.deepEqual(visibleStructuredErrors(panel), []);
+  editStructured(panel, "Cell to check kind", "cellRef");
+  const input = editStructured(panel, "Current-row column", "  {Statuses}  ");
+  assert.equal(input.value, "  {Statuses}  ");
+  assert.equal(panel.get("formula-output").value, "=ISBLANK([{Statuses}]@row)");
+  assert.equal(panel.get("reference-section").hidden, true);
+  assert.equal(panel.get("reference-notice").hidden, true);
+  assertCommonGuidance(panel, "isBlank");
+  panel.get("copy").dispatch("click"); await tick();
+  assert.deepEqual(copied, ["=ISBLANK([{Statuses}]@row)"]);
+  panel.get("back").dispatch("click"); panel.choose("isBlank");
+  assert.equal(structuredControl(panel, "Current-row column").value, "  {Statuses}  ");
+  editStructured(panel, "Current-row column", "Task\nName");
+  assert.deepEqual(visibleStructuredErrors(panel), ["Expected text without control characters."]);
+  assertCommonGuidance(panel, "isBlank");
+  editStructured(panel, "Cell to check kind", "");
+  assert.deepEqual(calls.at(-1), { value: {} });
+  editStructured(panel, "Cell to check kind", "cellRef");
+  assert.deepEqual(calls.at(-1), { value: { type: "cellRef", column: "" } });
+  assert.equal(structuredControl(panel, "Current-row column").value, "");
+  assert.deepEqual(visibleStructuredErrors(panel), []);
+  editStructured(panel, "Current-row column", "Task Name");
+  assert.equal(panel.get("formula-output").value, "=ISBLANK([Task Name]@row)");
+  assert.equal(panel.get("copy").disabled, false);
+  assert.equal(JSON.stringify(calls).includes("uiState"), false);
+});
 
 test("production ROUND preserves raw incomplete drafts, precision presence and independent formula drafts", () => {
   const calls = [];
@@ -362,12 +493,12 @@ const visibleStructuredErrors = panel => descendants(panel.get("fields"))
 test("all production Common formulas validate immediately but initially display no inline errors", () => {
   const panel = setupExtension();
   switchLibrary(panel, "common");
-  for (const config of [...batch1.formulas, ...batch2.formulas]) {
+  for (const config of [...batch1.formulas, ...batch2.formulas, ...batch3.formulas]) {
     panel.choose(config.id);
-    assert.ok(panel.core.generateFormula(config.id, {}).validationErrors.length > 0);
+    assert.equal(panel.core.generateFormula(config.id, {}).validationErrors.length > 0, config.id !== "todayDate");
     assertCommonGuidance(panel, config.id);
-    assert.equal(panel.get("copy").disabled, true);
-    assert.equal(panel.get("formula-output").value, "");
+    assert.equal(panel.get("copy").disabled, config.id !== "todayDate");
+    assert.equal(panel.get("formula-output").value, config.id === "todayDate" ? "=TODAY()" : "");
     assert.deepEqual(visibleStructuredErrors(panel), []);
     assert.equal(panel.get("validation").textContent, "");
     assert.ok(descendants(panel.get("fields")).every(node => node.getAttribute("aria-invalid") !== "true"));

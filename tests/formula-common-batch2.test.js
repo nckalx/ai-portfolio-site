@@ -6,6 +6,7 @@ const { loadFormulaCore } = require("./helpers/load-formula-core");
 const { currentLegacyFixtures } = require("./helpers/formula-expectations");
 const { deepFreeze } = require("./helpers/formula-discovery-fixtures");
 const batch1 = require("./fixtures/formula-common-batch1-cases.json");
+const batch3 = require("./fixtures/formula-common-batch3-cases.json");
 const fixtures = require("./fixtures/formula-common-batch2-cases.json");
 const plain = value => JSON.parse(JSON.stringify(value));
 const core = loadFormulaCore();
@@ -19,14 +20,14 @@ const expectedResult = entry => ({
 test("Batch 2 appends exactly ten approved entries and preserves all surface partitions", () => {
   assert.deepEqual(ids, ["leftText", "rightText", "midText", "textLength", "findTextPosition", "containsText", "lowerText", "upperText", "substituteText", "replaceTextByPosition"]);
   const advancedIds = currentLegacyFixtures.catalog.map(config => config.id);
-  const commonIds = [...batch1.formulas.map(config => config.id), ...ids];
+  const commonIds = [...batch1.formulas.map(config => config.id), ...ids, ...batch3.formulas.map(config => config.id)];
   assert.deepEqual(Object.keys(core.catalog), [...advancedIds, ...commonIds]);
   const entries = Object.values(core.catalog);
-  assert.equal(entries.length, 44);
+  assert.equal(entries.length, 47);
   assert.deepEqual(entries.filter(config => config.libraryId === "advanced").map(config => config.id), advancedIds);
   assert.deepEqual(entries.filter(config => config.libraryId === "common").map(config => config.id), commonIds);
-  assert.equal(commonIds.length, 18);
-  assert.equal(entries.filter(config => config.availability.extension).length, 42);
+  assert.equal(commonIds.length, 21);
+  assert.equal(entries.filter(config => config.availability.extension).length, 45);
   assert.equal(entries.filter(config => config.libraryId === "advanced" && config.availability.extension).length, 24);
   assert.deepEqual(entries.filter(config => config.libraryId === "common" && config.availability.extension).map(config => config.id), commonIds);
   assert.deepEqual(entries.filter(config => config.availability.portfolio).map(config => config.id), advancedIds);

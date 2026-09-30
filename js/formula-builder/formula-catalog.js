@@ -1565,6 +1565,63 @@
     }
   });
 
+  // Phase 5 Batch 3: date parts and a current-row blank check use existing schemas.
+  Object.assign(catalog, {
+    todayDate: {
+      id: "todayDate", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "TODAY", explanation: "Return the current date, optionally offset by a number of days.",
+      inputContract: "structured-v1", builderKey: "todayOffset", builderOptions: { functionName: "TODAY" },
+      guidance: {
+        setupNotes: ["No special setup is required. TODAY does not use cell or cross-sheet references."],
+        instructions: [
+          "Leave Days offset excluded to return the current date, or include it to shift the date by a whole number of days.",
+          "Use a positive offset for days after today, zero for today, or a negative offset for days before today.",
+          "Copy the formula into a Date column.",
+          "Smartsheet refreshes TODAY when the sheet is opened and saved or another supported sheet update occurs; displaying a report or dashboard alone does not necessarily refresh it."
+        ]
+      },
+      fields: [
+        { id: "offsetDays", label: "Days offset", type: "integer", required: false, help: "Enter whole days before today as a negative number or after today as a positive number." }
+      ],
+      categoryId: "dates-status", keywords: ["today", "current date", "today's date", "date offset", "days from today"]
+    },
+    dateFromParts: {
+      id: "dateFromParts", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "DATE", explanation: "Create a date from year, month, and day numbers.",
+      inputContract: "structured-v1", builderKey: "dateConstructor", builderOptions: { functionName: "DATE" },
+      guidance: {
+        setupNotes: ["No special setup is required. Enter the date parts directly; this builder does not use cell or cross-sheet references."],
+        instructions: [
+          "Enter a Year from 1000 through 9999, a Month from 1 through 12, and a Day from 1 through 31.",
+          "Smartsheet evaluates the resulting date, including days beyond the chosen month's length.",
+          "Copy the formula into a Date column that is not used for dependencies."
+        ]
+      },
+      fields: [
+        { id: "year", label: "Year", type: "integer", required: true, min: "1000", max: "9999", help: "Enter a year from 1000 through 9999." },
+        { id: "month", label: "Month", type: "integer", required: true, min: "1", max: "12", help: "Enter a month number from 1 through 12." },
+        { id: "day", label: "Day", type: "integer", required: true, min: "1", max: "31", help: "Enter a day number from 1 through 31. Smartsheet evaluates days beyond the chosen month's length." }
+      ],
+      categoryId: "dates-status", keywords: ["date", "year month day", "date from parts", "create date"]
+    },
+    isBlank: {
+      id: "isBlank", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "ISBLANK", explanation: "Check whether a current-row cell is blank.",
+      inputContract: "structured-v1", builderKey: "booleanTest", builderOptions: { functionName: "ISBLANK" },
+      guidance: {
+        setupNotes: ["No special setup is required. Choose Current-row cell and enter the source column name; no cross-sheet reference is needed."],
+        instructions: [
+          "Select Current-row cell and enter the column containing the value to check.",
+          "Copy the formula into a Checkbox column to flag rows whose source cell is blank. Use a different column from the source."
+        ]
+      },
+      fields: [
+        { id: "value", label: "Cell to check", type: "cellRef", required: true, help: "Choose Current-row cell and enter the source column name." }
+      ],
+      categoryId: "dates-status", keywords: ["isblank", "blank cell", "empty cell", "missing value", "checkbox"]
+    }
+  });
+
   const categories = [
     {
       "id": "text-labels",
