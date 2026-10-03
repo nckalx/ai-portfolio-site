@@ -58,7 +58,7 @@ test("shared load order and Batch 1–3 production structured registry stay expl
   assert.deepEqual(coreScripts, ["formula-catalog", "formula-utils", "formula-primitives", "formula-validation", "formula-guidance", "formula-common-builders", "formula-engine"]);
   assert.equal(typeof core.primitives.renderOperand, "function");
   assert.equal(typeof core.validation.structured.normalizeAndValidate, "function");
-  assert.deepEqual(Object.keys(core.commonBuilders.registry), ["decimalRounding", "multipleRounding", "unaryNumeric", "textSlice", "textUnary", "textSearch", "textReplace", "todayOffset", "dateConstructor", "booleanTest"]);
+  assert.deepEqual(Object.keys(core.commonBuilders.registry), ["decimalRounding", "multipleRounding", "unaryNumeric", "textSlice", "textUnary", "textSearch", "textReplace", "todayOffset", "dateConstructor", "booleanTest", "variadicAggregate"]);
   assert.ok(advanced.every(config => config.libraryId === "advanced" && !Object.hasOwn(config, "inputContract")));
 });
 

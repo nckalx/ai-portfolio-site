@@ -1622,6 +1622,178 @@
     }
   });
 
+  // Phase 5 Batch 4: ordered aggregate inputs use two restricted operand policies.
+  const aggregateReferences = ["cellRef", "columnRef", "rangeRef"];
+  const aggregateNumbersAndReferences = ["number", "cellRef", "columnRef", "rangeRef"];
+  Object.assign(catalog, {
+    countValues: {
+      id: "countValues", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "COUNT", explanation: "Count nonblank values in selected cells, columns, or ranges.",
+      inputContract: "structured-v1", builderKey: "variadicAggregate", builderOptions: { functionName: "COUNT" },
+      guidance: {
+        "setupNotes": [
+          "No special setup is required for current-sheet inputs. Choose a current-row cell, Whole column, or Range.",
+          "Range with Current sheet uses whole columns from the start column through the end column, not numbered cell endpoints.",
+          "For Cross-sheet named reference, create the reference in the destination Smartsheet sheet and enter its name.",
+          "COUNT counts nonblank values. Unchecked checkbox cells also count because they contain false."
+        ],
+        "instructions": [
+          "Select Add Value, then choose and complete the first reference.",
+          "Select Add Value for each additional reference. Use Remove to delete an extra row; at least one complete row is required.",
+          "Copy the formula to the cell where you want the count."
+        ]
+      },
+      fields: [
+        { id: "values", label: "Value", type: "array", required: true, minItems: 1,
+          items: { type: "valueOrRange", allowedTypes: aggregateReferences },
+          help: "Add at least one cell, whole column, or range to count." }
+      ],
+      categoryId: "counts-calculations", keywords: ["count","nonblank","populated cells","count values","count cells"]
+    },
+    sumValues: {
+      id: "sumValues", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "SUM", explanation: "Add numbers entered directly or supplied by selected cells, columns, or ranges.",
+      inputContract: "structured-v1", builderKey: "variadicAggregate", builderOptions: { functionName: "SUM" },
+      guidance: {
+        "setupNotes": [
+          "No special setup is required for entered numbers or current-sheet inputs. Choose Number, Current-row cell, Whole column, or Range; referenced data should contain numbers.",
+          "Range with Current sheet uses whole columns from the start column through the end column, not numbered cell endpoints.",
+          "For Cross-sheet named reference, create the reference in the destination Smartsheet sheet and enter its name."
+        ],
+        "instructions": [
+          "Select Add Value, then enter a number or choose and complete a reference.",
+          "Select Add Value for each additional input. Use Remove to delete an extra row; at least one complete row is required.",
+          "Copy the formula to the cell where you want the total."
+        ]
+      },
+      fields: [
+        { id: "values", label: "Value", type: "array", required: true, minItems: 1,
+          items: { type: "valueOrRange", allowedTypes: aggregateNumbersAndReferences },
+          help: "Add at least one number, current-row cell, whole column, or range containing numbers." }
+      ],
+      categoryId: "counts-calculations", keywords: ["sum","add numbers","total","sum values"]
+    },
+    averageValues: {
+      id: "averageValues", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "AVG", explanation: "Calculate the arithmetic mean of numbers entered directly or supplied by selected cells, columns, or ranges.",
+      inputContract: "structured-v1", builderKey: "variadicAggregate", builderOptions: { functionName: "AVG" },
+      guidance: {
+        "setupNotes": [
+          "No special setup is required for entered numbers or current-sheet inputs. Choose Number, Current-row cell, Whole column, or Range; referenced data should contain numbers.",
+          "Range with Current sheet uses whole columns from the start column through the end column, not numbered cell endpoints.",
+          "For Cross-sheet named reference, create the reference in the destination Smartsheet sheet and enter its name.",
+          "Smartsheet uses AVG for the arithmetic mean."
+        ],
+        "instructions": [
+          "Select Add Value, then enter a number or choose and complete a reference.",
+          "Select Add Value for each additional input. Use Remove to delete an extra row; at least one complete row is required.",
+          "Copy the formula to the cell where you want the average."
+        ]
+      },
+      fields: [
+        { id: "values", label: "Value", type: "array", required: true, minItems: 1,
+          items: { type: "valueOrRange", allowedTypes: aggregateNumbersAndReferences },
+          help: "Add at least one number, current-row cell, whole column, or range containing numbers." }
+      ],
+      categoryId: "counts-calculations", keywords: ["avg","average","arithmetic mean","mean","average values"]
+    },
+    minValue: {
+      id: "minValue", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "MIN", explanation: "Find the smallest number among entered numbers and selected cells, columns, or ranges.",
+      inputContract: "structured-v1", builderKey: "variadicAggregate", builderOptions: { functionName: "MIN" },
+      guidance: {
+        "setupNotes": [
+          "No special setup is required for entered numbers or current-sheet inputs. Choose Number, Current-row cell, Whole column, or Range; referenced data should contain numbers.",
+          "Range with Current sheet uses whole columns from the start column through the end column, not numbered cell endpoints.",
+          "For Cross-sheet named reference, create the reference in the destination Smartsheet sheet and enter its name.",
+          "This builder is intended for numeric inputs."
+        ],
+        "instructions": [
+          "Select Add Value, then enter a number or choose and complete a reference.",
+          "Select Add Value for each additional input. Use Remove to delete an extra row; at least one complete row is required.",
+          "Copy the formula to the cell where you want the smallest number."
+        ]
+      },
+      fields: [
+        { id: "values", label: "Value", type: "array", required: true, minItems: 1,
+          items: { type: "valueOrRange", allowedTypes: aggregateNumbersAndReferences },
+          help: "Add at least one number, current-row cell, whole column, or range containing numbers." }
+      ],
+      categoryId: "counts-calculations", keywords: ["min","minimum","smallest number","lowest number"]
+    },
+    maxValue: {
+      id: "maxValue", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "MAX", explanation: "Find the largest number among entered numbers and selected cells, columns, or ranges.",
+      inputContract: "structured-v1", builderKey: "variadicAggregate", builderOptions: { functionName: "MAX" },
+      guidance: {
+        "setupNotes": [
+          "No special setup is required for entered numbers or current-sheet inputs. Choose Number, Current-row cell, Whole column, or Range; referenced data should contain numbers.",
+          "Range with Current sheet uses whole columns from the start column through the end column, not numbered cell endpoints.",
+          "For Cross-sheet named reference, create the reference in the destination Smartsheet sheet and enter its name.",
+          "This builder is intended for numeric inputs."
+        ],
+        "instructions": [
+          "Select Add Value, then enter a number or choose and complete a reference.",
+          "Select Add Value for each additional input. Use Remove to delete an extra row; at least one complete row is required.",
+          "Copy the formula to the cell where you want the largest number."
+        ]
+      },
+      fields: [
+        { id: "values", label: "Value", type: "array", required: true, minItems: 1,
+          items: { type: "valueOrRange", allowedTypes: aggregateNumbersAndReferences },
+          help: "Add at least one number, current-row cell, whole column, or range containing numbers." }
+      ],
+      categoryId: "counts-calculations", keywords: ["max","maximum","largest number","highest number"]
+    },
+    countMultiSelectValues: {
+      id: "countMultiSelectValues", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "COUNTM", explanation: "Count selected elements in multi-select dropdown or multi-contact cells, columns, or ranges.",
+      inputContract: "structured-v1", builderKey: "variadicAggregate", builderOptions: { functionName: "COUNTM" },
+      guidance: {
+        "setupNotes": [
+          "Use source cells in multi-select dropdown or multi-contact columns. Choose a current-row cell, Whole column, or Range.",
+          "Range with Current sheet uses whole columns from the start column through the end column, not numbered cell endpoints.",
+          "For Cross-sheet named reference, create the reference in the destination Smartsheet sheet and enter its name.",
+          "COUNTM counts selected elements. This builder does not provide a distinct-value count."
+        ],
+        "instructions": [
+          "Select Add Value, then choose and complete the first reference.",
+          "Select Add Value for each additional reference. Use Remove to delete an extra row; at least one complete row is required.",
+          "Copy the formula to the cell where you want the selected-element count."
+        ]
+      },
+      fields: [
+        { id: "values", label: "Value", type: "array", required: true, minItems: 1,
+          items: { type: "valueOrRange", allowedTypes: aggregateReferences },
+          help: "Add at least one cell, whole column, or range from multi-select dropdown or multi-contact columns." }
+      ],
+      categoryId: "counts-calculations", keywords: ["countm","multiselect","multi-select","multicontact","multi-contact","selected values"]
+    },
+    medianValue: {
+      id: "medianValue", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "MEDIAN", explanation: "Find the median of numbers entered directly or supplied by selected cells, columns, or ranges.",
+      inputContract: "structured-v1", builderKey: "variadicAggregate", builderOptions: { functionName: "MEDIAN" },
+      guidance: {
+        "setupNotes": [
+          "No special setup is required for entered numbers or current-sheet inputs. Choose Number, Current-row cell, Whole column, or Range; referenced data should contain numbers.",
+          "Range with Current sheet uses whole columns from the start column through the end column, not numbered cell endpoints.",
+          "For Cross-sheet named reference, create the reference in the destination Smartsheet sheet and enter its name."
+        ],
+        "instructions": [
+          "Select Add Value, then enter a number or choose and complete a reference.",
+          "Select Add Value for each additional input. Use Remove to delete an extra row; at least one complete row is required.",
+          "Copy the formula to the cell where you want the median."
+        ]
+      },
+      fields: [
+        { id: "values", label: "Value", type: "array", required: true, minItems: 1,
+          items: { type: "valueOrRange", allowedTypes: aggregateNumbersAndReferences },
+          help: "Add at least one number, current-row cell, whole column, or range containing numbers." }
+      ],
+      categoryId: "counts-calculations", keywords: ["median","middle value","middle number","median value"]
+    }
+  });
+
   const categories = [
     {
       "id": "text-labels",

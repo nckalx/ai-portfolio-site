@@ -7,6 +7,7 @@ const availabilityFixture = require("./fixtures/formula-availability.json");
 const batch1 = require("./fixtures/formula-common-batch1-cases.json");
 const batch2 = require("./fixtures/formula-common-batch2-cases.json");
 const batch3 = require("./fixtures/formula-common-batch3-cases.json");
+const batch4 = require("./fixtures/formula-common-batch4-cases.json");
 const { discoveryFixture } = require("./helpers/formula-discovery-fixtures");
 const excluded = new Set(["multiLineReportLabel", "rioIdLookup"]);
 const tick = () => new Promise(resolve => setImmediate(resolve));
@@ -186,13 +187,13 @@ function switchLibrary(panel, library) {
   radio.dispatch("change");
 }
 
-test("production Common navigation exposes twenty-one choices and exact text/date/calculation categories", () => {
+test("production Common navigation exposes twenty-eight choices and exact text/date/calculation categories", () => {
   const panel = setupExtension();
   assert.equal(panel.get("library-advanced").checked, true);
   assert.equal(panel.get("library-selector").hidden, false);
   switchLibrary(panel, "common");
-  assert.deepEqual(resultIds(panel), [...batch1.formulas, ...batch2.formulas, ...batch3.formulas].map(config => config.id));
-  assert.equal(panel.get("result-count").textContent, "21 formulas");
+  assert.deepEqual(resultIds(panel), [...batch1.formulas, ...batch2.formulas, ...batch3.formulas, ...batch4.formulas].map(config => config.id));
+  assert.equal(panel.get("result-count").textContent, "28 formulas");
   assert.deepEqual(categoryIds(panel), ["", "text-labels", "dates-status", "counts-calculations"]);
   panel.get("category").value = "text-labels"; panel.get("category").dispatch("change");
   assert.deepEqual(resultIds(panel), batch2.formulas.map(config => config.id));
@@ -201,7 +202,7 @@ test("production Common navigation exposes twenty-one choices and exact text/dat
   assert.deepEqual(resultIds(panel), ["todayDate", "dateFromParts", "isBlank"]);
   assert.equal(panel.get("result-count").textContent, "3 formulas");
   panel.get("category").value = "counts-calculations"; panel.get("category").dispatch("change");
-  assert.equal(panel.get("result-count").textContent, "8 formulas");
+  assert.equal(panel.get("result-count").textContent, "15 formulas");
   panel.get("search").value = "  NUMBER stored AS TEXT  "; panel.get("search").dispatch("input");
   assert.deepEqual(resultIds(panel), ["textToNumber"]);
   const choices = panel.choices();
@@ -213,7 +214,7 @@ test("production Common navigation exposes twenty-one choices and exact text/dat
   assert.equal(panel.get("results-scroll").scrollTop, 51);
   assert.equal(panel.document.activeElement, button);
   panel.get("clear-filters").dispatch("click");
-  assert.deepEqual(resultIds(panel), [...batch1.formulas, ...batch2.formulas, ...batch3.formulas].map(config => config.id));
+  assert.deepEqual(resultIds(panel), [...batch1.formulas, ...batch2.formulas, ...batch3.formulas, ...batch4.formulas].map(config => config.id));
   switchLibrary(panel, "advanced");
   assert.equal(panel.get("result-count").textContent, "24 formulas");
 });
@@ -490,10 +491,97 @@ function fillBatch2Text(panel, config, text = " abc ") {
 const visibleStructuredErrors = panel => descendants(panel.get("fields"))
   .filter(node => node.className === "field-error" && !node.hidden).map(node => node.textContent);
 
+for (const config of batch4.formulas) {
+  test(`Batch 4 production repeatable startup, examples, Copy and Build/Back: ${config.id}`, async () => {
+    const copied = [], calls = [];
+    const panel = setupExtension({ clipboard: { writeText: async text => copied.push(text) } }, {}, core => {
+      const generate = core.generateFormula;
+      core.generateFormula = (id, values) => { calls.push(JSON.parse(JSON.stringify(values))); return generate(id, values); };
+    });
+    switchLibrary(panel, "common"); panel.choose(config.id);
+    const add = () => descendants(panel.get("fields")).find(node => node.tagName === "button" && node.textContent === "Add Value");
+    const remove = index => descendants(panel.get("fields")).find(node => node.getAttribute("aria-label") === `Remove Value ${index}`);
+    assert.deepEqual(calls.at(-1), {});
+    assert.equal(descendants(panel.get("fields")).filter(node => node.tagName === "select").length, 0);
+    assert.ok(add()); assert.equal(panel.get("copy").disabled, true);
+    assert.deepEqual(visibleStructuredErrors(panel), []); assertCommonGuidance(panel, config.id);
+    const example = batch4.cases.find(entry => entry.formulaType === config.id && entry.name === "approved example");
+    for (const [index, value] of example.rawValues.values.entries()) {
+      add().dispatch("click");
+      assert.deepEqual(calls.at(-1).values.at(-1), {});
+      assert.equal(panel.get("copy").disabled, true);
+      const kind = `Value ${index + 1} kind`;
+      const selector = structuredControl(panel, kind);
+      assert.equal(panel.document.activeElement, selector);
+      assert.deepEqual(selector.children.map(option => option.value), ["", ...config.fields[0].items.allowedTypes]);
+      if (index === 0) {
+        assert.equal(remove(1).disabled, true);
+        const count = panel.generationCount(); remove(1).dispatch("click");
+        assert.equal(panel.generationCount(), count);
+      }
+      editStructured(panel, kind, value.type);
+      if (value.type === "number") editStructured(panel, "Number", value.value, index);
+      else if (value.type === "cellRef") editStructured(panel, "Current-row column", value.column);
+      else if (value.type === "columnRef") editStructured(panel, "Whole column", value.column);
+      else {
+        const scope = `Value ${index + 1} scope`;
+        assert.deepEqual(structuredControl(panel, scope).children.map(option => option.value), ["", "currentSheet", "crossSheet"]);
+        editStructured(panel, scope, "crossSheet"); editStructured(panel, "Reference name", value.name);
+      }
+    }
+    assert.equal(panel.get("formula-output").value, example.expected.formula);
+    assert.equal(panel.get("copy").disabled, false);
+    panel.get("copy").dispatch("click"); await tick();
+    assert.deepEqual(copied, [example.expected.formula]);
+    assertCommonGuidance(panel, config.id);
+    // An incomplete appended row must invalidate output while preserving earlier rows.
+    add().dispatch("click");
+    const extraIndex = example.rawValues.values.length + 1;
+    const extra = structuredControl(panel, `Value ${extraIndex} kind`);
+    extra.dispatch("blur");
+    assert.equal(panel.get("formula-output").value, ""); assert.equal(panel.get("copy").disabled, true);
+    assert.ok(visibleStructuredErrors(panel).length);
+    const firstId = structuredControl(panel, "Value 1 kind").id;
+    panel.get("back").dispatch("click"); panel.choose(config.id);
+    assert.equal(structuredControl(panel, "Value 1 kind").id, firstId);
+    assert.equal(structuredControl(panel, `Value ${extraIndex} kind`).id, extra.id);
+    assert.ok(visibleStructuredErrors(panel).length);
+    remove(extraIndex).dispatch("click");
+    assert.equal(panel.get("formula-output").value, example.expected.formula);
+    assert.deepEqual(visibleStructuredErrors(panel), []);
+    // Switch the first row through both reference scopes, clearing obsolete members.
+    editStructured(panel, "Value 1 kind", "rangeRef");
+    editStructured(panel, "Value 1 scope", "currentSheet");
+    editStructured(panel, "Start column", " Low "); editStructured(panel, "End column", " High ");
+    assert.deepEqual(calls.at(-1).values[0], { type: "rangeRef", scope: "currentSheet", startColumn: " Low ", endColumn: " High " });
+    assert.ok(panel.get("formula-output").value.startsWith(`=${config.label}([Low]:[High]`));
+    editStructured(panel, "Value 1 scope", "crossSheet");
+    assert.deepEqual(calls.at(-1).values[0], { type: "rangeRef", scope: "crossSheet", name: "" });
+    editStructured(panel, "Reference name", "{{ Costs }}");
+    assert.ok(panel.get("formula-output").value.startsWith(`=${config.label}({Costs}`));
+    if (config.fields[0].items.allowedTypes.includes("number")) {
+      editStructured(panel, "Value 1 kind", "number"); editStructured(panel, "Number", "-");
+      assert.equal(panel.get("copy").disabled, true);
+      assert.deepEqual(calls.at(-1).values[0], { type: "number", value: "-" });
+      editStructured(panel, "Number", " 0012.500 ");
+      assert.ok(panel.get("formula-output").value.startsWith(`=${config.label}(12.5`));
+      panel.get("back").dispatch("click"); panel.choose(config.id);
+      assert.equal(structuredControl(panel, "Number").value, " 0012.500 ");
+    } else {
+      panel.get("back").dispatch("click"); panel.choose(config.id);
+      assert.equal(structuredControl(panel, "Reference name").value, "{{ Costs }}");
+    }
+    assert.equal(panel.get("copy").disabled, false);
+    assert.equal(structuredControl(panel, "Value 1 kind").id, firstId);
+    assert.doesNotMatch(JSON.stringify(calls), /"rowKey"|"uiState"|"nextKey"|"touched"|"r\d+"/);
+    assert.deepEqual(panel.storageWrites, []);
+  });
+}
+
 test("all production Common formulas validate immediately but initially display no inline errors", () => {
   const panel = setupExtension();
   switchLibrary(panel, "common");
-  for (const config of [...batch1.formulas, ...batch2.formulas, ...batch3.formulas]) {
+  for (const config of [...batch1.formulas, ...batch2.formulas, ...batch3.formulas, ...batch4.formulas]) {
     panel.choose(config.id);
     assert.equal(panel.core.generateFormula(config.id, {}).validationErrors.length > 0, config.id !== "todayDate");
     assertCommonGuidance(panel, config.id);

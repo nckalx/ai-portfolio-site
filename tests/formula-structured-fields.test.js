@@ -4,6 +4,7 @@ const { setupStructuredFields } = require("./helpers/formula-extension-dom");
 const { plain, config, loadValidation, pair } = require("./helpers/formula-structured-fixtures");
 const validator = loadValidation().validation.structured;
 const builder = { validateOptions() {}, validate() { return []; } };
+const batch4 = require("./fixtures/formula-common-batch4-cases.json");
 const validate = (fields, values) => plain(validator.normalizeAndValidate(config(fields), values, builder));
 const walk = node => [node, ...node.children.flatMap(walk)];
 const controls = node => walk(node).filter(node => ["input", "select", "button"].includes(node.tagName));
@@ -449,3 +450,67 @@ test("repeatable touched state survives reindexing without touching siblings and
   walk(ui.container).find(node => node.getAttribute("aria-label") === "Remove Rows 1").dispatch("click");
   assert.deepEqual(ui.snapshot().uiState.touched, {});
 });
+
+for (const config of batch4.formulas) {
+  test(`Batch 4 repeatable keys, paths, touched pruning and raw semantics: ${config.id}`, () => {
+    const ui = mount(plain(config.fields), {}, config.id);
+    const refresh = () => {
+      const result = validate(ui.metadata.fields, ui.snapshot().values);
+      ui.controller.update({ ...ui.snapshot(), validationErrors: result.errors });
+      return result;
+    };
+    assert.deepEqual(ui.snapshot().values, {});
+    assert.deepEqual(ui.snapshot().uiState, { nextKey: 1, rows: {}, touched: {} });
+    assert.equal(refresh().errors[0].path, "values");
+    assert.equal(ui.controller.getVisibleErrorCount(), 0);
+    assert.equal(ui.at("values:add").textContent, "Add Value");
+    ui.at("values:add").dispatch("click");
+    assert.deepEqual(ui.snapshot().values, { values: [{}] });
+    assert.deepEqual(ui.at("values[r1].type").children.map(option => option.value), ["", ...config.fields[0].items.allowedTypes]);
+    assert.equal(ui.document.activeElement, ui.at("values[r1].type"));
+    const onlyRemove = walk(ui.container).find(node => node.getAttribute("aria-label") === "Remove Value 1");
+    assert.equal(onlyRemove.disabled, true);
+    const before = ui.snapshot(); onlyRemove.dispatch("click");
+    assert.deepEqual(ui.snapshot(), before);
+    ui.set("values[r1].type", "cellRef"); ui.set("values[r1].column", " Task ");
+    assert.equal(refresh().values.values[0].column, "Task");
+    assert.equal(ui.snapshot().values.values[0].column, " Task ");
+    ui.at("values:add").dispatch("click");
+    ui.set("values[r2].type", "cellRef"); ui.at("values[r2].column").dispatch("blur");
+    const survivor = ui.at("values[r2].column");
+    assert.equal(refresh().errors[0].path, "values[1].column");
+    assert.equal(survivor.getAttribute("aria-invalid"), "true");
+    walk(ui.container).find(node => node.getAttribute("aria-label") === "Remove Value 1").dispatch("click");
+    assert.deepEqual(ui.snapshot().uiState.rows.values, ["r2"]);
+    assert.equal(ui.at("values[r2].column"), survivor);
+    assert.equal(refresh().errors[0].path, "values[0].column");
+    assert.equal(survivor.getAttribute("aria-invalid"), "true");
+    assert.ok(Object.keys(ui.snapshot().uiState.touched).every(key => !key.includes("r1")));
+    ui.set("values[r2].type", "rangeRef"); ui.set("values[r2].scope", "currentSheet");
+    ui.set("values[r2].startColumn", " Start "); ui.set("values[r2].endColumn", " End ");
+    assert.deepEqual(refresh().values.values, [{ type: "rangeRef", scope: "currentSheet", startColumn: "Start", endColumn: "End" }]);
+    const old = ui.at("values[r2].startColumn");
+    ui.set("values[r2].scope", "crossSheet");
+    assert.deepEqual(ui.snapshot().values.values, [{ type: "rangeRef", scope: "crossSheet", name: "" }]);
+    assert.ok(Object.keys(ui.snapshot().uiState.touched).every(key => !/startColumn|endColumn|\.column$/.test(key)));
+    const changes = ui.changes.length; old.dispatch("blur"); old.dispatch("input");
+    assert.equal(ui.changes.length, changes);
+    ui.set("values[r2].name", "{{ Costs }}");
+    assert.equal(refresh().values.values[0].name, "Costs");
+    assert.equal(ui.at("values[r2].name").value, "{{ Costs }}");
+    ui.set("values[r2].scope", "currentSheet");
+    assert.deepEqual(ui.snapshot().values.values, [{ type: "rangeRef", scope: "currentSheet", startColumn: "", endColumn: "" }]);
+    assert.equal(Object.hasOwn(ui.snapshot().uiState.touched, "values[r2].name"), false);
+    if (config.fields[0].items.allowedTypes.includes("number")) {
+      ui.set("values[r2].type", "number"); ui.set("values[r2].value", " 0012.500 ");
+      assert.deepEqual(refresh().values.values, [{ type: "number", value: "12.5" }]);
+      assert.deepEqual(ui.snapshot().values.values, [{ type: "number", value: " 0012.500 " }]);
+    }
+    ui.at("values:add").dispatch("click");
+    assert.deepEqual(ui.snapshot().uiState.rows.values, ["r2", "r3"]);
+    walk(ui.container).find(node => node.getAttribute("aria-label") === "Remove Value 1").dispatch("click");
+    assert.deepEqual(ui.snapshot().values, { values: [{}] });
+    assert.ok(Object.keys(ui.snapshot().uiState.touched).every(key => !key.includes("r2")));
+    assert.equal(JSON.stringify(ui.snapshot().values).includes("r3"), false);
+  });
+}

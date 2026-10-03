@@ -126,6 +126,15 @@
       build(values, options, p) {
         return p.renderFunctionCall(options.functionName, [p.renderOperand(values.value)]);
       }
+    },
+    variadicAggregate: {
+      validateOptions(options) { validateFunctionOptions(options, ["COUNT", "SUM", "AVG", "MIN", "MAX", "COUNTM", "MEDIAN"]); },
+      validate() { return []; },
+      build(values, options, p) {
+        const args = values.values.map(value => value.type === "number" || value.type === "cellRef"
+          ? p.renderOperand(value) : p.renderRange(value));
+        return p.renderFunctionCall(options.functionName, args);
+      }
     }
   });
   namespace.commonBuilders = Object.freeze({ familyKeys, createRegistry, registry });

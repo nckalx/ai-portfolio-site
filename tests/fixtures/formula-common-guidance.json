@@ -203,5 +203,94 @@
       "Select Current-row cell and enter the column containing the value to check.",
       "Copy the formula into a Checkbox column to flag rows whose source cell is blank. Use a different column from the source."
     ]
+  },
+  "countValues": {
+    "setupNotes": [
+      "No special setup is required for current-sheet inputs. Choose a current-row cell, Whole column, or Range.",
+      "Range with Current sheet uses whole columns from the start column through the end column, not numbered cell endpoints.",
+      "For Cross-sheet named reference, create the reference in the destination Smartsheet sheet and enter its name.",
+      "COUNT counts nonblank values. Unchecked checkbox cells also count because they contain false."
+    ],
+    "instructions": [
+      "Select Add Value, then choose and complete the first reference.",
+      "Select Add Value for each additional reference. Use Remove to delete an extra row; at least one complete row is required.",
+      "Copy the formula to the cell where you want the count."
+    ]
+  },
+  "sumValues": {
+    "setupNotes": [
+      "No special setup is required for entered numbers or current-sheet inputs. Choose Number, Current-row cell, Whole column, or Range; referenced data should contain numbers.",
+      "Range with Current sheet uses whole columns from the start column through the end column, not numbered cell endpoints.",
+      "For Cross-sheet named reference, create the reference in the destination Smartsheet sheet and enter its name."
+    ],
+    "instructions": [
+      "Select Add Value, then enter a number or choose and complete a reference.",
+      "Select Add Value for each additional input. Use Remove to delete an extra row; at least one complete row is required.",
+      "Copy the formula to the cell where you want the total."
+    ]
+  },
+  "averageValues": {
+    "setupNotes": [
+      "No special setup is required for entered numbers or current-sheet inputs. Choose Number, Current-row cell, Whole column, or Range; referenced data should contain numbers.",
+      "Range with Current sheet uses whole columns from the start column through the end column, not numbered cell endpoints.",
+      "For Cross-sheet named reference, create the reference in the destination Smartsheet sheet and enter its name.",
+      "Smartsheet uses AVG for the arithmetic mean."
+    ],
+    "instructions": [
+      "Select Add Value, then enter a number or choose and complete a reference.",
+      "Select Add Value for each additional input. Use Remove to delete an extra row; at least one complete row is required.",
+      "Copy the formula to the cell where you want the average."
+    ]
+  },
+  "minValue": {
+    "setupNotes": [
+      "No special setup is required for entered numbers or current-sheet inputs. Choose Number, Current-row cell, Whole column, or Range; referenced data should contain numbers.",
+      "Range with Current sheet uses whole columns from the start column through the end column, not numbered cell endpoints.",
+      "For Cross-sheet named reference, create the reference in the destination Smartsheet sheet and enter its name.",
+      "This builder is intended for numeric inputs."
+    ],
+    "instructions": [
+      "Select Add Value, then enter a number or choose and complete a reference.",
+      "Select Add Value for each additional input. Use Remove to delete an extra row; at least one complete row is required.",
+      "Copy the formula to the cell where you want the smallest number."
+    ]
+  },
+  "maxValue": {
+    "setupNotes": [
+      "No special setup is required for entered numbers or current-sheet inputs. Choose Number, Current-row cell, Whole column, or Range; referenced data should contain numbers.",
+      "Range with Current sheet uses whole columns from the start column through the end column, not numbered cell endpoints.",
+      "For Cross-sheet named reference, create the reference in the destination Smartsheet sheet and enter its name.",
+      "This builder is intended for numeric inputs."
+    ],
+    "instructions": [
+      "Select Add Value, then enter a number or choose and complete a reference.",
+      "Select Add Value for each additional input. Use Remove to delete an extra row; at least one complete row is required.",
+      "Copy the formula to the cell where you want the largest number."
+    ]
+  },
+  "countMultiSelectValues": {
+    "setupNotes": [
+      "Use source cells in multi-select dropdown or multi-contact columns. Choose a current-row cell, Whole column, or Range.",
+      "Range with Current sheet uses whole columns from the start column through the end column, not numbered cell endpoints.",
+      "For Cross-sheet named reference, create the reference in the destination Smartsheet sheet and enter its name.",
+      "COUNTM counts selected elements. This builder does not provide a distinct-value count."
+    ],
+    "instructions": [
+      "Select Add Value, then choose and complete the first reference.",
+      "Select Add Value for each additional reference. Use Remove to delete an extra row; at least one complete row is required.",
+      "Copy the formula to the cell where you want the selected-element count."
+    ]
+  },
+  "medianValue": {
+    "setupNotes": [
+      "No special setup is required for entered numbers or current-sheet inputs. Choose Number, Current-row cell, Whole column, or Range; referenced data should contain numbers.",
+      "Range with Current sheet uses whole columns from the start column through the end column, not numbered cell endpoints.",
+      "For Cross-sheet named reference, create the reference in the destination Smartsheet sheet and enter its name."
+    ],
+    "instructions": [
+      "Select Add Value, then enter a number or choose and complete a reference.",
+      "Select Add Value for each additional input. Use Remove to delete an extra row; at least one complete row is required.",
+      "Copy the formula to the cell where you want the median."
+    ]
   }
 }
