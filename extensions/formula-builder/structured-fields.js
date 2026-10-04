@@ -206,7 +206,7 @@
           const choices = rule.type === "boolean" ? [["true", "True"], ["false", "False"]]
             : rule.type === "comparisonOperator" ? (rule.enum ? operators.filter(value => rule.enum.includes(value)) : operators).map(value => [value, value])
               : rule.enum ? rule.enum.map(value => [value, value]) : null;
-          const format = rule.type === "date" ? "Use YYYY-MM-DD." : rule.type === "integer" ? "Enter a whole number." : rule.type === "number" ? "Enter a decimal number." : "";
+          const format = rule.type === "date" ? "Use YYYY-MM-DD." : rule.type === "integer" ? "Enter a whole number." : rule.type === "number" ? "Enter a number." : "";
           const bounds = ["min", "max"].filter(key => Object.hasOwn(rule, key)).map(key => `${key === "min" ? "Minimum" : "Maximum"}: ${rule[key]}.`).join(" ");
           input = control(body, address, "input", labelText, choices, [rule.help, format, bounds].filter(Boolean).join(" "));
           if (["number", "integer"].includes(rule.type)) input.node.setAttribute("inputmode", rule.type === "integer" ? "numeric" : "decimal");

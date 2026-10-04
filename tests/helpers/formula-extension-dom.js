@@ -33,6 +33,7 @@ function createDocument() {
     removeEventListener(name, callback) { this.listeners[name] = (this.listeners[name] || []).filter(item => item !== callback); }
     dispatch(name, event = {}) {
       if (name === "click" && this.disabled) return;
+      for (let node = this; node; node = node.parent) if (node.inert) return;
       for (const callback of this.listeners[name] || []) callback(event);
     }
     focus() { document.activeElement = this; }
@@ -72,15 +73,18 @@ function setupStructuredFields() {
   return { document, container, renderer: context.FormulaStructuredFields };
 }
 
-function setupExtension(navigator = {}, theme = {}, configureCore = () => {}, beforeEngine = () => {}) {
+function setupExtension(navigator = {}, theme = {}, configureCore = () => {}, beforeEngine = () => {}, workspace = {}) {
   const { document, root, Element } = createDocument();
   const storageWrites = [];
+  const storageRemovals = [];
+  const storageReads = [];
+  const store = { ...workspace.store, ...(theme.saved === undefined ? {} : { theme: theme.saved }) };
   const mediaListeners = [];
   const media = {
     matches: theme.systemDark || false,
     addEventListener(name, callback) { if (name === "change") mediaListeners.push(callback); }
   };
-  const directory = path.resolve(__dirname, "../../extensions/formula-builder");
+  const directory = workspace.directory || path.resolve(__dirname, "../../extensions/formula-builder");
   const html = fs.readFileSync(path.join(directory, "sidepanel.html"), "utf8");
   const stack = [root];
   for (const token of html.match(/<[^>]+>|[^<]+/g)) {
@@ -93,19 +97,43 @@ function setupExtension(navigator = {}, theme = {}, configureCore = () => {}, be
       node.setAttribute(match[1], match[2]);
       if (["id", "value", "type"].includes(match[1])) node[match[1]] = match[2];
     }
-    for (const name of ["hidden", "disabled", "readonly", "checked"]) if (new RegExp(`\\s${name}(?:\\s|>)`).test(token)) node[name] = true;
+    for (const name of ["hidden", "disabled", "readonly", "checked", "inert"]) if (new RegExp(`\\s${name}(?:\\s|>)`).test(token)) node[name] = true;
     stack.at(-1).appendChild(node);
     if (!["meta", "link", "input"].includes(tag)) stack.push(node);
   }
   document.documentElement = root.children.find(node => node.tagName === "html");
   const context = vm.createContext({ document, navigator, matchMedia: () => media,
-    chrome: { storage: { local: {
-      get: theme.get || (async () => ({ theme: theme.saved })),
-      set: theme.set || (async value => { storageWrites.push(JSON.parse(JSON.stringify(value))); })
+    setTimeout: workspace.setTimeout || setTimeout, clearTimeout: workspace.clearTimeout || clearTimeout,
+    confirm: workspace.confirm || (() => true),
+    chrome: workspace.noStorage ? undefined : { storage: { local: {
+      get(key) {
+        storageReads.push(key);
+        if (key === "theme" && theme.get) return theme.get(key);
+        if (key === "formulaBuilderWorkspace" && workspace.get) return workspace.get(key);
+        // Synchronous empty reads keep existing DOM-only tests synchronous.
+        // Persistence tests supply promised reads to exercise Chrome hydration.
+        return Object.hasOwn(store, key) ? { [key]: store[key] } : {};
+      },
+      async set(value) {
+        storageWrites.push(JSON.parse(JSON.stringify(value)));
+        if (Object.hasOwn(value, "theme") && theme.set) await theme.set(value);
+        if (Object.hasOwn(value, "formulaBuilderWorkspace") && workspace.set) await workspace.set(value);
+        Object.assign(store, JSON.parse(JSON.stringify(value)));
+      },
+      async remove(key) {
+        storageRemovals.push(key);
+        if (workspace.remove) await workspace.remove(key);
+        delete store[key];
+      }
     } } }
   });
   vm.runInContext(fs.readFileSync(path.join(directory, "theme.js"), "utf8"), context, { filename: "theme.js" });
-  const core = loadFormulaCore(context, beforeEngine);
+  let core;
+  if (workspace.directory) {
+    const { coreScripts } = require("./load-formula-core");
+    for (const name of coreScripts) vm.runInContext(fs.readFileSync(path.join(directory, `core/${name}.js`), "utf8"), context);
+    core = context.SmartsheetFormulaBuilder;
+  } else core = loadFormulaCore(context, beforeEngine);
   configureCore(core);
   let generationCalls = 0;
   const generate = core.generateFormula;
@@ -123,7 +151,9 @@ function setupExtension(navigator = {}, theme = {}, configureCore = () => {}, be
     button.dispatch("click");
     return button;
   };
-  return { document, core, get, choose, choices, storageWrites,
+  return { document, core, get, choose, choices, storageWrites, storageReads, storageRemovals, store,
+    get themeWrites() { return storageWrites.filter(value => Object.hasOwn(value, "theme")); },
+    get workspaceWrites() { return storageWrites.filter(value => Object.hasOwn(value, "formulaBuilderWorkspace")); },
     generationCount: () => generationCalls,
     changeSystem(dark) { media.matches = dark; mediaListeners.forEach(callback => callback({ matches: dark })); }
   };

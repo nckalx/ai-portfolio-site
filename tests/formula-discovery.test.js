@@ -14,9 +14,10 @@ const context = vm.createContext({});
 const core = loadFormulaCore(context);
 vm.runInContext(fs.readFileSync(path.resolve(__dirname, "../extensions/formula-builder/formula-discovery.js"), "utf8"), context);
 const find = (query, category) => Array.from(context.FormulaDiscovery.findFormulas(core.catalog, core.categories, query, category), config => config.id);
-const visible = Object.entries(availabilityFixture).filter(([, config]) => config.availability.extension).map(([id]) => id);
+const alphabetical = entries => [...entries].sort((a, b) => a.label.toLowerCase() < b.label.toLowerCase() ? -1 : a.label.toLowerCase() > b.label.toLowerCase() ? 1 : a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+const visible = alphabetical(Object.entries(availabilityFixture).filter(([, config]) => config.availability.extension).map(([id]) => core.catalog[id])).map(config => config.id);
 
-test("extension discovery preserves order and excludes exactly two formulas without changing the catalog", () => {
+test("extension discovery sorts alphabetically and excludes exactly two formulas without changing the catalog", () => {
   assert.equal(Object.keys(core.catalog).length, 54);
   assert.equal(find().length, 24);
   assert.deepEqual(find(), visible);
@@ -24,7 +25,7 @@ test("extension discovery preserves order and excludes exactly two formulas with
   assert.deepEqual(find("Cross-Sheet First-Match Lookup"), []);
 });
 
-test("all five category filters preserve catalog order and combine with search", () => {
+test("all five category filters sort alphabetically and combine with search", () => {
   for (const category of core.categories) {
     const expected = visible.filter(id => core.catalog[id].categoryId === category.id);
     assert.deepEqual(find("", category.id), expected);
@@ -83,6 +84,30 @@ const discover = (fixture, query = "", category = "", library = "advanced") =>
 const resolve = (fixture, state) => context.FormulaDiscovery.resolveDiscoveryState(fixture.catalog, fixture.categories, state);
 const plain = value => JSON.parse(JSON.stringify(value));
 
+test("Common exact alphabet and every populated library/category/search stay sorted without source mutation", () => {
+  const before = JSON.stringify(core.catalog), categoriesBefore = JSON.stringify(core.categories);
+  const common = discover(core, "", "", "common");
+  assert.deepEqual(Array.from(common, c => c.label), "ABS AVG CEILING CONTAINS COUNT COUNTM DATE FIND FLOOR INT ISBLANK LEFT LEN LOWER MAX MEDIAN MID MIN REPLACE RIGHT ROUND ROUNDDOWN ROUNDUP SUBSTITUTE SUM TODAY UPPER VALUE".split(" "));
+  assert.equal(find().length, 24);
+  for (const library of ["common", "advanced"]) for (const category of ["", ...core.categories.map(c => c.id)]) {
+    for (const query of ["", "number", "count", "text", "no-match-xyz"]) {
+      const matches = discover(core, query, category, library);
+      assert.deepEqual(ids(matches), alphabetical(matches).map(c => c.id));
+      const reversed = { catalog: Object.fromEntries(Object.entries(core.catalog).reverse()), categories: core.categories };
+      assert.deepEqual(ids(discover(reversed, query, category, library)), ids(matches));
+    }
+  }
+  assert.equal(JSON.stringify(core.catalog), before); assert.equal(JSON.stringify(core.categories), categoriesBefore);
+  assert.deepEqual(Object.values(core.catalog).filter(c => c.availability.portfolio).map(c => c.id), Object.keys(availabilityFixture));
+});
+
+test("case-insensitive equal labels break ties by exact case-sensitive ID without locale rules", () => {
+  const fixture = discoveryFixture(); const original = fixture.catalog.commonText;
+  fixture.catalog = Object.fromEntries(["z", "a", "Z", "A"].map((id, i) => [id, { ...original, id, label: i % 2 ? "same" : "SAME" }]));
+  deepFreeze(fixture);
+  assert.deepEqual(ids(discover(fixture, "same", "text-labels", "common")), ["A", "Z", "a", "z"]);
+});
+
 test("production resolver retains Advanced and all five categories with Common available", () => {
   const state = resolve(core);
   assert.equal(state.libraryId, "advanced");
@@ -93,11 +118,11 @@ test("production resolver retains Advanced and all five categories with Common a
 });
 
 test("production Common discovery exposes all four batches, exact categories and every approved keyword", () => {
-  const expected = [...batch1.formulas, ...batch2.formulas, ...batch3.formulas, ...batch4.formulas].map(config => config.id);
+  const expected = alphabetical([...batch1.formulas, ...batch2.formulas, ...batch3.formulas, ...batch4.formulas]).map(config => config.id);
   assert.deepEqual(ids(discover(core, "", "", "common")), expected);
-  assert.deepEqual(ids(discover(core, "", "counts-calculations", "common")), [...batch1.formulas, ...batch4.formulas].map(config => config.id));
-  assert.deepEqual(ids(discover(core, "", "text-labels", "common")), batch2.formulas.map(config => config.id));
-  assert.deepEqual(ids(discover(core, "", "dates-status", "common")), ["todayDate", "dateFromParts", "isBlank"]);
+  assert.deepEqual(ids(discover(core, "", "counts-calculations", "common")), alphabetical([...batch1.formulas, ...batch4.formulas]).map(config => config.id));
+  assert.deepEqual(ids(discover(core, "", "text-labels", "common")), alphabetical(batch2.formulas).map(config => config.id));
+  assert.deepEqual(ids(discover(core, "", "dates-status", "common")), ["dateFromParts", "isBlank", "todayDate"]);
   assert.deepEqual(ids(discover(core, "average", "counts-calculations", "common")), ["averageValues"]);
   assert.deepEqual(ids(discover(core, " DAYS from TODAY ", "dates-status", "common")), ["todayDate"]);
   assert.deepEqual(ids(discover(core, "checkbox", "dates-status", "common")), ["isBlank"]);
@@ -114,12 +139,12 @@ test("production Common discovery exposes all four batches, exact categories and
   assert.deepEqual(Object.values(core.catalog).filter(config => config.availability.portfolio).map(config => config.id), Object.keys(availabilityFixture));
 });
 
-test("mixed discovery preserves interleaved catalog order and original objects without mutation", () => {
+test("mixed discovery sorts interleaved catalog order and original objects without mutation", () => {
   const fixture = deepFreeze(discoveryFixture());
   const before = JSON.stringify(fixture);
   for (const [library, expected] of [
-    ["advanced", ["advancedRow", "advancedText", "advancedCount"]],
-    ["common", ["commonCount", "commonText", "commonLogic"]]
+    ["advanced", ["advancedText", "advancedCount", "advancedRow"]],
+    ["common", ["commonText", "commonLogic", "commonCount"]]
   ]) {
     const matches = discover(fixture, "", "", library);
     assert.deepEqual(ids(matches), expected);

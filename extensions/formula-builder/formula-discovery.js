@@ -24,6 +24,10 @@
       // Deliberately index user-facing metadata only, never internal IDs or field defaults.
       const text = [config.label, config.explanation, category?.label || "", ...config.keywords].join(" ").toLowerCase();
       return terms.every(term => text.includes(term));
+    }).sort((a, b) => {
+      const left = a.label.toLowerCase();
+      const right = b.label.toLowerCase();
+      return left < right ? -1 : left > right ? 1 : a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
     });
   }
 

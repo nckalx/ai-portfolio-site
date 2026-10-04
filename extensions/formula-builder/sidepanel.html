@@ -8,11 +8,15 @@
   <script src="theme.js"></script>
 </head>
 <body>
+  <div id="workspace-actions" class="workspace-actions">
+    <button id="clear-work" class="secondary-button" type="button" title="Clear all formula drafts and return to Find a formula. Theme is kept." disabled>Clear work</button>
   <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Dark mode" aria-pressed="false" title="Turn on dark mode">
     <span id="theme-icon" aria-hidden="true">☾</span>
   </button>
+  </div>
   <p id="theme-status" class="visually-hidden" role="status" aria-live="polite"></p>
-  <main>
+  <p id="workspace-status" class="workspace-status" role="status" aria-live="polite">Loading saved work…</p>
+  <main id="workspace" aria-busy="true" inert>
     <section id="find-view" class="find-view" aria-labelledby="find-title">
       <div class="find-controls">
         <h1 id="find-title">Find a formula</h1>

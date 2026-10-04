@@ -14,6 +14,24 @@ const batch3 = require("./fixtures/formula-common-batch3-cases.json");
 const batch4 = require("./fixtures/formula-common-batch4-cases.json");
 const root = path.resolve(__dirname, "..");
 
+test("packaged UI sorts, restores raw work and clears only workspace storage", async t => {
+  const { setupExtension } = require("./helpers/formula-extension-dom");
+  const { descendants, structuredControl, editStructured } = require("./helpers/formula-structured-ui-fixtures");
+  const directory = packageExtension(temporaryPackage(t));
+  const tick = () => new Promise(resolve => setImmediate(resolve));
+  const p = setupExtension({}, { saved: "dark" }, () => {}, () => {}, { directory, store: { sentinel: "keep" } });
+  p.get("library-common").checked = true; p.get("library-common").dispatch("change");
+  assert.deepEqual(p.choices().map(b => p.get(b.getAttribute("aria-labelledby")).textContent), "ABS AVG CEILING CONTAINS COUNT COUNTM DATE FIND FLOOR INT ISBLANK LEFT LEN LOWER MAX MEDIAN MID MIN REPLACE RIGHT ROUND ROUNDDOWN ROUNDUP SUBSTITUTE SUM TODAY UPPER VALUE".split(" "));
+  p.choose("sumValues"); descendants(p.get("fields")).find(n => n.textContent === "Add Value" && n.tagName === "button").dispatch("click");
+  editStructured(p, "Value 1 kind", "number"); editStructured(p, "Number", "0001.2300"); await tick();
+  const q = setupExtension({}, {}, () => {}, () => {}, { directory, store: p.store });
+  assert.equal(structuredControl(q, "Number").value, "0001.2300"); assert.equal(q.get("formula-output").value, "=SUM(1.23)");
+  q.get("clear-work").dispatch("click"); await tick();
+  assert.equal(q.get("library-advanced").checked, true); assert.equal(q.get("build-view").hidden, true);
+  assert.deepEqual(q.store, { sentinel: "keep", theme: "dark" });
+  assert.deepEqual(q.storageRemovals, ["formulaBuilderWorkspace"]);
+});
+
 function temporaryPackage(t) {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "formula-extension-test-"));
   // This exact directory was allocated by this test; never clean user-supplied paths.

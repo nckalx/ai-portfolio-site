@@ -9,6 +9,7 @@ const batch2 = require("./fixtures/formula-common-batch2-cases.json");
 const batch3 = require("./fixtures/formula-common-batch3-cases.json");
 const batch4 = require("./fixtures/formula-common-batch4-cases.json");
 const { discoveryFixture } = require("./helpers/formula-discovery-fixtures");
+const alphabetical = entries => [...entries].sort((a, b) => a.label.toLowerCase() < b.label.toLowerCase() ? -1 : a.label.toLowerCase() > b.label.toLowerCase() ? 1 : a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 const excluded = new Set(["multiLineReportLabel", "rioIdLookup"]);
 const tick = () => new Promise(resolve => setImmediate(resolve));
 const { installStructuredFixtures, descendants, structuredControl, editStructured } = require("./helpers/formula-structured-ui-fixtures");
@@ -110,7 +111,7 @@ test("structured validation count is concise and inline errors clear without mov
   assert.equal(panel.document.activeElement, input);
 });
 
-test("structured valid output uses existing Copy Formula and only theme can write storage", async () => {
+test("structured valid output uses existing Copy Formula and copy preserves theme storage", async () => {
   const copied = []; const panel = structuredPanel({ clipboard: { writeText: async value => copied.push(value) } });
   panel.choose("syntheticStructured");
   const expected = panel.get("formula-output").value;
@@ -118,7 +119,7 @@ test("structured valid output uses existing Copy Formula and only theme can writ
   assert.deepEqual(copied, [expected]); assert.equal(panel.get("copy-status").textContent, "Formula copied.");
   editStructured(panel, "Text", "changed");
   assert.equal(panel.get("copy-status").textContent, "");
-  assert.deepEqual(panel.storageWrites, []);
+  assert.deepEqual(panel.themeWrites, []);
 });
 
 for (const action of ["edit", "back", "switch"]) {
@@ -162,7 +163,7 @@ test("panel starts in discovery with canonical categories and exactly 24 choices
   assert.deepEqual(options.map(option => option.value), ["", ...Array.from(core.categories, category => category.id)]);
   assert.equal(choices().length, 24);
   assert.deepEqual(choices().map(button => button.getAttribute("aria-labelledby")),
-    Object.entries(availabilityFixture).filter(([, config]) => config.availability.extension).map(([id]) => `choice-${id}`));
+    alphabetical(Object.values(core.catalog).filter(config => config.availability.extension && config.libraryId === "advanced")).map(config => `choice-${config.id}`));
   for (const id of excluded) assert.throws(() => choose(id), /not discoverable/);
 });
 
@@ -192,14 +193,14 @@ test("production Common navigation exposes twenty-eight choices and exact text/d
   assert.equal(panel.get("library-advanced").checked, true);
   assert.equal(panel.get("library-selector").hidden, false);
   switchLibrary(panel, "common");
-  assert.deepEqual(resultIds(panel), [...batch1.formulas, ...batch2.formulas, ...batch3.formulas, ...batch4.formulas].map(config => config.id));
+  assert.deepEqual(resultIds(panel), alphabetical([...batch1.formulas, ...batch2.formulas, ...batch3.formulas, ...batch4.formulas]).map(config => config.id));
   assert.equal(panel.get("result-count").textContent, "28 formulas");
   assert.deepEqual(categoryIds(panel), ["", "text-labels", "dates-status", "counts-calculations"]);
   panel.get("category").value = "text-labels"; panel.get("category").dispatch("change");
-  assert.deepEqual(resultIds(panel), batch2.formulas.map(config => config.id));
+  assert.deepEqual(resultIds(panel), alphabetical(batch2.formulas).map(config => config.id));
   assert.equal(panel.get("result-count").textContent, "10 formulas");
   panel.get("category").value = "dates-status"; panel.get("category").dispatch("change");
-  assert.deepEqual(resultIds(panel), ["todayDate", "dateFromParts", "isBlank"]);
+  assert.deepEqual(resultIds(panel), ["dateFromParts", "isBlank", "todayDate"]);
   assert.equal(panel.get("result-count").textContent, "3 formulas");
   panel.get("category").value = "counts-calculations"; panel.get("category").dispatch("change");
   assert.equal(panel.get("result-count").textContent, "15 formulas");
@@ -214,7 +215,7 @@ test("production Common navigation exposes twenty-eight choices and exact text/d
   assert.equal(panel.get("results-scroll").scrollTop, 51);
   assert.equal(panel.document.activeElement, button);
   panel.get("clear-filters").dispatch("click");
-  assert.deepEqual(resultIds(panel), [...batch1.formulas, ...batch2.formulas, ...batch3.formulas, ...batch4.formulas].map(config => config.id));
+  assert.deepEqual(resultIds(panel), alphabetical([...batch1.formulas, ...batch2.formulas, ...batch3.formulas, ...batch4.formulas]).map(config => config.id));
   switchLibrary(panel, "advanced");
   assert.equal(panel.get("result-count").textContent, "24 formulas");
 });
@@ -261,7 +262,7 @@ for (const config of batch1.formulas) {
     assert.equal(panel.get("formula-output").value, `=${config.label}([Amount]@row${multiple ? ", [Increment]@row" : ""})`);
     assert.equal(JSON.stringify(calls).includes("uiState"), false);
     assert.equal(JSON.stringify(calls).includes("nextKey"), false);
-    assert.deepEqual(panel.storageWrites, []);
+    assert.deepEqual(panel.themeWrites, []);
   });
 }
 
@@ -574,7 +575,7 @@ for (const config of batch4.formulas) {
     assert.equal(panel.get("copy").disabled, false);
     assert.equal(structuredControl(panel, "Value 1 kind").id, firstId);
     assert.doesNotMatch(JSON.stringify(calls), /"rowKey"|"uiState"|"nextKey"|"touched"|"r\d+"/);
-    assert.deepEqual(panel.storageWrites, []);
+    assert.deepEqual(panel.themeWrites, []);
   });
 }
 
@@ -730,7 +731,7 @@ for (const [id, literalFormula, cellFormula, emptyFormula] of batch2UiCases) {
     assert.equal(panel.get("validation").textContent, "");
     assert.equal(JSON.stringify(calls).includes("uiState"), false);
     assert.equal(JSON.stringify(calls).includes("nextKey"), false);
-    assert.deepEqual(panel.storageWrites, []);
+    assert.deepEqual(panel.themeWrites, []);
   });
 }
 
@@ -834,7 +835,7 @@ test("production CONTAINS restricts targets and discards stale kind/scope member
   panel.get("theme-toggle").focus(); panel.get("theme-toggle").dispatch("click"); await tick();
   assert.equal(panel.get("formula-output").value, formula);
   assert.equal(structuredControl(panel, "Reference name"), input);
-  assert.deepEqual(panel.storageWrites, [{ theme: "dark" }]);
+  assert.deepEqual(panel.themeWrites, [{ theme: "dark" }]);
   panel.get("back").dispatch("click"); panel.choose("containsText");
   assert.equal(structuredControl(panel, "Reference name").value, " {{ Source Text }} ");
   editStructured(panel, "Cell or range to search scope", "currentSheet");
@@ -924,7 +925,7 @@ test("mixed startup exposes labeled native radios, defaults to Advanced, and swi
     assert.equal(radio.parent.textContent.trim().toLowerCase(), id);
     assert.equal(radio.checked, id === "advanced");
   }
-  assert.deepEqual(resultIds(panel), ["advancedRow", "advancedText", "advancedCount"]);
+  assert.deepEqual(resultIds(panel), ["advancedText", "advancedCount", "advancedRow"]);
   assert.deepEqual(categoryIds(panel), ["", "text-labels", "counts-calculations", "row-hierarchy"]);
   for (const library of ["common", "advanced"]) {
     switchLibrary(panel, library);
@@ -934,12 +935,12 @@ test("mixed startup exposes labeled native radios, defaults to Advanced, and swi
     assert.equal(get("result-count").textContent, "3 formulas");
     assert.equal(get("clear-filters").disabled, true);
     assert.deepEqual(resultIds(panel), library === "common"
-      ? ["commonCount", "commonText", "commonLogic"] : ["advancedRow", "advancedText", "advancedCount"]);
+      ? ["commonText", "commonLogic", "commonCount"] : ["advancedText", "advancedCount", "advancedRow"]);
     assert.deepEqual(categoryIds(panel), ["", "text-labels", "counts-calculations", library === "common" ? "logic-conditions" : "row-hierarchy"]);
   }
   assert.equal(panel.generationCount(), 0);
   await tick();
-  assert.deepEqual(panel.storageWrites, []);
+  assert.deepEqual(panel.themeWrites, []);
 });
 
 test("library changes preserve raw search and shared category through singular and zero results", () => {
@@ -987,7 +988,7 @@ test("unavailable category visibly resets and is not remembered on switching bac
   assert.ok(!categoryIds(panel).includes("row-hierarchy"));
   switchLibrary(panel, "advanced");
   assert.equal(get("category").value, "");
-  assert.deepEqual(resultIds(panel), ["advancedRow", "advancedText", "advancedCount"]);
+  assert.deepEqual(resultIds(panel), ["advancedText", "advancedCount", "advancedRow"]);
   assert.equal(panel.generationCount(), 0);
 });
 
@@ -1010,7 +1011,7 @@ for (const clearId of ["clear-filters", "empty-clear"]) {
     assert.equal(get("clear-filters").disabled, true);
     assert.equal(get("empty-state").hidden, true);
     assert.equal(get("result-count").textContent, "3 formulas");
-    assert.deepEqual(resultIds(panel), ["commonCount", "commonText", "commonLogic"]);
+    assert.deepEqual(resultIds(panel), ["commonText", "commonLogic", "commonCount"]);
     assert.equal(panel.document.activeElement, get("search"));
     assert.equal(panel.generationCount(), 0);
   });
@@ -1044,7 +1045,7 @@ test("invalid UI selection and changing availability recover visibly without cha
   switchLibrary(panel, "common");
   assert.equal(get("library-advanced").checked, true);
   assert.equal(get("library-common").checked, false);
-  assert.deepEqual(resultIds(panel), ["advancedRow", "advancedText", "advancedCount"]);
+  assert.deepEqual(resultIds(panel), ["advancedText", "advancedCount", "advancedRow"]);
   get("library-common").value = "common";
   Object.values(core.catalog).forEach(entry => {
     if (entry.libraryId === "advanced") entry.availability.extension = false;
@@ -1052,7 +1053,7 @@ test("invalid UI selection and changing availability recover visibly without cha
   get("search").dispatch("input");
   assert.equal(get("library-selector").hidden, true);
   assert.equal(get("library-common").checked, true);
-  assert.deepEqual(resultIds(panel), ["commonCount", "commonText", "commonLogic"]);
+  assert.deepEqual(resultIds(panel), ["commonText", "commonLogic", "commonCount"]);
   assert.deepEqual(categoryIds(panel), ["", "text-labels", "counts-calculations", "logic-conditions"]);
   Object.values(core.catalog).forEach(entry => { entry.availability.extension = false; });
   get("search").dispatch("input");
@@ -1139,7 +1140,7 @@ test("discovery rendering follows changed availability metadata and can select a
   get("search").dispatch("input");
   const expectedIds = currentLegacyFixtures.catalog.map(config => config.id).filter(id =>
     !["appendFinishDateLabel", "scheduleMovedWorkdays", "checkboxMatch", "multiLineReportLabel"].includes(id));
-  assert.deepEqual(choices().map(button => button.getAttribute("aria-labelledby")), expectedIds.map(id => `choice-${id}`));
+  assert.deepEqual(choices().map(button => button.getAttribute("aria-labelledby")), alphabetical(expectedIds.map(id => core.catalog[id])).map(config => `choice-${config.id}`));
   assert.equal(get("result-count").textContent, "22 formulas");
   for (const id of ["appendFinishDateLabel", "scheduleMovedWorkdays", "checkboxMatch", "multiLineReportLabel"]) {
     assert.throws(() => choose(id), /not discoverable/);

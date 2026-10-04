@@ -20,7 +20,7 @@ test("theme changes preserve structured raw drafts, rows, DOM and output with th
     assert.equal(panel.generationCount(), count); assert.equal(panel.get("formula-output").value, output);
     assert.equal(panel.document.activeElement, panel.get("theme-toggle"));
   }
-  assert.deepEqual(panel.storageWrites, [{ theme: "dark" }, { theme: "light" }]);
+  assert.deepEqual(panel.themeWrites, [{ theme: "dark" }, { theme: "light" }]);
   panel.get("back").dispatch("click"); panel.choose("syntheticStructured"); assert.equal(structuredControl(panel, "Number").value, "-");
 });
 const resolved = panel => panel.document.documentElement.getAttribute("data-theme");
@@ -45,7 +45,7 @@ test("library selector retains native radio styles, semantics, and visible focus
   assert.doesNotMatch(html, /role="(?:radio|radiogroup|tab|tablist)"/);
 });
 
-test("mixed Common discovery state survives both theme changes with only theme persistence", async () => {
+test("mixed Common discovery state survives both theme changes across theme changes", async () => {
   const panel = setupExtension({}, {}, core => { Object.assign(core, discoveryFixture()); });
   await tick();
   const { get } = panel;
@@ -73,7 +73,7 @@ test("mixed Common discovery state survives both theme changes with only theme p
     assert.equal(panel.document.activeElement, get("theme-toggle"));
     assert.equal(panel.generationCount(), 0);
   }
-  assert.deepEqual(panel.storageWrites, [{ theme: "dark" }, { theme: "light" }]);
+  assert.deepEqual(panel.themeWrites, [{ theme: "dark" }, { theme: "light" }]);
 });
 
 for (const saved of ["light", "dark"]) {
@@ -86,7 +86,7 @@ for (const saved of ["light", "dark"]) {
     assert.equal(panel.get("theme-icon").getAttribute("aria-hidden"), "true");
     panel.changeSystem(saved !== "dark");
     assert.equal(resolved(panel), saved);
-    assert.deepEqual(panel.storageWrites, []);
+    assert.deepEqual(panel.themeWrites, []);
   });
 }
 
@@ -102,7 +102,7 @@ for (const saved of [undefined, "invalid", null, 1]) {
     panel.changeSystem(false);
     assert.equal(resolved(panel), "dark");
     await tick();
-    assert.deepEqual(panel.storageWrites, [{ theme: "dark" }]);
+    assert.deepEqual(panel.themeWrites, [{ theme: "dark" }]);
   });
 }
 
@@ -115,7 +115,7 @@ test("read failure preserves system fallback and permits later explicit persiste
   assert.equal(resolved(panel), "light");
   toggle(panel); await tick();
   assert.equal(panel.get("theme-status").textContent, "");
-  assert.deepEqual(panel.storageWrites, [{ theme: "dark" }]);
+  assert.deepEqual(panel.themeWrites, [{ theme: "dark" }]);
 });
 
 test("write failure keeps the current session theme and a later write can recover", async () => {
@@ -147,7 +147,7 @@ for (const reject of [false, true]) {
     finish(); await tick();
     assert.equal(resolved(panel), "dark");
     assert.equal(panel.get("theme-status").textContent, "");
-    assert.deepEqual(panel.storageWrites, [{ theme: "dark" }]);
+    assert.deepEqual(panel.themeWrites, [{ theme: "dark" }]);
   });
 }
 
@@ -211,7 +211,7 @@ test("theme switching leaves formula state, drafts, feedback, disclosures, scrol
   panel.get("back").dispatch("click");
   panel.choose("appendFinishDateLabel");
   assert.equal(panel.get("field-milestoneLabelColumn").value, "  Custom Name  ");
-  assert.deepEqual(panel.storageWrites, [{ theme: "dark" }]);
+  assert.deepEqual(panel.themeWrites, [{ theme: "dark" }]);
 });
 
 test("shell and styles retain narrow-panel native controls without duplicate branding", () => {

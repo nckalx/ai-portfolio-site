@@ -8,6 +8,7 @@ const batch4 = require("./fixtures/formula-common-batch4-cases.json");
 const validate = (fields, values) => plain(validator.normalizeAndValidate(config(fields), values, builder));
 const walk = node => [node, ...node.children.flatMap(walk)];
 const controls = node => walk(node).filter(node => ["input", "select", "button"].includes(node.tagName));
+const helperText = (ui, control) => control.getAttribute("aria-describedby").split(" ").map(id => ui.document.getElementById(id).textContent).join(" ");
 const freeze = value => {
   if (value && typeof value === "object") { Object.values(value).forEach(freeze); Object.freeze(value); }
   return value;
@@ -24,6 +25,42 @@ function mount(fields, values = {}, formulaId = "test") {
     input.dispatch(input.tagName === "select" ? "change" : "input"); return input;
   };
   return { ...dom, controller, changes, at, set, snapshot: () => plain(snapshot), metadata };
+}
+
+test("number and integer helpers keep exact wording, help/bounds order and input modes", () => {
+  const ui = mount([{ id: "n", type: "number", help: "Specific guidance.", min: "0", max: "9" }, { id: "i", type: "integer" }]);
+  assert.equal(helperText(ui, ui.at("n")), "Specific guidance. Enter a number. Minimum: 0. Maximum: 9.");
+  assert.equal(helperText(ui, ui.at("i")), "Enter a whole number.");
+  assert.equal(ui.at("n").getAttribute("inputmode"), "decimal"); assert.equal(ui.at("i").getAttribute("inputmode"), "numeric");
+  ui.set("n", "0001.20"); ui.set("i", "2");
+  assert.deepEqual(validate(ui.metadata.fields, ui.snapshot().values).values, { n: "1.2", i: "2" });
+});
+
+test("nested/repeatable Number helper is Enter a number", () => {
+  const ui = mount([{ id: "nested", type: "object", fields: [{ id: "rows", type: "array", items: { type: "numericOperand" } }] }], { nested: { rows: [{ type: "number", value: "-" }] } });
+  assert.equal(helperText(ui, ui.at("nested.rows[r1].value")), "Enter a number.");
+});
+
+for (const batch of [require("./fixtures/formula-common-batch1-cases.json"), batch4]) for (const formula of batch.formulas) {
+  test(`production numeric helper policy: ${formula.id}`, () => {
+    const fields = require("./helpers/load-formula-core").loadFormulaCore().catalog[formula.id].fields;
+    const ui = mount(fields);
+    const numeric = fields.find(field => field.type === "numericOperand");
+    if (numeric) {
+      ui.set(`${numeric.id}.type`, "number");
+      assert.equal(helperText(ui, ui.at(`${numeric.id}.value`)), "Enter a number.");
+    } else if (fields[0].type === "array") {
+      ui.at("values:add").dispatch("click");
+      if (fields[0].items.allowedTypes.includes("number")) {
+        ui.set("values[r1].type", "number");
+        assert.equal(helperText(ui, ui.at("values[r1].value")), "Enter a number.");
+      } else {
+        ui.set("values[r1].type", "cellRef");
+        assert.doesNotMatch(ui.container.textContent, /Enter a number\./);
+      }
+    }
+    assert.doesNotMatch(ui.container.textContent, /Enter a decimal number\./);
+  });
 }
 
 for (const [type, raw] of [["text", "<b>literal</b>"], ["number", "-"], ["number", "1."], ["number", "0001.230000000000001"], ["integer", "-"], ["date", "2026-"], ["columnName", " Status "], ["referenceName", "{{ Statuses }}"]]) {
