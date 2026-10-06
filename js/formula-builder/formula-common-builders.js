@@ -29,6 +29,24 @@
     catch { throw new TypeError("Structured configuration: expected only functionName in builder options."); }
     if (!names.includes(options.functionName)) throw new TypeError("Structured configuration: unsupported function for builder family.");
   }
+  function validateEmptyOptions(options) {
+    try { namespace.primitives.assertRecord(options, []); }
+    catch { throw new TypeError("Structured configuration: expected empty builder options."); }
+  }
+  function validateComparison(condition, path) {
+    if (["=", "<>"].includes(condition.operator)) return [];
+    const left = condition.left.type, right = condition.right.type;
+    const orderedKinds = ["number", "date", "cellRef"];
+    if (orderedKinds.includes(left) && orderedKinds.includes(right)
+      && (left === right || left === "cellRef" || right === "cellRef")) return [];
+    return [{ path, code: "incompatibleComparison", message: "Ordered comparisons require numbers or dates of the same kind, or current-row cells containing compatible values." }];
+  }
+  // Only already-rendered fragments enter these private, fixed compositions.
+  function joinFragments(parts, separator, p) {
+    return { expression: parts.map(part => part.expression).join(separator), references: p.collectReferences(parts) };
+  }
+  function numeric(value, p) { return p.renderOperand({ type: "number", value }); }
+  function blankCondition(cell, p) { return p.renderCondition({ left: cell, operator: "=", right: { type: "blank" } }); }
   const registry = createRegistry({
     decimalRounding: {
       validateOptions(options) { validateFunctionOptions(options, ["ROUND", "ROUNDUP", "ROUNDDOWN"]); },
@@ -134,6 +152,63 @@
         const args = values.values.map(value => value.type === "number" || value.type === "cellRef"
           ? p.renderOperand(value) : p.renderRange(value));
         return p.renderFunctionCall(options.functionName, args);
+      }
+    },
+    comparisonReturn: {
+      validateOptions(options) {
+        try { namespace.primitives.assertRecord(options, ["mode"]); }
+        catch { throw new TypeError("Structured configuration: expected only mode in builder options."); }
+        if (!["checkbox", "text", "typed"].includes(options.mode)) throw new TypeError("Structured configuration: unsupported comparison return mode.");
+      },
+      validate(values, options) {
+        const errors = validateComparison(values.condition, "condition");
+        if (options.mode === "text" && !values.matchText.trim()) errors.push({ path: "matchText", code: "requiredText", message: "Enter the text to return when the comparison matches." });
+        return errors;
+      },
+      build(values, options, p) {
+        const args = [p.renderCondition(values.condition)];
+        if (options.mode === "checkbox") args.push(numeric("1", p), numeric("0", p));
+        else if (options.mode === "text") {
+          args.push(p.renderOperand({ type: "textLiteral", value: values.matchText }));
+          if (Object.hasOwn(values, "noMatchText")) args.push(p.renderOperand({ type: "textLiteral", value: values.noMatchText }));
+        } else {
+          args.push(p.renderOperand(values.trueOutput));
+          if (Object.hasOwn(values, "falseOutput")) args.push(p.renderOperand(values.falseOutput));
+        }
+        return p.renderFunctionCall("IF", args);
+      }
+    },
+    duplicateFlag: {
+      validateOptions: validateEmptyOptions,
+      validate() { return []; },
+      build(values, options, p) {
+        const cell = { type: "cellRef", column: values.column.column };
+        const count = p.renderFunctionCall("COUNTIF", [p.renderRange(values.column), p.renderCriterion({ operator: "=", value: cell })]);
+        const duplicated = joinFragments([count, numeric("1", p)], " > ", p);
+        const flag = p.renderFunctionCall("IF", [duplicated, numeric("1", p), numeric("0", p)]);
+        return values.ignoreBlank ? p.renderFunctionCall("IF", [blankCondition(cell, p), numeric("0", p), flag]) : flag;
+      }
+    },
+    textCombine: {
+      validateOptions: validateEmptyOptions,
+      validate() { return []; },
+      build(values, options, p) {
+        const first = p.renderOperand(values.first), second = p.renderOperand(values.second);
+        const combined = joinFragments([first, p.renderOperand({ type: "textLiteral", value: values.separator }), second], " + ", p);
+        if (!values.suppressBlank) return combined;
+        const secondGuard = p.renderFunctionCall("IF", [blankCondition(values.second, p), first, combined]);
+        return p.renderFunctionCall("IF", [blankCondition(values.first, p), second, secondGuard]);
+      }
+    },
+    booleanGroup: {
+      validateOptions(options) { validateFunctionOptions(options, ["AND", "OR", "NOT"]); },
+      validate(values, options) {
+        return options.functionName === "NOT" ? validateComparison(values.condition, "condition")
+          : values.conditions.flatMap((condition, index) => validateComparison(condition, `conditions[${index}]`));
+      },
+      build(values, options, p) {
+        const conditions = options.functionName === "NOT" ? [values.condition] : values.conditions;
+        return p.renderFunctionCall(options.functionName, conditions.map(condition => p.renderCondition(condition)));
       }
     }
   });

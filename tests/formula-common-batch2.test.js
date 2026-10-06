@@ -8,6 +8,7 @@ const { deepFreeze } = require("./helpers/formula-discovery-fixtures");
 const batch1 = require("./fixtures/formula-common-batch1-cases.json");
 const batch3 = require("./fixtures/formula-common-batch3-cases.json");
 const batch4 = require("./fixtures/formula-common-batch4-cases.json");
+const batch5 = require("./fixtures/formula-common-batch5-cases.json");
 const fixtures = require("./fixtures/formula-common-batch2-cases.json");
 const plain = value => JSON.parse(JSON.stringify(value));
 const core = loadFormulaCore();
@@ -21,14 +22,14 @@ const expectedResult = entry => ({
 test("Batch 2 appends exactly ten approved entries and preserves all surface partitions", () => {
   assert.deepEqual(ids, ["leftText", "rightText", "midText", "textLength", "findTextPosition", "containsText", "lowerText", "upperText", "substituteText", "replaceTextByPosition"]);
   const advancedIds = currentLegacyFixtures.catalog.map(config => config.id);
-  const commonIds = [...batch1.formulas.map(config => config.id), ...ids, ...batch3.formulas.map(config => config.id), ...batch4.formulas.map(config => config.id)];
+  const commonIds = [...batch1.formulas.map(config => config.id), ...ids, ...batch3.formulas.map(config => config.id), ...batch4.formulas.map(config => config.id), ...batch5.formulas.map(config => config.id)];
   assert.deepEqual(Object.keys(core.catalog), [...advancedIds, ...commonIds]);
   const entries = Object.values(core.catalog);
-  assert.equal(entries.length, 54);
+  assert.equal(entries.length, 62);
   assert.deepEqual(entries.filter(config => config.libraryId === "advanced").map(config => config.id), advancedIds);
   assert.deepEqual(entries.filter(config => config.libraryId === "common").map(config => config.id), commonIds);
-  assert.equal(commonIds.length, 28);
-  assert.equal(entries.filter(config => config.availability.extension).length, 52);
+  assert.equal(commonIds.length, 36);
+  assert.equal(entries.filter(config => config.availability.extension).length, 60);
   assert.equal(entries.filter(config => config.libraryId === "advanced" && config.availability.extension).length, 24);
   assert.deepEqual(entries.filter(config => config.libraryId === "common" && config.availability.extension).map(config => config.id), commonIds);
   assert.deepEqual(entries.filter(config => config.availability.portfolio).map(config => config.id), advancedIds);

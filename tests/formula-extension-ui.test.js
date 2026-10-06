@@ -8,6 +8,7 @@ const batch1 = require("./fixtures/formula-common-batch1-cases.json");
 const batch2 = require("./fixtures/formula-common-batch2-cases.json");
 const batch3 = require("./fixtures/formula-common-batch3-cases.json");
 const batch4 = require("./fixtures/formula-common-batch4-cases.json");
+const batch5 = require("./fixtures/formula-common-batch5-cases.json");
 const { discoveryFixture } = require("./helpers/formula-discovery-fixtures");
 const alphabetical = entries => [...entries].sort((a, b) => a.label.toLowerCase() < b.label.toLowerCase() ? -1 : a.label.toLowerCase() > b.label.toLowerCase() ? 1 : a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 const excluded = new Set(["multiLineReportLabel", "rioIdLookup"]);
@@ -35,7 +36,7 @@ test("structured UI uses real engine dispatch, core defaults once, and semantic-
   assert.equal(calls[0].length, 2);
   assert.deepEqual(Object.keys(calls[0][1]), ["criteria"]);
   const generationBefore = panel.generationCount();
-  editStructured(panel, "Value kind", "number");
+  editStructured(panel, "Value type", "number");
   editStructured(panel, "Number", "-");
   assert.equal(panel.generationCount(), generationBefore + 2);
   assert.deepEqual(calls.at(-1)[1].criteria[0].criterion.value, { type: "number", value: "-" });
@@ -61,7 +62,7 @@ test("structured drafts, row keys, Advanced drafts and library switches remain i
   const panel = structuredPanel();
   panel.choose("syntheticStructured"); editStructured(panel, "Text", "first");
   descendants(panel.get("fields")).find(node => node.tagName === "button" && node.textContent === "Add Criteria").dispatch("click");
-  const rowId = structuredControl(panel, "Range kind", 1).id;
+  const rowId = structuredControl(panel, "Range type", 1).id;
   assert.equal(panel.document.activeElement.id, rowId);
   panel.get("back").dispatch("click"); panel.choose("syntheticSecond");
   assert.equal(structuredControl(panel, "Text").value, "Open"); editStructured(panel, "Text", "second");
@@ -70,7 +71,7 @@ test("structured drafts, row keys, Advanced drafts and library switches remain i
   const advanced = panel.get("field-milestoneLabelColumn"); advanced.value = "Saved Advanced"; advanced.dispatch("input");
   panel.get("back").dispatch("click"); switchLibrary(panel, "common"); panel.choose("syntheticStructured");
   assert.equal(structuredControl(panel, "Text").value, "first");
-  assert.equal(structuredControl(panel, "Range kind", 1).id, rowId);
+  assert.equal(structuredControl(panel, "Range type", 1).id, rowId);
   panel.get("back").dispatch("click"); panel.choose("syntheticSecond"); assert.equal(structuredControl(panel, "Text").value, "second");
   panel.get("back").dispatch("click"); switchLibrary(panel, "advanced"); panel.choose("appendFinishDateLabel");
   assert.equal(panel.get("field-milestoneLabelColumn").value, "Saved Advanced");
@@ -82,7 +83,7 @@ test("structured normalized reference names display alone and raw spelling survi
   assert.equal(panel.get("references").textContent, "{Named Range}");
   assert.doesNotMatch(panel.get("references").textContent, /undefined/);
   assert.equal(structuredControl(panel, "Reference name").value, "{{  Named Range  }}");
-  editStructured(panel, "Value kind", "number"); editStructured(panel, "Number", "0001.2300");
+  editStructured(panel, "Value type", "number"); editStructured(panel, "Number", "0001.2300");
   assert.equal(structuredControl(panel, "Number").value, "0001.2300");
   assert.match(panel.get("formula-output").value, /1\.23/);
   panel.get("back").dispatch("click"); panel.choose("syntheticStructured");
@@ -102,7 +103,7 @@ test("structured Back preserves Find DOM, scroll and return focus and destroys o
 
 test("structured validation count is concise and inline errors clear without moving focus", () => {
   const panel = structuredPanel(); panel.choose("syntheticStructured");
-  editStructured(panel, "Value kind", "number"); const input = editStructured(panel, "Number", "-");
+  editStructured(panel, "Value type", "number"); const input = editStructured(panel, "Number", "-");
   assert.equal(panel.get("validation").textContent, "1 field error. Review the fields above.");
   assert.equal(panel.document.activeElement, input); assert.equal(input.getAttribute("aria-invalid"), "true");
   assert.ok(descendants(panel.get("fields")).some(node => node.className === "field-error" && !node.hidden));
@@ -158,9 +159,9 @@ test("panel starts in discovery with canonical categories and exactly 24 choices
   assert.equal(get("library-selector").hidden, false);
   assert.equal(get("library-advanced").checked, true);
   assert.equal(get("library-common").checked, false);
-  assert.equal(core.categories.length, 5);
+  assert.equal(core.categories.length, 6);
   const options = get("category").children.filter(child => child.tagName === "option");
-  assert.deepEqual(options.map(option => option.value), ["", ...Array.from(core.categories, category => category.id)]);
+  assert.deepEqual(options.map(option => option.value), ["", ...Array.from(core.categories, category => category.id).filter(id => id !== "logic-conditions")]);
   assert.equal(choices().length, 24);
   assert.deepEqual(choices().map(button => button.getAttribute("aria-labelledby")),
     alphabetical(Object.values(core.catalog).filter(config => config.availability.extension && config.libraryId === "advanced")).map(config => `choice-${config.id}`));
@@ -188,17 +189,17 @@ function switchLibrary(panel, library) {
   radio.dispatch("change");
 }
 
-test("production Common navigation exposes twenty-eight choices and exact text/date/calculation categories", () => {
+test("production Common navigation exposes thirty-six choices and exact text/date/calculation/logic categories", () => {
   const panel = setupExtension();
   assert.equal(panel.get("library-advanced").checked, true);
   assert.equal(panel.get("library-selector").hidden, false);
   switchLibrary(panel, "common");
-  assert.deepEqual(resultIds(panel), alphabetical([...batch1.formulas, ...batch2.formulas, ...batch3.formulas, ...batch4.formulas]).map(config => config.id));
-  assert.equal(panel.get("result-count").textContent, "28 formulas");
-  assert.deepEqual(categoryIds(panel), ["", "text-labels", "dates-status", "counts-calculations"]);
+  assert.deepEqual(resultIds(panel), alphabetical([...batch1.formulas, ...batch2.formulas, ...batch3.formulas, ...batch4.formulas, ...batch5.formulas]).map(config => config.id));
+  assert.equal(panel.get("result-count").textContent, "36 formulas");
+  assert.deepEqual(categoryIds(panel), ["", "text-labels", "dates-status", "counts-calculations", "logic-conditions"]);
   panel.get("category").value = "text-labels"; panel.get("category").dispatch("change");
-  assert.deepEqual(resultIds(panel), alphabetical(batch2.formulas).map(config => config.id));
-  assert.equal(panel.get("result-count").textContent, "10 formulas");
+  assert.deepEqual(resultIds(panel), alphabetical([...batch2.formulas, ...batch5.formulas.filter(c => c.categoryId === "text-labels")]).map(config => config.id));
+  assert.equal(panel.get("result-count").textContent, "11 formulas");
   panel.get("category").value = "dates-status"; panel.get("category").dispatch("change");
   assert.deepEqual(resultIds(panel), ["dateFromParts", "isBlank", "todayDate"]);
   assert.equal(panel.get("result-count").textContent, "3 formulas");
@@ -215,7 +216,7 @@ test("production Common navigation exposes twenty-eight choices and exact text/d
   assert.equal(panel.get("results-scroll").scrollTop, 51);
   assert.equal(panel.document.activeElement, button);
   panel.get("clear-filters").dispatch("click");
-  assert.deepEqual(resultIds(panel), alphabetical([...batch1.formulas, ...batch2.formulas, ...batch3.formulas, ...batch4.formulas]).map(config => config.id));
+  assert.deepEqual(resultIds(panel), alphabetical([...batch1.formulas, ...batch2.formulas, ...batch3.formulas, ...batch4.formulas, ...batch5.formulas]).map(config => config.id));
   switchLibrary(panel, "advanced");
   assert.equal(panel.get("result-count").textContent, "24 formulas");
 });
@@ -234,10 +235,10 @@ for (const config of batch1.formulas) {
     assert.equal(panel.document.activeElement, panel.get("build-title"));
     const text = config.id === "textToNumber";
     const multiple = config.builderKey === "multipleRounding";
-    editStructured(panel, text ? "Text kind" : "Number kind", text ? "textLiteral" : "number");
+    editStructured(panel, text ? "Text type" : "Number type", text ? "textLiteral" : "number");
     editStructured(panel, text ? "Text" : "Number", text ? "0012.50" : " 0012.500 ");
     if (multiple) {
-      editStructured(panel, "Multiple kind", "number");
+      editStructured(panel, "Multiple type", "number");
       editStructured(panel, "Number", "0.5", 1);
     }
     const expected = text ? '=VALUE("0012.50")' : `=${config.label}(12.5${multiple ? ", 0.5" : ""})`;
@@ -251,11 +252,11 @@ for (const config of batch1.formulas) {
     assert.equal(panel.document.activeElement, button);
     panel.choose(config.id);
     assert.equal(structuredControl(panel, text ? "Text" : "Number").value, text ? "0012.50" : " 0012.500 ");
-    editStructured(panel, text ? "Text kind" : "Number kind", "cellRef");
+    editStructured(panel, text ? "Text type" : "Number type", "cellRef");
     assert.deepEqual(calls.at(-1).value, { type: "cellRef", column: "" });
     editStructured(panel, "Current-row column", " Amount ");
     if (multiple) {
-      editStructured(panel, "Multiple kind", "cellRef");
+      editStructured(panel, "Multiple type", "cellRef");
       assert.deepEqual(calls.at(-1).multiple, { type: "cellRef", column: "" });
       editStructured(panel, "Current-row column", " Increment ", 1);
     }
@@ -364,10 +365,10 @@ test("production ISBLANK restricts kind, clears stale cells and preserves local 
     core.generateFormula = (id, values) => { calls.push(JSON.parse(JSON.stringify(values))); return generate(id, values); };
   });
   switchLibrary(panel, "common"); panel.choose("isBlank");
-  assert.deepEqual(structuredControl(panel, "Cell to check kind").children.map(option => option.value), ["", "cellRef"]);
+  assert.deepEqual(structuredControl(panel, "Cell to check type").children.map(option => option.value), ["", "cellRef"]);
   assert.equal(panel.get("copy").disabled, true);
   assert.deepEqual(visibleStructuredErrors(panel), []);
-  editStructured(panel, "Cell to check kind", "cellRef");
+  editStructured(panel, "Cell to check type", "cellRef");
   const input = editStructured(panel, "Current-row column", "  {Statuses}  ");
   assert.equal(input.value, "  {Statuses}  ");
   assert.equal(panel.get("formula-output").value, "=ISBLANK([{Statuses}]@row)");
@@ -381,9 +382,9 @@ test("production ISBLANK restricts kind, clears stale cells and preserves local 
   editStructured(panel, "Current-row column", "Task\nName");
   assert.deepEqual(visibleStructuredErrors(panel), ["Expected text without control characters."]);
   assertCommonGuidance(panel, "isBlank");
-  editStructured(panel, "Cell to check kind", "");
+  editStructured(panel, "Cell to check type", "");
   assert.deepEqual(calls.at(-1), { value: {} });
-  editStructured(panel, "Cell to check kind", "cellRef");
+  editStructured(panel, "Cell to check type", "cellRef");
   assert.deepEqual(calls.at(-1), { value: { type: "cellRef", column: "" } });
   assert.equal(structuredControl(panel, "Current-row column").value, "");
   assert.deepEqual(visibleStructuredErrors(panel), []);
@@ -400,7 +401,7 @@ test("production ROUND preserves raw incomplete drafts, precision presence and i
     core.generateFormula = (id, values) => { calls.push(JSON.parse(JSON.stringify(values))); return generate(id, values); };
   });
   switchLibrary(panel, "common"); panel.choose("roundValue");
-  editStructured(panel, "Number kind", "number");
+  editStructured(panel, "Number type", "number");
   for (const raw of ["-", "1."]) {
     const input = editStructured(panel, "Number", raw);
     assert.equal(input.getAttribute("aria-invalid"), "true");
@@ -408,7 +409,7 @@ test("production ROUND preserves raw incomplete drafts, precision presence and i
     assert.equal(panel.document.activeElement, input);
     assert.equal(panel.get("copy").disabled, true);
     panel.get("back").dispatch("click"); panel.choose("absoluteValue");
-    editStructured(panel, "Number kind", "number"); editStructured(panel, "Number", "99");
+    editStructured(panel, "Number type", "number"); editStructured(panel, "Number", "99");
     panel.get("back").dispatch("click"); switchLibrary(panel, "advanced"); panel.choose("appendFinishDateLabel");
     panel.get("back").dispatch("click"); switchLibrary(panel, "common"); panel.choose("roundValue");
     assert.equal(structuredControl(panel, "Number").value, raw);
@@ -433,16 +434,16 @@ test("production ROUND preserves raw incomplete drafts, precision presence and i
   restored.checked = false; restored.dispatch("change");
   assert.equal(Object.hasOwn(calls.at(-1), "decimalPlaces"), false);
   assert.equal(panel.get("formula-output").value, "=ROUND(12.5)");
-  editStructured(panel, "Number kind", "cellRef");
+  editStructured(panel, "Number type", "cellRef");
   editStructured(panel, "Current-row column", "Amount");
-  editStructured(panel, "Number kind", "number");
+  editStructured(panel, "Number type", "number");
   assert.deepEqual(calls.at(-1).value, { type: "number", value: "" });
 });
 
 test("production VALUE shows requiredText errors, preserves literal text and handles copy failure", async () => {
   const panel = setupExtension({ clipboard: { writeText: async () => { throw new Error("unavailable"); } } });
   switchLibrary(panel, "common"); panel.choose("textToNumber");
-  editStructured(panel, "Text kind", "textLiteral");
+  editStructured(panel, "Text type", "textLiteral");
   for (const raw of ["", "   ", "\u00a0"]) {
     const input = editStructured(panel, "Text", raw);
     assert.equal(input.getAttribute("aria-invalid"), "true");
@@ -459,7 +460,7 @@ test("production VALUE shows requiredText errors, preserves literal text and han
   assert.equal(panel.document.activeElement, panel.get("formula-output"));
   assert.equal(panel.get("formula-output").selected, true);
   assert.equal(panel.get("copy").disabled, false);
-  editStructured(panel, "Text kind", "cellRef"); editStructured(panel, "Current-row column", "Text");
+  editStructured(panel, "Text type", "cellRef"); editStructured(panel, "Current-row column", "Text");
   assert.equal(panel.get("formula-output").value, "=VALUE([Text]@row)");
 });
 
@@ -478,19 +479,203 @@ const batch2UiCases = [
 
 function fillBatch2Text(panel, config, text = " abc ") {
   const fields = config.fields.filter(field => field.type === "textOperand");
-  for (const field of fields) editStructured(panel, `${field.label} kind`, "textLiteral");
+  for (const field of fields) editStructured(panel, `${field.label} type`, "textLiteral");
   fields.forEach((field, index) => editStructured(panel, "Text", text, index));
   for (const field of config.fields.filter(field => field.type === "integer" && field.required)) {
     editStructured(panel, field.label, field.id === "startPosition" ? "1" : "2");
   }
   if (config.id === "containsText") {
-    editStructured(panel, "Cell or range to search kind", "cellRef");
+    editStructured(panel, "Cell or range to search type", "cellRef");
     editStructured(panel, "Current-row column", "Target");
   }
 }
 
 const visibleStructuredErrors = panel => descendants(panel.get("fields"))
   .filter(node => node.className === "field-error" && !node.hidden).map(node => node.textContent);
+
+const batch5Button = (panel, text) => descendants(panel.get("fields")).find(node => node.tagName === "button" && node.textContent === text);
+for (const id of ["andConditions", "orConditions", "notCondition", "ifCondition", "checkboxWhenValueMatches", "returnTextWhenValueMatches"]) {
+  test(`polished comparison labels and incomplete messages retain internal paths: ${id}`, () => {
+    const panel = setupExtension(); switchLibrary(panel, "common"); panel.choose(id);
+    const repeated = ["andConditions", "orConditions"].includes(id), template = ["checkboxWhenValueMatches", "returnTextWhenValueMatches"].includes(id);
+    if (repeated) batch5Button(panel, "Add Condition").dispatch("click");
+    const firstLabel = template ? "Source cell type" : "First value type", secondLabel = template ? "Match value type" : "Second value type";
+    const first = structuredControl(panel, firstLabel);
+    assert.equal(first.value, "");
+    assert.ok(first.children.some(option => option.value === "cellRef" && option.textContent === "Cell in this row"));
+    editStructured(panel, firstLabel, "");
+    structuredControl(panel, "Comparison").dispatch("blur"); structuredControl(panel, secondLabel).dispatch("blur");
+    assert.deepEqual(visibleStructuredErrors(panel), [template ? "Choose a source cell type." : "Choose a first value type.", "Choose a comparison.", template ? "Choose a match value type." : "Choose a second value type."]);
+    const raw = repeated ? { conditions: [{ left: {} }] } : { condition: { left: {} } };
+    const path = repeated ? "conditions[0]" : "condition";
+    assert.deepEqual(JSON.parse(JSON.stringify(panel.core.generateFormula(id, raw).validationErrors.slice(0, 3))).map(error => [error.path, error.code]), [[`${path}.left.type`, "required"], [`${path}.operator`, "required"], [`${path}.right`, "required"]]);
+    const labels = descendants(panel.get("fields")).filter(node => node.tagName === "label").map(node => node.textContent);
+    assert.ok(labels.every(label => !/Left operand|Right operand|\bOperator\b|\bkind\b/.test(label)));
+    assert.doesNotMatch(visibleStructuredErrors(panel).join(" "), /conditions\[|\.left|\.right/);
+    assert.equal(panel.get("copy").disabled, true);
+  });
+}
+
+for (const id of ["andConditions", "orConditions"]) test(`polished second-row errors survive removal and reindexing: ${id}`, () => {
+  const panel = setupExtension(); switchLibrary(panel, "common"); panel.choose(id);
+  batch5Button(panel, "Add Condition").dispatch("click"); batch5Comparison(panel);
+  batch5Button(panel, "Add Condition").dispatch("click");
+  const second = structuredControl(panel, "First value type", 1); second.dispatch("blur");
+  structuredControl(panel, "Comparison", 1).dispatch("blur"); structuredControl(panel, "Second value type", 1).dispatch("blur");
+  const messages = ["Choose a first value type.", "Choose a comparison.", "Choose a second value type."];
+  assert.deepEqual(visibleStructuredErrors(panel), messages);
+  descendants(panel.get("fields")).find(node => node.getAttribute("aria-label") === "Remove Condition 1").dispatch("click");
+  assert.equal(structuredControl(panel, "First value type"), second);
+  assert.deepEqual(visibleStructuredErrors(panel), messages);
+  assert.doesNotMatch(panel.get("fields").textContent, /conditions\[|\.left|\.right/);
+  assert.equal(panel.get("copy").disabled, true);
+});
+
+for (const id of ["roundValue", "notCondition"]) test(`invalid generic Number shows natural copy without changing raw input: ${id}`, () => {
+  const panel = setupExtension(); switchLibrary(panel, "common"); panel.choose(id);
+  if (id === "notCondition") batch5Comparison(panel);
+  editStructured(panel, id === "roundValue" ? "Number type" : "Second value type", "number");
+  const input = editStructured(panel, "Number", "j");
+  assert.equal(input.value, "j"); assert.equal(panel.get("copy").disabled, true); assert.equal(panel.get("formula-output").value, "");
+  assert.deepEqual(visibleStructuredErrors(panel), ["Enter a number."]);
+  const descriptions = input.getAttribute("aria-describedby").split(" ").map(id => panel.get(id).textContent);
+  assert.equal(descriptions[0], "Enter a number."); assert.equal(descriptions.at(-1), "Enter a number.");
+  panel.get("back").dispatch("click"); panel.choose(id); assert.equal(structuredControl(panel, "Number").value, "j");
+  assert.deepEqual(visibleStructuredErrors(panel), ["Enter a number."]);
+});
+
+test("IF explicitly distinguishes entered Status text from Cell in this row after wording polish", () => {
+  const panel = setupExtension(); switchLibrary(panel, "common"); panel.choose("ifCondition");
+  editStructured(panel, "First value type", "textLiteral"); editStructured(panel, "Text", "Status");
+  editStructured(panel, "Comparison", "="); editStructured(panel, "Second value type", "textLiteral"); editStructured(panel, "Text", "Complete", 1);
+  editStructured(panel, "True output type", "textLiteral"); editStructured(panel, "Text", "Yes", 2);
+  assert.equal(panel.get("formula-output").value, '=IF("Status" = "Complete", "Yes")');
+  editStructured(panel, "First value type", "cellRef"); editStructured(panel, "Current-row column", "Status");
+  assert.equal(panel.get("formula-output").value, '=IF([Status]@row = "Complete", "Yes")');
+});
+
+function batch5Comparison(panel, template = false, index = 0) {
+  editStructured(panel, template ? "Source cell type" : "First value type", "cellRef", index);
+  editStructured(panel, "Current-row column", "Status", index);
+  editStructured(panel, "Comparison", "=", index);
+  editStructured(panel, template ? "Match value type" : "Second value type", "textLiteral", index);
+  editStructured(panel, "Text", "Complete", index);
+}
+for (const config of batch5.formulas) test(`Batch 5 production form, exact example, Copy and Back: ${config.id}`, async () => {
+  const copied = [], raw = [];
+  const panel = setupExtension({ clipboard: { writeText: async value => copied.push(value) } }, {}, core => {
+    const generate = core.generateFormula;
+    core.generateFormula = (id, values) => { raw.push(JSON.parse(JSON.stringify(values))); return generate(id, values); };
+  });
+  switchLibrary(panel, "common"); panel.choose(config.id);
+  assert.equal(panel.get("build-title").textContent, config.label);
+  assert.equal(panel.get("copy").disabled, true); assert.deepEqual(visibleStructuredErrors(panel), []);
+  assertCommonGuidance(panel, config.id);
+  const expectedDefaults = config.id === "flagDuplicateValues" ? { ignoreBlank: true } : config.id === "combineTwoColumns" ? { separator: " - ", suppressBlank: true } : {};
+  assert.deepEqual(raw.at(-1), expectedDefaults);
+  if (["andConditions", "orConditions"].includes(config.id)) {
+    assert.equal(descendants(panel.get("fields")).filter(node => node.tagName === "select").length, 0);
+    batch5Button(panel, "Add Condition").dispatch("click");
+    assert.deepEqual(raw.at(-1), { conditions: [{}] });
+    assert.equal(panel.document.activeElement, structuredControl(panel, "First value type"));
+    batch5Comparison(panel);
+  } else if (config.id === "flagDuplicateValues") {
+    editStructured(panel, "Column to check type", "columnRef"); editStructured(panel, "Whole column", "Item ID");
+  }
+  else if (config.id === "combineTwoColumns") {
+    editStructured(panel, "First cell type", "cellRef"); editStructured(panel, "Second cell type", "cellRef");
+    editStructured(panel, "Current-row column", "First Value", 0);
+    editStructured(panel, "Current-row column", "Second Value", 1);
+  } else {
+    batch5Comparison(panel, ["checkboxWhenValueMatches", "returnTextWhenValueMatches"].includes(config.id));
+    if (config.id === "returnTextWhenValueMatches") editStructured(panel, "Match text", "Done");
+    if (config.id === "ifCondition") { editStructured(panel, "True output type", "textLiteral"); editStructured(panel, "Text", "Yes", 1); }
+  }
+  const example = batch5.cases.find(entry => entry.formulaType === config.id && entry.name === "representative");
+  assert.deepEqual(raw.at(-1), example.rawValues);
+  assert.equal(panel.get("formula-output").value, example.expected.formula);
+  assert.equal(panel.get("copy").disabled, false);
+  panel.get("copy").dispatch("click"); await tick(); assert.deepEqual(copied, [example.expected.formula]);
+  assert.equal(panel.get("references").textContent, "");
+  const controls = descendants(panel.get("fields")).filter(node => ["input", "select"].includes(node.tagName)).map(node => [node.id, node.value]);
+  panel.get("back").dispatch("click"); panel.choose(config.id);
+  assert.equal(panel.get("formula-output").value, example.expected.formula);
+  assert.deepEqual(descendants(panel.get("fields")).filter(node => ["input", "select"].includes(node.tagName)).map(node => [node.id, node.value]), controls);
+  assert.doesNotMatch(JSON.stringify(raw), /"rowKey"|"uiState"|"nextKey"|"touched"|"r\d+"/);
+});
+
+test("Batch 5 optional outputs preserve omission, empty text, Blank and pending Boolean", () => {
+  const raw = [], panel = setupExtension({}, {}, core => {
+    const generate = core.generateFormula; core.generateFormula = (id, values) => { raw.push(JSON.parse(JSON.stringify(values))); return generate(id, values); };
+  });
+  switchLibrary(panel, "common"); panel.choose("ifCondition"); batch5Comparison(panel);
+  editStructured(panel, "True output type", "blank");
+  assert.equal(panel.get("formula-output").value, '=IF([Status]@row = "Complete", "")');
+  const include = () => structuredControl(panel, "Include False output");
+  include().checked = true; include().dispatch("change");
+  assert.equal(panel.get("copy").disabled, true); assert.deepEqual(raw.at(-1).falseOutput, {});
+  editStructured(panel, "False output type", "textLiteral");
+  assert.equal(panel.get("formula-output").value, '=IF([Status]@row = "Complete", "", "")');
+  editStructured(panel, "False output type", "boolean");
+  assert.deepEqual(raw.at(-1).falseOutput, { type: "boolean" }); assert.equal(panel.get("copy").disabled, true);
+  editStructured(panel, "Boolean", "false");
+  assert.equal(panel.get("formula-output").value, '=IF([Status]@row = "Complete", "", 0)');
+  include().checked = false; include().dispatch("change"); assert.equal(Object.hasOwn(raw.at(-1), "falseOutput"), false);
+  include().checked = true; include().dispatch("change"); assert.deepEqual(raw.at(-1).falseOutput, {});
+  assert.deepEqual(visibleStructuredErrors(panel), []);
+  editStructured(panel, "False output type", "blank"); assert.deepEqual(raw.at(-1).falseOutput, { type: "blank" });
+  panel.get("back").dispatch("click"); panel.choose("returnTextWhenValueMatches"); batch5Comparison(panel, true); editStructured(panel, "Match text", "Done");
+  const textInclude = structuredControl(panel, "Include No-match text"); textInclude.checked = true; textInclude.dispatch("change");
+  assert.equal(panel.get("formula-output").value, '=IF([Status]@row = "Complete", "Done", "")');
+  editStructured(panel, "No-match text", "Old"); textInclude.checked = false; textInclude.dispatch("change");
+  assert.equal(Object.hasOwn(raw.at(-1), "noMatchText"), false);
+  textInclude.checked = true; textInclude.dispatch("change"); assert.equal(raw.at(-1).noMatchText, "");
+});
+
+test("Batch 5 comparison group errors follow touched descendants and type switches discard stale state", () => {
+  const raw = [], panel = setupExtension({}, {}, core => {
+    const generate = core.generateFormula; core.generateFormula = (id, values) => { raw.push(JSON.parse(JSON.stringify(values))); return generate(id, values); };
+  });
+  switchLibrary(panel, "common"); panel.choose("notCondition"); batch5Comparison(panel);
+  const operator = editStructured(panel, "Comparison", ">");
+  assert.equal(panel.get("copy").disabled, true);
+  assert.ok(visibleStructuredErrors(panel).some(text => text.includes("Ordered comparisons")));
+  const group = descendants(panel.get("fields")).find(node => node.tagName === "fieldset" && node.getAttribute("aria-invalid") === "true");
+  assert.ok(group); assert.ok(group.getAttribute("aria-describedby"));
+  assert.equal(panel.document.activeElement, operator);
+  editStructured(panel, "Second value type", "number"); editStructured(panel, "Number", "-");
+  assert.deepEqual(raw.at(-1).condition.right, { type: "number", value: "-" });
+  editStructured(panel, "Second value type", "boolean");
+  assert.deepEqual(raw.at(-1).condition.right, { type: "boolean" });
+  assert.ok(!visibleStructuredErrors(panel).some(text => /decimal/.test(text)));
+  editStructured(panel, "Comparison", "="); editStructured(panel, "Boolean", "false");
+  assert.equal(panel.get("formula-output").value, '=NOT([Status]@row = 0)');
+  editStructured(panel, "Second value type", "blank");
+  assert.deepEqual(raw.at(-1).condition.right, { type: "blank" });
+  assert.equal(panel.get("formula-output").value, '=NOT([Status]@row = "")');
+});
+
+for (const id of ["andConditions", "orConditions"]) test(`Batch 5 repeatable identity, error reindexing, minimum and focus: ${id}`, () => {
+  const panel = setupExtension(); switchLibrary(panel, "common"); panel.choose(id);
+  const add = () => batch5Button(panel, "Add Condition");
+  const remove = index => descendants(panel.get("fields")).find(node => node.getAttribute("aria-label") === `Remove Condition ${index}`);
+  add().dispatch("click"); batch5Comparison(panel);
+  assert.equal(remove(1).disabled, true);
+  const first = structuredControl(panel, "First value type"), valid = panel.get("formula-output").value;
+  add().dispatch("click"); batch5Comparison(panel, false, 1);
+  add().dispatch("click"); const third = structuredControl(panel, "First value type", 2);
+  third.dispatch("blur"); assert.ok(visibleStructuredErrors(panel).length); assert.equal(panel.get("copy").disabled, true);
+  remove(2).dispatch("click");
+  assert.equal(structuredControl(panel, "First value type", 0), first);
+  assert.equal(structuredControl(panel, "First value type", 1), third);
+  assert.equal(panel.document.activeElement, third);
+  assert.ok(visibleStructuredErrors(panel).length);
+  remove(2).dispatch("click"); assert.equal(panel.document.activeElement, first);
+  assert.equal(panel.get("formula-output").value, valid); assert.equal(remove(1).disabled, true);
+  assert.deepEqual(visibleStructuredErrors(panel), []);
+  add().dispatch("click"); assert.notEqual(structuredControl(panel, "First value type", 1).id, third.id);
+  assert.equal(structuredControl(panel, "First value type", 1).value, "");
+});
 
 for (const config of batch4.formulas) {
   test(`Batch 4 production repeatable startup, examples, Copy and Build/Back: ${config.id}`, async () => {
@@ -511,7 +696,7 @@ for (const config of batch4.formulas) {
       add().dispatch("click");
       assert.deepEqual(calls.at(-1).values.at(-1), {});
       assert.equal(panel.get("copy").disabled, true);
-      const kind = `Value ${index + 1} kind`;
+      const kind = `Value ${index + 1} type`;
       const selector = structuredControl(panel, kind);
       assert.equal(panel.document.activeElement, selector);
       assert.deepEqual(selector.children.map(option => option.value), ["", ...config.fields[0].items.allowedTypes]);
@@ -538,20 +723,20 @@ for (const config of batch4.formulas) {
     // An incomplete appended row must invalidate output while preserving earlier rows.
     add().dispatch("click");
     const extraIndex = example.rawValues.values.length + 1;
-    const extra = structuredControl(panel, `Value ${extraIndex} kind`);
+    const extra = structuredControl(panel, `Value ${extraIndex} type`);
     extra.dispatch("blur");
     assert.equal(panel.get("formula-output").value, ""); assert.equal(panel.get("copy").disabled, true);
     assert.ok(visibleStructuredErrors(panel).length);
-    const firstId = structuredControl(panel, "Value 1 kind").id;
+    const firstId = structuredControl(panel, "Value 1 type").id;
     panel.get("back").dispatch("click"); panel.choose(config.id);
-    assert.equal(structuredControl(panel, "Value 1 kind").id, firstId);
-    assert.equal(structuredControl(panel, `Value ${extraIndex} kind`).id, extra.id);
+    assert.equal(structuredControl(panel, "Value 1 type").id, firstId);
+    assert.equal(structuredControl(panel, `Value ${extraIndex} type`).id, extra.id);
     assert.ok(visibleStructuredErrors(panel).length);
     remove(extraIndex).dispatch("click");
     assert.equal(panel.get("formula-output").value, example.expected.formula);
     assert.deepEqual(visibleStructuredErrors(panel), []);
     // Switch the first row through both reference scopes, clearing obsolete members.
-    editStructured(panel, "Value 1 kind", "rangeRef");
+    editStructured(panel, "Value 1 type", "rangeRef");
     editStructured(panel, "Value 1 scope", "currentSheet");
     editStructured(panel, "Start column", " Low "); editStructured(panel, "End column", " High ");
     assert.deepEqual(calls.at(-1).values[0], { type: "rangeRef", scope: "currentSheet", startColumn: " Low ", endColumn: " High " });
@@ -561,7 +746,7 @@ for (const config of batch4.formulas) {
     editStructured(panel, "Reference name", "{{ Costs }}");
     assert.ok(panel.get("formula-output").value.startsWith(`=${config.label}({Costs}`));
     if (config.fields[0].items.allowedTypes.includes("number")) {
-      editStructured(panel, "Value 1 kind", "number"); editStructured(panel, "Number", "-");
+      editStructured(panel, "Value 1 type", "number"); editStructured(panel, "Number", "-");
       assert.equal(panel.get("copy").disabled, true);
       assert.deepEqual(calls.at(-1).values[0], { type: "number", value: "-" });
       editStructured(panel, "Number", " 0012.500 ");
@@ -573,7 +758,7 @@ for (const config of batch4.formulas) {
       assert.equal(structuredControl(panel, "Reference name").value, "{{ Costs }}");
     }
     assert.equal(panel.get("copy").disabled, false);
-    assert.equal(structuredControl(panel, "Value 1 kind").id, firstId);
+    assert.equal(structuredControl(panel, "Value 1 type").id, firstId);
     assert.doesNotMatch(JSON.stringify(calls), /"rowKey"|"uiState"|"nextKey"|"touched"|"r\d+"/);
     assert.deepEqual(panel.themeWrites, []);
   });
@@ -582,7 +767,7 @@ for (const config of batch4.formulas) {
 test("all production Common formulas validate immediately but initially display no inline errors", () => {
   const panel = setupExtension();
   switchLibrary(panel, "common");
-  for (const config of [...batch1.formulas, ...batch2.formulas, ...batch3.formulas, ...batch4.formulas]) {
+  for (const config of [...batch1.formulas, ...batch2.formulas, ...batch3.formulas, ...batch4.formulas, ...batch5.formulas]) {
     panel.choose(config.id);
     assert.equal(panel.core.generateFormula(config.id, {}).validationErrors.length > 0, config.id !== "todayDate");
     assertCommonGuidance(panel, config.id);
@@ -609,10 +794,10 @@ test("required blur reveals only that Common field and deliberately restores tou
   start.focus();
   assert.deepEqual(visibleStructuredErrors(panel), []);
   start.dispatch("blur");
-  assert.deepEqual(visibleStructuredErrors(panel), ["Choose Start position."]);
+  assert.deepEqual(visibleStructuredErrors(panel), ["Choose a start position."]);
   assert.equal(start.getAttribute("aria-invalid"), "true");
   assert.equal(structuredControl(panel, "Number of characters").getAttribute("aria-invalid"), "false");
-  assert.equal(structuredControl(panel, "Text kind").getAttribute("aria-invalid"), "false");
+  assert.equal(structuredControl(panel, "Text type").getAttribute("aria-invalid"), "false");
   assert.deepEqual(calls.at(-1), {});
   editStructured(panel, "Start position", "-");
   assert.equal(start.getAttribute("aria-invalid"), "true");
@@ -623,9 +808,9 @@ test("required blur reveals only that Common field and deliberately restores tou
   editStructured(panel, "Start position", " 003 ");
   assert.deepEqual(visibleStructuredErrors(panel), []);
   assert.equal(panel.get("copy").disabled, true);
-  const kind = structuredControl(panel, "Text kind"); kind.focus(); kind.dispatch("blur");
-  assert.deepEqual(visibleStructuredErrors(panel), ["Choose Text."]);
-  editStructured(panel, "Text kind", "cellRef");
+  const kind = structuredControl(panel, "Text type"); kind.focus(); kind.dispatch("blur");
+  assert.deepEqual(visibleStructuredErrors(panel), ["Choose a text type."]);
+  editStructured(panel, "Text type", "cellRef");
   assert.deepEqual(visibleStructuredErrors(panel), []);
   const column = structuredControl(panel, "Current-row column"); column.focus(); column.dispatch("blur");
   assert.equal(column.getAttribute("aria-invalid"), "true");
@@ -637,7 +822,7 @@ test("required blur reveals only that Common field and deliberately restores tou
 test("optional inclusion stays clean until interaction and exclusion resets touched state", () => {
   const panel = setupExtension();
   switchLibrary(panel, "common"); panel.choose("rightText");
-  editStructured(panel, "Text kind", "textLiteral");
+  editStructured(panel, "Text type", "textLiteral");
   assert.equal(panel.get("copy").disabled, false);
   const include = structuredControl(panel, "Include Number of characters");
   include.checked = true; include.dispatch("change");
@@ -668,12 +853,12 @@ test("optional inclusion stays clean until interaction and exclusion resets touc
 test("interacted Common text and reference inputs retain exact validation and immediate correction", () => {
   const panel = setupExtension();
   switchLibrary(panel, "common"); panel.choose("containsText");
-  editStructured(panel, "Text to find kind", "textLiteral");
+  editStructured(panel, "Text to find type", "textLiteral");
   editStructured(panel, "Text", "\t");
   assert.deepEqual(visibleStructuredErrors(panel), ["Expected text without control characters."]);
   editStructured(panel, "Text", "x");
   assert.deepEqual(visibleStructuredErrors(panel), []);
-  editStructured(panel, "Cell or range to search kind", "rangeRef");
+  editStructured(panel, "Cell or range to search type", "rangeRef");
   editStructured(panel, "Cell or range to search scope", "crossSheet");
   assert.deepEqual(visibleStructuredErrors(panel), []);
   const reference = editStructured(panel, "Reference name", "{Broken");
@@ -711,7 +896,7 @@ for (const [id, literalFormula, cellFormula, emptyFormula] of batch2UiCases) {
     assert.equal(structuredControl(panel, "Text").value, " abc ");
     const fields = config.fields.filter(field => field.type === "textOperand");
     for (const field of fields) {
-      editStructured(panel, `${field.label} kind`, "cellRef");
+      editStructured(panel, `${field.label} type`, "cellRef");
       assert.deepEqual(calls.at(-1)[field.id], { type: "cellRef", column: "" });
     }
     fields.forEach((field, index) => editStructured(panel, "Current-row column", ` Column ${index + 1} `, index));
@@ -721,7 +906,7 @@ for (const [id, literalFormula, cellFormula, emptyFormula] of batch2UiCases) {
     panel.get("copy").dispatch("click"); await tick();
     assert.deepEqual(copied, [literalFormula, cellFormula]);
     for (const field of fields) {
-      editStructured(panel, `${field.label} kind`, "textLiteral");
+      editStructured(panel, `${field.label} type`, "textLiteral");
       assert.deepEqual(calls.at(-1)[field.id], { type: "textLiteral", value: "" });
     }
     assert.equal(panel.get("formula-output").value, emptyFormula);
@@ -795,9 +980,9 @@ test("production CONTAINS restricts targets and discards stale kind/scope member
   });
   await tick();
   switchLibrary(panel, "common"); panel.choose("containsText");
-  editStructured(panel, "Text to find kind", "textLiteral");
+  editStructured(panel, "Text to find type", "textLiteral");
   editStructured(panel, "Text", "{Reference}");
-  const kindLabel = "Cell or range to search kind";
+  const kindLabel = "Cell or range to search type";
   assert.deepEqual(structuredControl(panel, kindLabel).children.map(option => option.value), ["", "cellRef", "columnRef", "rangeRef"]);
   editStructured(panel, kindLabel, "columnRef"); editStructured(panel, "Whole column", " Notes ");
   assert.equal(panel.get("formula-output").value, '=CONTAINS("{Reference}", [Notes]:[Notes])');
@@ -860,13 +1045,13 @@ test("empty guidance fallback survives structured/Advanced navigation and contex
   panel.choose("syntheticStructured");
   assert.equal(panel.get("setup-details").hidden, true);
   assert.equal(panel.get("instructions-details").hidden, true);
-  editStructured(panel, "Range kind", "rangeRef");
+  editStructured(panel, "Range type", "rangeRef");
   editStructured(panel, "Range scope", "crossSheet");
   editStructured(panel, "Reference name", "Source");
   assert.equal(panel.get("setup-details").hidden, false);
   assert.equal(panel.get("instructions-details").hidden, true);
   assert.deepEqual(panel.get("references").children.map(node => node.textContent), ["{Source}"]);
-  editStructured(panel, "Range kind", "columnRef"); editStructured(panel, "Whole column", "Status");
+  editStructured(panel, "Range type", "columnRef"); editStructured(panel, "Whole column", "Status");
   assert.equal(panel.get("setup-details").hidden, true);
   panel.get("back").dispatch("click"); switchLibrary(panel, "advanced");
   panel.choose("appendFinishDateLabel");
@@ -887,8 +1072,8 @@ test("empty guidance fallback survives structured/Advanced navigation and contex
 test("production FIND empty search stays valid through clipboard failure and text escaping", async () => {
   const panel = setupExtension({ clipboard: { writeText: async () => { throw new Error("unavailable"); } } });
   switchLibrary(panel, "common"); panel.choose("findTextPosition");
-  editStructured(panel, "Text to find kind", "textLiteral");
-  editStructured(panel, "Text to search kind", "textLiteral");
+  editStructured(panel, "Text to find type", "textLiteral");
+  editStructured(panel, "Text to search type", "textLiteral");
   editStructured(panel, "Text", "abc", 1);
   assert.equal(panel.get("formula-output").value, '=FIND("", "abc")');
   assert.equal(panel.get("copy").disabled, false);

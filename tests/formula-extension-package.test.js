@@ -12,6 +12,7 @@ const batch1 = require("./fixtures/formula-common-batch1-cases.json");
 const batch2 = require("./fixtures/formula-common-batch2-cases.json");
 const batch3 = require("./fixtures/formula-common-batch3-cases.json");
 const batch4 = require("./fixtures/formula-common-batch4-cases.json");
+const batch5 = require("./fixtures/formula-common-batch5-cases.json");
 const root = path.resolve(__dirname, "..");
 
 test("packaged UI sorts, restores raw work and clears only workspace storage", async t => {
@@ -21,9 +22,9 @@ test("packaged UI sorts, restores raw work and clears only workspace storage", a
   const tick = () => new Promise(resolve => setImmediate(resolve));
   const p = setupExtension({}, { saved: "dark" }, () => {}, () => {}, { directory, store: { sentinel: "keep" } });
   p.get("library-common").checked = true; p.get("library-common").dispatch("change");
-  assert.deepEqual(p.choices().map(b => p.get(b.getAttribute("aria-labelledby")).textContent), "ABS AVG CEILING CONTAINS COUNT COUNTM DATE FIND FLOOR INT ISBLANK LEFT LEN LOWER MAX MEDIAN MID MIN REPLACE RIGHT ROUND ROUNDDOWN ROUNDUP SUBSTITUTE SUM TODAY UPPER VALUE".split(" "));
+  assert.deepEqual(p.choices().map(b => p.get(b.getAttribute("aria-labelledby")).textContent), ["ABS", "AND — Check Whether All Conditions Are True", "AVG", "CEILING", "Checkbox When Value Matches", "Combine Two Columns with Separator", "CONTAINS", "COUNT", "COUNTM", "DATE", "FIND", "Flag Duplicate Values", "FLOOR", "IF — Return a Value Based on a Condition", "INT", "ISBLANK", "LEFT", "LEN", "LOWER", "MAX", "MEDIAN", "MID", "MIN", "NOT — Reverse a True/False Condition", "OR — Check Whether Any Condition Is True", "REPLACE", "Return Text When Value Matches", "RIGHT", "ROUND", "ROUNDDOWN", "ROUNDUP", "SUBSTITUTE", "SUM", "TODAY", "UPPER", "VALUE"]);
   p.choose("sumValues"); descendants(p.get("fields")).find(n => n.textContent === "Add Value" && n.tagName === "button").dispatch("click");
-  editStructured(p, "Value 1 kind", "number"); editStructured(p, "Number", "0001.2300"); await tick();
+  editStructured(p, "Value 1 type", "number"); editStructured(p, "Number", "0001.2300"); await tick();
   const q = setupExtension({}, {}, () => {}, () => {}, { directory, store: p.store });
   assert.equal(structuredControl(q, "Number").value, "0001.2300"); assert.equal(q.get("formula-output").value, "=SUM(1.23)");
   q.get("clear-work").dispatch("click"); await tick();
@@ -56,10 +57,10 @@ test("copy-only package has exactly the allowlisted files and byte-identical can
   for (const file of packageFiles) assert.ok(fs.readFileSync(path.join(directory, file.target)).equals(fs.readFileSync(path.join(root, file.source))));
   const context = vm.createContext({});
   for (const name of coreScripts) vm.runInContext(fs.readFileSync(path.join(directory, `core/${name}.js`), "utf8"), context);
-  assert.equal(Object.keys(context.SmartsheetFormulaBuilder.catalog).length, 54);
+  assert.equal(Object.keys(context.SmartsheetFormulaBuilder.catalog).length, 62);
   assert.equal(Object.values(context.SmartsheetFormulaBuilder.catalog).filter(config => config.libraryId === "advanced" && !config.inputContract).length, 26);
   assert.ok(Object.isFrozen(context.SmartsheetFormulaBuilder.commonBuilders.registry));
-  assert.deepEqual(Object.keys(context.SmartsheetFormulaBuilder.commonBuilders.registry), ["decimalRounding", "multipleRounding", "unaryNumeric", "textSlice", "textUnary", "textSearch", "textReplace", "todayOffset", "dateConstructor", "booleanTest", "variadicAggregate"]);
+  assert.deepEqual(Object.keys(context.SmartsheetFormulaBuilder.commonBuilders.registry), ["decimalRounding", "multipleRounding", "unaryNumeric", "textSlice", "textUnary", "textSearch", "textReplace", "todayOffset", "dateConstructor", "booleanTest", "variadicAggregate", "comparisonReturn", "duplicateFlag", "textCombine", "booleanGroup"]);
   for (const entry of generalizedFixtures.cases) {
     assert.equal(context.SmartsheetFormulaBuilder.generateFormula(entry.formulaType, entry.rawValues).formula, entry.expected.formula);
     assert.deepEqual(JSON.parse(JSON.stringify(context.SmartsheetFormulaBuilder.generateFormula(entry.formulaType, entry.rawValues))), entry.expected);
@@ -67,8 +68,8 @@ test("copy-only package has exactly the allowlisted files and byte-identical can
   for (const entry of currentLegacyFixtures.cases) {
     assert.deepEqual(JSON.parse(JSON.stringify(context.SmartsheetFormulaBuilder.generateFormula(entry.formulaType, entry.rawValues))), entry.expected);
   }
-  assert.deepEqual(Object.values(context.SmartsheetFormulaBuilder.catalog).filter(config => config.libraryId === "common").map(config => config.id), [...batch1.formulas, ...batch2.formulas, ...batch3.formulas, ...batch4.formulas].map(config => config.id));
-  for (const batch of [batch1, batch2, batch3, batch4]) for (const entry of batch.cases) {
+  assert.deepEqual(Object.values(context.SmartsheetFormulaBuilder.catalog).filter(config => config.libraryId === "common").map(config => config.id), [...batch1.formulas, ...batch2.formulas, ...batch3.formulas, ...batch4.formulas, ...batch5.formulas].map(config => config.id));
+  for (const batch of [batch1, batch2, batch3, batch4, batch5]) for (const entry of batch.cases) {
     assert.deepEqual(JSON.parse(JSON.stringify(context.SmartsheetFormulaBuilder.generateFormula(entry.formulaType, entry.rawValues))), {
       formulaType: entry.formulaType, explanation: batch.formulas.find(config => config.id === entry.formulaType).explanation,
       ...entry.expected, missingFields: [], ...commonGuidance[entry.formulaType]

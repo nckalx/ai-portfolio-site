@@ -292,5 +292,96 @@
       "Select Add Value for each additional input. Use Remove to delete an extra row; at least one complete row is required.",
       "Copy the formula to the cell where you want the median."
     ]
+  },
+  "checkboxWhenValueMatches": {
+    "setupNotes": [
+      "Use a source column in the current sheet. No cross-sheet reference is needed.",
+      "Use a separate Checkbox, Flag, or Star destination column."
+    ],
+    "instructions": [
+      "Choose the source cell, operator, and match value kind, then complete the value.",
+      "The formula returns 1 when the comparison is true and 0 otherwise.",
+      "For ordered comparisons, use numeric or date values and compatible source data. The builder cannot infer source column types."
+    ]
+  },
+  "returnTextWhenValueMatches": {
+    "setupNotes": [
+      "Use a source column in the current sheet and a separate Text/Number destination column. No cross-sheet reference is needed."
+    ],
+    "instructions": [
+      "Complete one comparison and enter the text to return when it matches.",
+      "Include No-match text to supply another result; an included empty value writes an explicit empty-string result.",
+      "Leave No-match text excluded to omit the false argument.",
+      "For ordered comparisons, use numeric or date values and compatible source data. The builder cannot infer source column types."
+    ]
+  },
+  "flagDuplicateValues": {
+    "setupNotes": [
+      "Choose one source column in the current sheet. The formula checks that whole column.",
+      "Use a separate Checkbox, Flag, or Star destination column. No cross-sheet reference is needed."
+    ],
+    "instructions": [
+      "Choose whether to ignore blank values.",
+      "The formula flags a value when native COUNTIF finds it more than once.",
+      "Matching follows Smartsheet's native behavior; this builder does not normalize case or formatting."
+    ]
+  },
+  "combineTwoColumns": {
+    "setupNotes": [
+      "Choose two source columns in the current sheet and use a separate Text/Number destination column. No cross-sheet reference is needed.",
+      "This builder does not format dates or other cell types."
+    ],
+    "instructions": [
+      "Enter the separator, or leave its value empty to combine without separator text.",
+      "Keep blank suppression True to omit the separator when either source is blank.",
+      "Set it to False to concatenate both cells with the separator every time."
+    ]
+  },
+  "ifCondition": {
+    "setupNotes": [
+      "Use current-row cells or entered values. No cross-sheet reference is needed.",
+      "Choose a destination column compatible with the values returned, and avoid referencing the destination itself."
+    ],
+    "instructions": [
+      "Complete one comparison, then choose and complete True output.",
+      "Include False output to provide a third argument.",
+      "Choose Blank for an explicit empty-string argument, or exclude False output to omit it.",
+      "Ordered comparisons require numbers or dates of the same kind, or current-row cells containing compatible values. The builder cannot infer source column types."
+    ]
+  },
+  "andConditions": {
+    "setupNotes": [
+      "Use current-row cells or entered values. No cross-sheet reference is needed.",
+      "Use a separate Checkbox destination for the logical result."
+    ],
+    "instructions": [
+      "Select Add Condition and complete its left operand, operator, and right operand.",
+      "Add more conditions as needed; every condition must be complete.",
+      "AND is true when all configured conditions are true. At least one condition is required.",
+      "Ordered comparisons require numbers or dates of the same kind, or current-row cells containing compatible values. The builder cannot infer source column types."
+    ]
+  },
+  "orConditions": {
+    "setupNotes": [
+      "Use current-row cells or entered values. No cross-sheet reference is needed.",
+      "Use a separate Checkbox destination for the logical result."
+    ],
+    "instructions": [
+      "Select Add Condition and complete all three parts.",
+      "Add alternatives as separate conditions; every configured row must be complete.",
+      "OR is true when at least one configured condition is true. At least one condition is required.",
+      "Ordered comparisons require numbers or dates of the same kind, or current-row cells containing compatible values. The builder cannot infer source column types."
+    ]
+  },
+  "notCondition": {
+    "setupNotes": [
+      "Use current-row cells or entered values. No cross-sheet reference is needed.",
+      "Use a separate Checkbox destination for the logical result."
+    ],
+    "instructions": [
+      "Complete one comparison.",
+      "NOT reverses that comparison's logical result.",
+      "Ordered comparisons require numbers or dates of the same kind, or current-row cells containing compatible values. The builder cannot infer source column types."
+    ]
   }
 }

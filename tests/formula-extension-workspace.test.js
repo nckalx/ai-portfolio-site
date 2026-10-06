@@ -18,6 +18,78 @@ async function restore(saved, options = {}, before) {
   const p = panel({ ...options, get: () => Promise.resolve({ [key]: saved }) }, {}, before); await tick(); return p;
 }
 
+const batch5 = require("./fixtures/formula-common-batch5-cases.json");
+const batch5Condition = { left: { type: "cellRef", column: "Status" }, operator: "=", right: { type: "textLiteral", value: "Complete" } };
+async function savedBatch5(id, values) {
+  const p = panel(); library(p, "common");
+  p.get("category").value = id === "combineTwoColumns" ? "text-labels" : "logic-conditions"; p.get("category").dispatch("change");
+  p.choose(id); await tick();
+  const saved = clone(p.store[key]); saved.drafts[id].values = clone(values); return saved;
+}
+const batch5RoundTrips = batch5.formulas.flatMap(config => {
+  const entries = batch5.cases.filter(entry => entry.formulaType === config.id);
+  return [entries.find(e => e.name === "representative"), entries.find(e => e.name === "empty input")];
+}).map(entry => [entry.formulaType, entry.name, entry.rawValues, entry.expected.formula]);
+batch5RoundTrips.push(
+  ["ifCondition", "explicit Blank false", { condition: batch5Condition, trueOutput: { type: "boolean", value: false }, falseOutput: { type: "blank" } }, '=IF([Status]@row = "Complete", 0, "")'],
+  ["ifCondition", "empty false text", { condition: batch5Condition, trueOutput: { type: "blank" }, falseOutput: { type: "textLiteral", value: "" } }, '=IF([Status]@row = "Complete", "", "")'],
+  ["ifCondition", "unfinished included false", { condition: batch5Condition, trueOutput: { type: "blank" }, falseOutput: {} }, null],
+  ["returnTextWhenValueMatches", "included empty", { condition: batch5Condition, matchText: " Yes ", noMatchText: "" }, '=IF([Status]@row = "Complete", " Yes ", "")'],
+  ["returnTextWhenValueMatches", "included whitespace", { condition: batch5Condition, matchText: "Yes", noMatchText: "  " }, '=IF([Status]@row = "Complete", "Yes", "  ")'],
+  ["flagDuplicateValues", "pending setting", { column: { type: "columnRef", column: " Item ID " }, ignoreBlank: "" }, null],
+  ["combineTwoColumns", "pending setting", { first: { type: "cellRef", column: "First" }, second: { type: "cellRef", column: "Second" }, separator: "", suppressBlank: "" }, null],
+  ["notCondition", "pending operator", { condition: { ...batch5Condition, operator: "" } }, null],
+  ["notCondition", "raw invalid number", { condition: { ...batch5Condition, right: { type: "number", value: "  1. " } } }, null],
+  ["notCondition", "raw invalid date", { condition: { ...batch5Condition, right: { type: "date", value: "2026-" } } }, null],
+  ["checkboxWhenValueMatches", "pending Boolean", { condition: { ...batch5Condition, right: { type: "boolean" } } }, null],
+  ["notCondition", "incompatible ordered pair", { condition: { ...batch5Condition, operator: ">" } }, null],
+  ["andConditions", "ordered raw rows", { conditions: [batch5Condition, { left: { type: "number", value: "0001.20" }, operator: ">", right: { type: "number", value: "0" } }, batch5Condition] }, '=AND([Status]@row = "Complete", 1.2 > 0, [Status]@row = "Complete")'],
+  ["orConditions", "incomplete alternative", { conditions: [batch5Condition, {}] }, null]
+);
+for (const [id, name, values, formula] of batch5RoundTrips) test(`Batch 5 workspace raw round trip: ${id}: ${name}`, async () => {
+  const q = await restore(await savedBatch5(id, values));
+  assert.equal(q.get("build-view").hidden, false); assert.equal(q.get("build-title").textContent, batch5.formulas.find(c => c.id === id).label);
+  assert.equal(q.get("formula-output").value, formula || ""); assert.equal(q.get("copy").disabled, formula === null);
+  assert.equal(q.get("validation").textContent, "");
+  assert.ok(descendants(q.get("fields")).every(node => node.getAttribute("aria-invalid") !== "true"));
+  q.get("back").dispatch("click"); await tick();
+  assert.deepEqual(q.store[key].drafts[id].values, values);
+  assert.equal(q.get("category").value, id === "combineTwoColumns" ? "text-labels" : "logic-conditions");
+  assert.doesNotMatch(JSON.stringify(q.store[key]), /"touched"|"nextKey"|"rowKey"|"validationErrors"|"references"/);
+});
+
+for (const id of ["andConditions", "orConditions"]) test(`Batch 5 restored condition keys replace gaps and errors start untouched: ${id}`, async () => {
+  const p = await restore(await savedBatch5(id, { conditions: [batch5Condition, {}, {}] }));
+  const third = structuredControl(p, "First value type", 2);
+  third.dispatch("blur"); assert.notEqual(p.get("validation").textContent, "");
+  descendants(p.get("fields")).filter(node => node.tagName === "button" && node.textContent === "Remove")[1].dispatch("click");
+  assert.equal(structuredControl(p, "First value type", 1), third); await tick();
+  assert.deepEqual(p.store[key].drafts[id].values.conditions, [batch5Condition, {}]);
+  const q = await restore(p.store[key]);
+  assert.notEqual(structuredControl(q, "First value type", 1).id, third.id);
+  assert.equal(q.get("validation").textContent, ""); assert.equal(q.get("copy").disabled, true);
+});
+
+test("Batch 5 Logic category persists in Common and resolves away in Advanced", async () => {
+  const p = await restore(await savedBatch5("notCondition", { condition: batch5Condition }));
+  p.get("back").dispatch("click"); search(p, "  CONDITION "); await tick();
+  const q = await restore(p.store[key]);
+  assert.equal(q.get("search").value, "  CONDITION "); assert.equal(q.get("category").value, "logic-conditions");
+  library(q, "advanced"); assert.equal(q.get("category").value, "");
+  assert.ok(q.get("category").children.every(node => node.value !== "logic-conditions"));
+});
+
+test("Clear work removes all eight Batch 5 drafts alongside prior Common and Advanced work", async () => {
+  const p = panel({ store: { sentinel: "keep" }, confirm: () => true }, { saved: "dark" });
+  p.choose("appendFinishDateLabel"); rawEdit(p, "milestoneLabelColumn", "Saved"); p.get("back").dispatch("click"); library(p, "common");
+  for (const id of ["roundValue", "leftText", "todayDate", "sumValues", ...batch5.formulas.map(c => c.id)]) { p.choose(id); p.get("back").dispatch("click"); }
+  await tick(); assert.equal(Object.keys(p.store[key].drafts).length, 13);
+  p.get("clear-work").dispatch("click"); await tick();
+  assert.equal(p.store[key], undefined); assert.equal(p.store.theme, "dark"); assert.equal(p.store.sentinel, "keep");
+  assert.equal(p.get("library-advanced").checked, true); assert.equal(p.get("category").value, ""); assert.equal(p.get("search").value, "");
+  library(p, "common"); p.choose("ifCondition"); assert.equal(p.get("formula-output").value, ""); assert.equal(p.get("copy").disabled, true);
+});
+
 test("empty store hydrates without writing and retains fresh Advanced discovery", async () => {
   const p = panel({ get: async () => ({}) });
   assert.equal(p.get("workspace").inert, true); assert.equal(p.get("clear-work").disabled, true);
@@ -37,9 +109,9 @@ test("Common restore keeps raw rows, regenerates keys, starts untouched and gene
   assert.equal(structuredControl(p, "Number").value, " 0001.2300 ");
   assert.equal(p.get("validation").textContent, ""); assert.equal(p.get("copy").disabled, true);
   assert.equal(p.generationCount(), 1); assert.deepEqual(p.workspaceWrites, []);
-  assert.equal(structuredControl(p, "Value 2 kind").value, "");
+  assert.equal(structuredControl(p, "Value 2 type").value, "");
   button(p, "Add Value").dispatch("click");
-  editStructured(p, "Value 3 kind", "number"); editStructured(p, "Number", "-", 1);
+  editStructured(p, "Value 3 type", "number"); editStructured(p, "Number", "-", 1);
   const removes = descendants(p.get("fields")).filter(node => node.tagName === "button" && node.textContent === "Remove");
   removes[1].dispatch("click"); await tick();
   assert.deepEqual(p.store[key].drafts.sumValues.values.values, [saved.drafts.sumValues.values.values[0], { type: "number", value: "-" }]);
@@ -48,11 +120,11 @@ test("Common restore keeps raw rows, regenerates keys, starts untouched and gene
 
 test("fresh row sidecars replace prior gaps while same-document keys remain stable", async () => {
   const p = await restore(await savedSum([{}, {}, {}]));
-  const third = structuredControl(p, "Value 3 kind").id;
+  const third = structuredControl(p, "Value 3 type").id;
   descendants(p.get("fields")).filter(node => node.tagName === "button" && node.textContent === "Remove")[1].dispatch("click");
-  assert.equal(structuredControl(p, "Value 2 kind").id, third); await tick();
+  assert.equal(structuredControl(p, "Value 2 type").id, third); await tick();
   const reopened = await restore(p.store[key]);
-  assert.notEqual(structuredControl(reopened, "Value 2 kind").id, third);
+  assert.notEqual(structuredControl(reopened, "Value 2 type").id, third);
 });
 
 for (const raw of ["-", "1.", "000.00", "  +001.2300  ", "bad\nnumber"]) {
@@ -69,7 +141,7 @@ for (const raw of ["-", "1.", "000.00", "  +001.2300  ", "bad\nnumber"]) {
 test("multiple Common and Advanced drafts survive discovery view, filters and reopen", async () => {
   const p = panel(); p.choose("appendFinishDateLabel"); rawEdit(p, "milestoneLabelColumn", "  Raw Advanced  ");
   p.get("back").dispatch("click"); library(p, "common"); p.choose("sumValues");
-  button(p, "Add Value").dispatch("click"); editStructured(p, "Value 1 kind", "number"); editStructured(p, "Number", "0002.00");
+  button(p, "Add Value").dispatch("click"); editStructured(p, "Value 1 type", "number"); editStructured(p, "Number", "0002.00");
   p.get("back").dispatch("click"); p.choose("averageValues"); p.get("back").dispatch("click");
   p.get("category").value = "counts-calculations"; p.get("category").dispatch("change"); search(p, "  SuM \t"); await tick();
   assert.equal(p.store[key].view, "discovery"); assert.equal(p.store[key].formulaId, null);
@@ -106,14 +178,14 @@ test("current-sheet and cross-sheet raw drafts preserve row order and wrappers",
   const q = await restore(await savedSum(values));
   assert.equal(structuredControl(q, "Start column").value, " [Start] "); assert.equal(structuredControl(q, "Reference name").value, " {{ Totals }} ");
   editStructured(q, "Value 1 scope", "crossSheet"); editStructured(q, "Reference name", " {{ New }} ");
-  editStructured(q, "Value 2 kind", "number"); editStructured(q, "Number", "12"); await tick();
+  editStructured(q, "Value 2 type", "number"); editStructured(q, "Number", "12"); await tick();
   assert.deepEqual(q.store[key].drafts.sumValues.values.values, [{ type: "rangeRef", scope: "crossSheet", name: " {{ New }} " }, { type: "number", value: "12" }, {}]);
   const reopened = await restore(q.store[key]); assert.equal(structuredControl(reopened, "Reference name").value, " {{ New }} ");
 });
 
 test("synthetic nested criteria, optional text and raw date drafts survive without normalization", async () => {
   const p = panel({}, {}, installStructuredFixtures); library(p, "common"); p.choose("syntheticStructured");
-  editStructured(p, "Value kind", "date"); editStructured(p, "Date", "2026-");
+  editStructured(p, "Value type", "date"); editStructured(p, "Date", "2026-");
   const include = structuredControl(p, "Include Note"); include.checked = true; include.dispatch("change");
   editStructured(p, "Note", "  raw text  "); await tick();
   const q = await restore(p.store[key], {}, installStructuredFixtures);
@@ -220,7 +292,7 @@ test("two-second timeout releases workspace and ignores late read after edits", 
 
 test("write failure preserves work and retries on next meaningful event without touched-only saves", async () => {
   let fail = true; const p = panel({ set: async () => { if (fail) throw new Error("private draft"); } });
-  library(p, "common"); p.choose("sumValues"); button(p, "Add Value").dispatch("click"); editStructured(p, "Value 1 kind", "number"); editStructured(p, "Number", "-"); await tick();
+  library(p, "common"); p.choose("sumValues"); button(p, "Add Value").dispatch("click"); editStructured(p, "Value 1 type", "number"); editStructured(p, "Number", "-"); await tick();
   assert.match(p.get("workspace-status").textContent, /could not be saved/);
   assert.equal(structuredControl(p, "Number").value, "-"); const count = p.workspaceWrites.length;
   structuredControl(p, "Number").dispatch("blur"); await tick(); assert.equal(p.workspaceWrites.length, count);
@@ -245,7 +317,7 @@ test("Copy, focus, scroll, theme, guidance and touched-only blur do not save wor
   p.get("explanation-details").open = true; p.get("explanation-details").dispatch("toggle"); p.get("theme-toggle").dispatch("click"); await tick();
   assert.equal(p.workspaceWrites.length, count); assert.deepEqual(p.themeWrites, [{ theme: "dark" }]);
   p.get("back").dispatch("click"); library(p, "common"); p.choose("sumValues"); button(p, "Add Value").dispatch("click"); await tick();
-  const before = p.workspaceWrites.length; structuredControl(p, "Value 1 kind").dispatch("blur"); await tick(); assert.equal(p.workspaceWrites.length, before);
+  const before = p.workspaceWrites.length; structuredControl(p, "Value 1 type").dispatch("blur"); await tick(); assert.equal(p.workspaceWrites.length, before);
 });
 
 test("Clear work is a native named button left of theme in the shared action row", () => {

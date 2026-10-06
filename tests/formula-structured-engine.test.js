@@ -18,7 +18,7 @@ test("structured guidance faults throw before building even with incomplete sema
 for (const [id, expected] of Object.entries(commonGuidance)) {
   test(`Common guidance on complete/incomplete results remains independent: ${id}`, () => {
     const core = loadFormulaCore();
-    const batches = [require("./fixtures/formula-common-batch1-cases.json"), require("./fixtures/formula-common-batch2-cases.json"), require("./fixtures/formula-common-batch3-cases.json"), require("./fixtures/formula-common-batch4-cases.json")];
+    const batches = [require("./fixtures/formula-common-batch1-cases.json"), require("./fixtures/formula-common-batch2-cases.json"), require("./fixtures/formula-common-batch3-cases.json"), require("./fixtures/formula-common-batch4-cases.json"), require("./fixtures/formula-common-batch5-cases.json")];
     const success = batches.flatMap(batch => batch.cases).find(entry => entry.formulaType === id && entry.expected.formula !== null);
     for (const raw of [success.rawValues, id === "todayDate" ? { offsetDays: "-" } : {}]) {
       const result = core.generateFormula(id, raw);
@@ -128,7 +128,7 @@ test("fixtures do not mutate production catalog; Advanced malformed-input except
   const core = loadFormulaCore(), before = JSON.stringify(core.catalog);
   setup();
   assert.equal(JSON.stringify(core.catalog), before);
-  assert.equal(Object.keys(core.catalog).length, 54);
+  assert.equal(Object.keys(core.catalog).length, 62);
   assert.ok(Object.values(core.catalog).filter(entry => entry.libraryId === "advanced").every(entry => !Object.hasOwn(entry, "inputContract")));
   assert.throws(() => core.generateFormula("unknown", {}));
   for (const raw of [null, {}, { finishDateColumn: 1, milestoneLabelColumn: "Task" }]) assert.throws(() => core.generateFormula("appendFinishDateLabel", raw));

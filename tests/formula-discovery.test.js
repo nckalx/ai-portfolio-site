@@ -9,6 +9,7 @@ const batch1 = require("./fixtures/formula-common-batch1-cases.json");
 const batch2 = require("./fixtures/formula-common-batch2-cases.json");
 const batch3 = require("./fixtures/formula-common-batch3-cases.json");
 const batch4 = require("./fixtures/formula-common-batch4-cases.json");
+const batch5 = require("./fixtures/formula-common-batch5-cases.json");
 const { discoveryFixture, deepFreeze } = require("./helpers/formula-discovery-fixtures");
 const context = vm.createContext({});
 const core = loadFormulaCore(context);
@@ -18,7 +19,7 @@ const alphabetical = entries => [...entries].sort((a, b) => a.label.toLowerCase(
 const visible = alphabetical(Object.entries(availabilityFixture).filter(([, config]) => config.availability.extension).map(([id]) => core.catalog[id])).map(config => config.id);
 
 test("extension discovery sorts alphabetically and excludes exactly two formulas without changing the catalog", () => {
-  assert.equal(Object.keys(core.catalog).length, 54);
+  assert.equal(Object.keys(core.catalog).length, 62);
   assert.equal(find().length, 24);
   assert.deepEqual(find(), visible);
   assert.deepEqual(find("Multi-Line Task Assignment Label"), []);
@@ -87,7 +88,7 @@ const plain = value => JSON.parse(JSON.stringify(value));
 test("Common exact alphabet and every populated library/category/search stay sorted without source mutation", () => {
   const before = JSON.stringify(core.catalog), categoriesBefore = JSON.stringify(core.categories);
   const common = discover(core, "", "", "common");
-  assert.deepEqual(Array.from(common, c => c.label), "ABS AVG CEILING CONTAINS COUNT COUNTM DATE FIND FLOOR INT ISBLANK LEFT LEN LOWER MAX MEDIAN MID MIN REPLACE RIGHT ROUND ROUNDDOWN ROUNDUP SUBSTITUTE SUM TODAY UPPER VALUE".split(" "));
+  assert.deepEqual(Array.from(common, c => c.label), ["ABS", "AND — Check Whether All Conditions Are True", "AVG", "CEILING", "Checkbox When Value Matches", "Combine Two Columns with Separator", "CONTAINS", "COUNT", "COUNTM", "DATE", "FIND", "Flag Duplicate Values", "FLOOR", "IF — Return a Value Based on a Condition", "INT", "ISBLANK", "LEFT", "LEN", "LOWER", "MAX", "MEDIAN", "MID", "MIN", "NOT — Reverse a True/False Condition", "OR — Check Whether Any Condition Is True", "REPLACE", "Return Text When Value Matches", "RIGHT", "ROUND", "ROUNDDOWN", "ROUNDUP", "SUBSTITUTE", "SUM", "TODAY", "UPPER", "VALUE"]);
   assert.equal(find().length, 24);
   for (const library of ["common", "advanced"]) for (const category of ["", ...core.categories.map(c => c.id)]) {
     for (const query of ["", "number", "count", "text", "no-match-xyz"]) {
@@ -114,28 +115,28 @@ test("production resolver retains Advanced and all five categories with Common a
   assert.equal(state.categoryId, "");
   assert.deepEqual(Array.from(state.availableLibraries), ["advanced", "common"]);
   assert.equal(state.availableCategories.length, 5);
-  assert.deepEqual(ids(state.availableCategories), ids(core.categories));
+  assert.deepEqual(ids(state.availableCategories), ids(core.categories).filter(id => id !== "logic-conditions"));
 });
 
-test("production Common discovery exposes all four batches, exact categories and every approved keyword", () => {
-  const expected = alphabetical([...batch1.formulas, ...batch2.formulas, ...batch3.formulas, ...batch4.formulas]).map(config => config.id);
+test("production Common discovery exposes all five batches, exact categories and every approved keyword", () => {
+  const expected = alphabetical([...batch1.formulas, ...batch2.formulas, ...batch3.formulas, ...batch4.formulas, ...batch5.formulas]).map(config => config.id);
   assert.deepEqual(ids(discover(core, "", "", "common")), expected);
   assert.deepEqual(ids(discover(core, "", "counts-calculations", "common")), alphabetical([...batch1.formulas, ...batch4.formulas]).map(config => config.id));
-  assert.deepEqual(ids(discover(core, "", "text-labels", "common")), alphabetical(batch2.formulas).map(config => config.id));
+  assert.deepEqual(ids(discover(core, "", "text-labels", "common")), alphabetical([...batch2.formulas, ...batch5.formulas.filter(c => c.categoryId === "text-labels")]).map(config => config.id));
   assert.deepEqual(ids(discover(core, "", "dates-status", "common")), ["dateFromParts", "isBlank", "todayDate"]);
   assert.deepEqual(ids(discover(core, "average", "counts-calculations", "common")), ["averageValues"]);
   assert.deepEqual(ids(discover(core, " DAYS from TODAY ", "dates-status", "common")), ["todayDate"]);
   assert.deepEqual(ids(discover(core, "checkbox", "dates-status", "common")), ["isBlank"]);
   assert.deepEqual(ids(discover(core, "year month day", "dates-status", "common")), ["dateFromParts"]);
-  assert.deepEqual(ids(resolve(core, { libraryId: "common" }).availableCategories), ["text-labels", "dates-status", "counts-calculations"]);
-  for (const config of [...batch1.formulas, ...batch2.formulas, ...batch3.formulas, ...batch4.formulas]) {
+  assert.deepEqual(ids(resolve(core, { libraryId: "common" }).availableCategories), ["text-labels", "dates-status", "counts-calculations", "logic-conditions"]);
+  for (const config of [...batch1.formulas, ...batch2.formulas, ...batch3.formulas, ...batch4.formulas, ...batch5.formulas]) {
     for (const query of [config.label, config.explanation, ...config.keywords]) {
       assert.ok(ids(discover(core, `  ${query.toUpperCase().replaceAll(" ", "  ")}  `, "", "common")).includes(config.id));
     }
     assert.deepEqual(ids(discover(core, config.id, "", "common")), config.id === "isBlank" ? ["isBlank"] : [], "ISBLANK also matches its public label; other internal IDs are not indexed");
     assert.ok(!find().includes(config.id));
   }
-  assert.equal(Object.values(core.catalog).filter(config => config.availability.extension).length, 52);
+  assert.equal(Object.values(core.catalog).filter(config => config.availability.extension).length, 60);
   assert.deepEqual(Object.values(core.catalog).filter(config => config.availability.portfolio).map(config => config.id), Object.keys(availabilityFixture));
 });
 

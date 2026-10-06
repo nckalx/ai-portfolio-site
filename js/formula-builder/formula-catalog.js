@@ -1794,6 +1794,129 @@
     }
   });
 
+  Object.assign(catalog, {
+    checkboxWhenValueMatches: {
+      id: "checkboxWhenValueMatches", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "Checkbox When Value Matches", explanation: "Return 1 when a current-row value matches one comparison, and 0 otherwise.",
+      inputContract: "structured-v1", builderKey: "comparisonReturn", builderOptions: { mode: "checkbox" },
+      guidance: {
+        setupNotes: ["Use a source column in the current sheet. No cross-sheet reference is needed.", "Use a separate Checkbox, Flag, or Star destination column."],
+        instructions: ["Choose the source cell, operator, and match value kind, then complete the value.", "The formula returns 1 when the comparison is true and 0 otherwise.", "For ordered comparisons, use numeric or date values and compatible source data. The builder cannot infer source column types."]
+      },
+      fields: [
+        { id: "condition", label: "Comparison", type: "object", required: true, fields: [
+          { id: "left", label: "Source cell", type: "cellRef", required: true },
+          { id: "operator", label: "Operator", type: "comparisonOperator", required: true },
+          { id: "right", label: "Match value", type: "typedOperand", required: true }
+        ] }
+      ],
+      categoryId: "logic-conditions", keywords: ["checkbox", "flag", "star", "value matches", "check when", "if"]
+    },
+    returnTextWhenValueMatches: {
+      id: "returnTextWhenValueMatches", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "Return Text When Value Matches", explanation: "Return entered text when a current-row value matches one comparison, with optional no-match text.",
+      inputContract: "structured-v1", builderKey: "comparisonReturn", builderOptions: { mode: "text" },
+      guidance: {
+        setupNotes: ["Use a source column in the current sheet and a separate Text/Number destination column. No cross-sheet reference is needed."],
+        instructions: ["Complete one comparison and enter the text to return when it matches.", "Include No-match text to supply another result; an included empty value writes an explicit empty-string result.", "Leave No-match text excluded to omit the false argument.", "For ordered comparisons, use numeric or date values and compatible source data. The builder cannot infer source column types."]
+      },
+      fields: [
+        { id: "condition", label: "Comparison", type: "object", required: true, fields: [
+          { id: "left", label: "Source cell", type: "cellRef", required: true },
+          { id: "operator", label: "Operator", type: "comparisonOperator", required: true },
+          { id: "right", label: "Match value", type: "typedOperand", required: true }
+        ] },
+        { id: "matchText", label: "Match text", type: "text", required: true },
+        { id: "noMatchText", label: "No-match text", type: "text", required: false }
+      ],
+      categoryId: "logic-conditions", keywords: ["if", "conditional text", "value matches", "status label", "match text", "no-match text"]
+    },
+    flagDuplicateValues: {
+      id: "flagDuplicateValues", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "Flag Duplicate Values", explanation: "Flag every value that native COUNTIF finds more than once in a selected column, optionally ignoring blanks.",
+      inputContract: "structured-v1", builderKey: "duplicateFlag", builderOptions: {},
+      guidance: {
+        setupNotes: ["Choose one source column in the current sheet. The formula checks that whole column.", "Use a separate Checkbox, Flag, or Star destination column. No cross-sheet reference is needed."],
+        instructions: ["Choose whether to ignore blank values.", "The formula flags a value when native COUNTIF finds it more than once.", "Matching follows Smartsheet's native behavior; this builder does not normalize case or formatting."]
+      },
+      fields: [
+        { id: "column", label: "Column to check", type: "columnRef", required: true },
+        { id: "ignoreBlank", label: "Ignore blank values", type: "boolean", required: true, defaultValue: true }
+      ],
+      categoryId: "logic-conditions", keywords: ["duplicates", "duplicate values", "repeated values", "countif", "checkbox", "flag"]
+    },
+    combineTwoColumns: {
+      id: "combineTwoColumns", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "Combine Two Columns with Separator", explanation: "Combine exactly two current-row cells with entered separator text, optionally suppressing the separator for blank cells.",
+      inputContract: "structured-v1", builderKey: "textCombine", builderOptions: {},
+      guidance: {
+        setupNotes: ["Choose two source columns in the current sheet and use a separate Text/Number destination column. No cross-sheet reference is needed.", "This builder does not format dates or other cell types."],
+        instructions: ["Enter the separator, or leave its value empty to combine without separator text.", "Keep blank suppression True to omit the separator when either source is blank.", "Set it to False to concatenate both cells with the separator every time."]
+      },
+      fields: [
+        { id: "first", label: "First cell", type: "cellRef", required: true },
+        { id: "second", label: "Second cell", type: "cellRef", required: true },
+        { id: "separator", label: "Separator", type: "text", required: true, defaultValue: " - " },
+        { id: "suppressBlank", label: "Suppress separator for blank cells", type: "boolean", required: true, defaultValue: true }
+      ],
+      categoryId: "text-labels", keywords: ["combine columns", "concatenate", "separator", "join text", "text label", "blank suppression"]
+    },
+    ifCondition: {
+      id: "ifCondition", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "IF — Return a Value Based on a Condition", explanation: "Return a chosen value when one comparison is true, with an optional false output.",
+      inputContract: "structured-v1", builderKey: "comparisonReturn", builderOptions: { mode: "typed" },
+      guidance: {
+        setupNotes: ["Use current-row cells or entered values. No cross-sheet reference is needed.", "Choose a destination column compatible with the values returned, and avoid referencing the destination itself."],
+        instructions: ["Complete one comparison, then choose and complete True output.", "Include False output to provide a third argument.", "Choose Blank for an explicit empty-string argument, or exclude False output to omit it.", "Ordered comparisons require numbers or dates of the same kind, or current-row cells containing compatible values. The builder cannot infer source column types."]
+      },
+      fields: [
+        { id: "condition", label: "Condition", type: "condition", required: true },
+        { id: "trueOutput", label: "True output", type: "outputOperand", required: true },
+        { id: "falseOutput", label: "False output", type: "outputOperand", required: false }
+      ],
+      categoryId: "logic-conditions", keywords: ["if", "condition", "true output", "false output", "conditional value", "comparison"]
+    },
+    andConditions: {
+      id: "andConditions", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "AND — Check Whether All Conditions Are True", explanation: "Check whether every configured comparison is true.",
+      inputContract: "structured-v1", builderKey: "booleanGroup", builderOptions: { functionName: "AND" },
+      guidance: {
+        setupNotes: ["Use current-row cells or entered values. No cross-sheet reference is needed.", "Use a separate Checkbox destination for the logical result."],
+        instructions: ["Select Add Condition and complete its left operand, operator, and right operand.", "Add more conditions as needed; every condition must be complete.", "AND is true when all configured conditions are true. At least one condition is required.", "Ordered comparisons require numbers or dates of the same kind, or current-row cells containing compatible values. The builder cannot infer source column types."]
+      },
+      fields: [
+        { id: "conditions", label: "Condition", type: "array", required: true, minItems: 1, items: { type: "condition" } }
+      ],
+      categoryId: "logic-conditions", keywords: ["and", "all conditions", "every condition", "boolean", "logical test"]
+    },
+    orConditions: {
+      id: "orConditions", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "OR — Check Whether Any Condition Is True", explanation: "Check whether at least one configured comparison is true.",
+      inputContract: "structured-v1", builderKey: "booleanGroup", builderOptions: { functionName: "OR" },
+      guidance: {
+        setupNotes: ["Use current-row cells or entered values. No cross-sheet reference is needed.", "Use a separate Checkbox destination for the logical result."],
+        instructions: ["Select Add Condition and complete all three parts.", "Add alternatives as separate conditions; every configured row must be complete.", "OR is true when at least one configured condition is true. At least one condition is required.", "Ordered comparisons require numbers or dates of the same kind, or current-row cells containing compatible values. The builder cannot infer source column types."]
+      },
+      fields: [
+        { id: "conditions", label: "Condition", type: "array", required: true, minItems: 1, items: { type: "condition" } }
+      ],
+      categoryId: "logic-conditions", keywords: ["or", "any condition", "at least one", "alternatives", "boolean"]
+    },
+    notCondition: {
+      id: "notCondition", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "NOT — Reverse a True/False Condition", explanation: "Reverse the logical result of one comparison.",
+      inputContract: "structured-v1", builderKey: "booleanGroup", builderOptions: { functionName: "NOT" },
+      guidance: {
+        setupNotes: ["Use current-row cells or entered values. No cross-sheet reference is needed.", "Use a separate Checkbox destination for the logical result."],
+        instructions: ["Complete one comparison.", "NOT reverses that comparison's logical result.", "Ordered comparisons require numbers or dates of the same kind, or current-row cells containing compatible values. The builder cannot infer source column types."]
+      },
+      fields: [
+        { id: "condition", label: "Condition", type: "condition", required: true }
+      ],
+      categoryId: "logic-conditions", keywords: ["not", "reverse condition", "inverse", "boolean", "logical test"]
+    }
+  });
+
   const categories = [
     {
       "id": "text-labels",
@@ -1814,6 +1937,10 @@
     {
       "id": "row-hierarchy",
       "label": "Row hierarchy"
+    },
+    {
+      "id": "logic-conditions",
+      "label": "Logic & conditions"
     }
   ];
 

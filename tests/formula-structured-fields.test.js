@@ -41,6 +41,79 @@ test("nested/repeatable Number helper is Enter a number", () => {
   assert.equal(helperText(ui, ui.at("nested.rows[r1].value")), "Enter a number.");
 });
 
+test("comparison labels and choices use plain language without changing semantic paths or defaults", () => {
+  const ui = mount([{ id: "condition", type: "condition", label: "Condition" }, { id: "trueOutput", type: "outputOperand", label: "True output" }, { id: "falseOutput", type: "outputOperand", label: "False output", required: false }]);
+  const labels = () => walk(ui.container).filter(node => node.tagName === "label").map(node => node.textContent);
+  assert.ok(labels().includes("First value type")); assert.ok(labels().includes("Second value type"));
+  assert.ok(labels().includes("Comparison")); assert.ok(labels().includes("True output type"));
+  assert.ok(walk(ui.container).some(node => node.tagName === "legend" && node.textContent === "First value"));
+  assert.ok(walk(ui.container).some(node => node.tagName === "legend" && node.textContent === "Second value"));
+  assert.deepEqual(ui.snapshot().values, {});
+  const first = ui.at("condition.left.type"), id = first.id;
+  assert.equal(first.value, "");
+  assert.deepEqual(first.children.map(node => [node.value, node.textContent]), [["", "Choose…"], ["textLiteral", "Specific text string"], ["number", "Number"], ["boolean", "Boolean"], ["date", "Date"], ["cellRef", "Cell in this row"], ["blank", "Blank"]]);
+  const include = ui.at("falseOutput:include"); include.checked = true; include.dispatch("change");
+  assert.ok(labels().includes("False output type"));
+  assert.ok(labels().every(label => !/Left operand|Right operand|\bOperator\b|\bkind\b/.test(label)));
+  ui.set("condition.left.type", "cellRef");
+  assert.deepEqual(ui.snapshot().values.condition.left, { type: "cellRef", column: "" });
+  assert.equal(ui.at("condition.left.type").id, id);
+  assert.equal(ui.snapshot().uiState.touched["condition.left.type"], true);
+});
+
+test("condition required errors use mapped labels while retaining exact engine records and ordering", () => {
+  const ui = mount([{ id: "conditions", label: "Condition", type: "array", minItems: 1, items: { type: "condition" } }], { conditions: [{}, {}] });
+  const errors = freeze(validate(ui.metadata.fields, ui.snapshot().values).errors);
+  const before = JSON.stringify(errors);
+  const visible = () => walk(ui.container).filter(node => node.className === "field-error" && !node.hidden).map(node => node.textContent);
+  ui.controller.update({ validationErrors: errors }); assert.deepEqual(visible(), []);
+  ui.at("conditions[r1].left.type").dispatch("blur");
+  ui.at("conditions[r1].operator").dispatch("blur");
+  ui.at("conditions[r1].right.type").dispatch("blur");
+  ui.at("conditions[r2].left.type").dispatch("blur");
+  assert.deepEqual(visible(), ["Choose a first value type.", "Choose a comparison.", "Choose a second value type.", "Choose a first value type."]);
+  assert.deepEqual(errors.map(error => [error.path, error.code]), [
+    ["conditions[0].left", "required"], ["conditions[0].operator", "required"], ["conditions[0].right", "required"],
+    ["conditions[1].left", "required"], ["conditions[1].operator", "required"], ["conditions[1].right", "required"]
+  ]);
+  const survivor = ui.at("conditions[r2].left.type");
+  walk(ui.container).find(node => node.getAttribute("aria-label") === "Remove Condition 1").dispatch("click");
+  const reindexed = validate(ui.metadata.fields, ui.snapshot().values).errors;
+  ui.controller.update({ validationErrors: reindexed });
+  assert.equal(ui.at("conditions[r2].left.type"), survivor);
+  assert.equal(reindexed[0].path, "conditions[0].left");
+  assert.deepEqual(visible(), ["Choose a first value type."]);
+  assert.doesNotMatch(visible().join(" "), /conditions\[|\.left|\.right/);
+  assert.equal(JSON.stringify(errors), before);
+});
+
+test("nested condition arrays and empty collections get friendly reusable errors", () => {
+  const fields = [{ id: "nested", type: "object", fields: [{ id: "checks", label: "Condition", type: "condition[]" }] }];
+  const ui = mount(fields, { nested: { checks: [] } });
+  ui.at("nested.checks:add").dispatch("blur");
+  ui.controller.update({ validationErrors: validate(fields, ui.snapshot().values).errors });
+  assert.ok(walk(ui.container).some(node => node.className === "field-error" && !node.hidden && node.textContent === "Add at least one condition."));
+  ui.at("nested.checks:add").dispatch("click");
+  ui.at("nested.checks[r1].right.type").dispatch("blur");
+  ui.controller.update({ validationErrors: validate(fields, ui.snapshot().values).errors });
+  assert.ok(walk(ui.container).some(node => node.className === "field-error" && !node.hidden && node.textContent === "Choose a second value type."));
+});
+
+test("numeric presentation translates only ordinary decimal syntax and retains specific constraints", () => {
+  const fields = [{ id: "n", label: "Number", type: "number", min: "0", max: "9" }, { id: "i", label: "Count", type: "integer" }, { id: "name", label: "Name", type: "text", requiredMessage: "Choose the source name first." }];
+  const ui = mount(fields);
+  const refresh = () => { const result = validate(fields, ui.snapshot().values); ui.controller.update({ validationErrors: result.errors }); return result; };
+  const number = ui.set("n", "j"), result = refresh();
+  assert.equal(result.errors[0].message, "Use decimal syntax.");
+  assert.equal(number.value, "j"); assert.match(helperText(ui, number), /Enter a number\./);
+  assert.doesNotMatch(helperText(ui, number), /decimal syntax/);
+  ui.set("i", "1.2"); refresh(); assert.match(helperText(ui, ui.at("i")), /Use integer syntax\./);
+  ui.set("n", "10"); refresh(); assert.match(helperText(ui, number), /Value must be at most 9\./);
+  ui.set("n", "-1"); refresh(); assert.match(helperText(ui, number), /Value must be at least 0\./);
+  ui.set("n", "9007199254740993"); refresh(); assert.match(helperText(ui, number), /Use a number from -9007199254740992 through 9007199254740992\./);
+  ui.at("name").dispatch("blur"); refresh(); assert.match(helperText(ui, ui.at("name")), /Choose the source name first\./);
+});
+
 for (const batch of [require("./fixtures/formula-common-batch1-cases.json"), batch4]) for (const formula of batch.formulas) {
   test(`production numeric helper policy: ${formula.id}`, () => {
     const fields = require("./helpers/load-formula-core").loadFormulaCore().catalog[formula.id].fields;
@@ -418,7 +491,7 @@ test("friendly text labels preserve semantic types, control IDs, legends and tou
   const ui = mount([{ id: "source", label: "Source text", type: "textOperand" }]);
   const selector = ui.at("source.type"), selectorId = selector.id;
   assert.deepEqual(selector.children.map(node => [node.value, node.textContent]).slice(1), [
-    ["textLiteral", "Specific text string"], ["cellRef", "Current-row cell"]
+    ["textLiteral", "Specific text string"], ["cellRef", "Cell in this row"]
   ]);
   ui.set("source.type", "textLiteral");
   const input = ui.at("source.value"), inputId = input.id;

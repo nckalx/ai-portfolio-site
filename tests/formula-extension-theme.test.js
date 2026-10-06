@@ -10,7 +10,7 @@ const { installStructuredFixtures, descendants, structuredControl, editStructure
 test("theme changes preserve structured raw drafts, rows, DOM and output with theme-only storage", async () => {
   const panel = setupExtension({}, {}, () => {}, installStructuredFixtures); await tick();
   panel.get("library-common").checked = true; panel.get("library-common").dispatch("change");
-  panel.choose("syntheticStructured"); editStructured(panel, "Value kind", "number"); editStructured(panel, "Number", "-");
+  panel.choose("syntheticStructured"); editStructured(panel, "Value type", "number"); editStructured(panel, "Number", "-");
   const input = structuredControl(panel, "Number"), nodes = descendants(panel.get("fields"));
   const count = panel.generationCount(), output = panel.get("formula-output").value;
   for (const expected of ["dark", "light"]) {

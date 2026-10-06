@@ -13,12 +13,12 @@
     cellRef: ["cellRef"], columnRef: ["columnRef"], rangeRef: ["rangeRef"]
   };
   const names = { textLiteral: "Specific text string", number: "Number", boolean: "Boolean", date: "Date",
-    cellRef: "Current-row cell", blank: "Blank", columnRef: "Whole column", rangeRef: "Range",
+    cellRef: "Cell in this row", blank: "Blank", columnRef: "Whole column", rangeRef: "Range",
     currentSheet: "Current sheet", crossSheet: "Cross-sheet named reference" };
   const operators = ["=", "<>", ">", "<", ">=", "<="];
   function expand(rule) {
-    if (rule.type === "condition") return { ...rule, type: "object", fields: [member("left", "typedOperand", "Left operand"), member("operator", "comparisonOperator", "Operator"), member("right", "typedOperand", "Right operand")] };
-    if (rule.type === "criterion") return { ...rule, type: "object", fields: [member("operator", "comparisonOperator", "Operator"), member("value", "typedOperand", "Value")] };
+    if (rule.type === "condition") return { ...rule, type: "object", fields: [member("left", "typedOperand", "First value"), member("operator", "comparisonOperator", "Comparison"), member("right", "typedOperand", "Second value")] };
+    if (rule.type === "criterion") return { ...rule, type: "object", fields: [member("operator", "comparisonOperator", "Comparison"), member("value", "typedOperand", "Value")] };
     if (["criteria[]", "condition[]", "valueOrRange[]"].includes(rule.type)) return {
       ...rule, type: "array", minItems: Math.max(1, rule.minItems || 0),
       items: rule.type === "criteria[]" ? { type: "object", fields: [member("range", "range", "Range"), member("criterion", "criterion", "Criterion")] } : { type: rule.type.slice(0, -2) }
@@ -155,7 +155,8 @@
       host.appendChild(node);
       const title = composite || row ? element("legend", schema.label || schema.id || "Item") : null;
       if (title) node.appendChild(title);
-      let labelText = schema.label || schema.id || "Value";
+      let labelText = rule.type === "comparisonOperator" ? "Comparison" : schema.label || schema.id || "Value";
+      const requiredMessage = (suffix = "") => rule.requiredMessage || `Choose a ${labelText.charAt(0).toLowerCase() + labelText.slice(1)}${suffix}.`;
       let include;
       if (rule.required === false && !row) {
         include = element("input"); include.type = "checkbox"; include.id = id(address, "include");
@@ -169,6 +170,8 @@
       }
       const body = element("div", undefined, "structured-body"); node.appendChild(body);
       const group = anchor(node, node, address, "group", composite ? rule.help : "");
+      group.requiredMessage = () => requiredMessage(families[rule.type] ? " type" : "");
+      if (rule.type === "array" && rule.items.type === "condition" && rule.minItems === 1) group.minItemsMessage = "Add at least one condition.";
       let input, typeControl, scopeControl, add;
       const clearBody = () => {
         record.children.forEach(child => child.destroy()); record.children = [];
@@ -193,7 +196,8 @@
           record.bodyCleanup.push(interaction(add, "click", handler, address));
         } else if (families[rule.type]) {
           const permitted = rule.allowedTypes || families[rule.type];
-          typeControl = control(body, address, "type", `${labelText} kind`, permitted.map(type => [type, names[type]]));
+          typeControl = control(body, address, "type", `${labelText} type`, permitted.map(type => [type, names[type]]));
+          typeControl.requiredMessage = () => requiredMessage(" type");
           const selector = typeControl.node;
           const handler = () => {
             clearTouched(address, [`${address}.type`]);
@@ -209,6 +213,7 @@
           const format = rule.type === "date" ? "Use YYYY-MM-DD." : rule.type === "integer" ? "Enter a whole number." : rule.type === "number" ? "Enter a number." : "";
           const bounds = ["min", "max"].filter(key => Object.hasOwn(rule, key)).map(key => `${key === "min" ? "Minimum" : "Maximum"}: ${rule[key]}.`).join(" ");
           input = control(body, address, "input", labelText, choices, [rule.help, format, bounds].filter(Boolean).join(" "));
+          input.requiredMessage = () => requiredMessage();
           if (["number", "integer"].includes(rule.type)) input.node.setAttribute("inputmode", rule.type === "integer" ? "numeric" : "decimal");
           input.node.setAttribute("aria-required", rule.required === false ? "false" : "true");
           const editor = input.node;
@@ -228,6 +233,7 @@
           record.editorKind = type; record.scopeKind = null;
           if (type === "rangeRef") {
             scopeControl = control(record.editorHost, address, "scope", `${labelText} scope`, ["currentSheet", "crossSheet"].map(scope => [scope, names[scope]]));
+            scopeControl.requiredMessage = () => requiredMessage(" scope");
             const selector = scopeControl.node;
             const handler = () => {
               clearTouched(address, [`${address}.type`, `${address}.scope`]);
@@ -311,7 +317,7 @@
         labelText = text;
         if (title) title.textContent = text;
         if (input && row) input.label.textContent = text;
-        if (typeControl && row) typeControl.label.textContent = `${text} kind`;
+        if (typeControl && row) typeControl.label.textContent = `${text} type`;
         if (scopeControl && row) scopeControl.label.textContent = `${text} scope`;
         if (add && row) add.textContent = `Add ${text}`;
       };
@@ -347,7 +353,12 @@
         if (!touched.some(key => within(key, target.address))) continue;
         visibleErrorCount += 1;
         if (!messages.has(target)) messages.set(target, []);
-        messages.get(target).push(error.message);
+        // Presentation uses the existing mapped field; engine paths/codes/messages stay intact.
+        let message = error.message;
+        if (["required", "operandType", "comparisonOperator"].includes(error.code) && target.requiredMessage) message = target.requiredMessage();
+        else if (error.code === "minItems" && target.minItemsMessage) message = target.minItemsMessage;
+        else if (error.code === "number" && message === "Use decimal syntax.") message = "Enter a number.";
+        messages.get(target).push(message);
       }
       for (const target of anchors) {
         const text = (messages.get(target) || []).join("\n");

@@ -60,11 +60,11 @@ test("reviewed new defaults cover exactly all 44 selectable combinations across 
 });
 
 test("five approved categories preserve Advanced distribution and capability-oriented search keywords", () => {
-  assert.deepEqual(plain(core.categories), generalizedFixtures.categories);
+  assert.deepEqual(plain(core.categories), [...generalizedFixtures.categories, { id: "logic-conditions", label: "Logic & conditions" }]);
   assert.deepEqual(Array.from(core.categories, category => category.label), [
-    "Text & labels", "Dates & status", "Lookups & matching", "Counts & calculations", "Row hierarchy"
+    "Text & labels", "Dates & status", "Lookups & matching", "Counts & calculations", "Row hierarchy", "Logic & conditions"
   ]);
-  assert.equal(new Set(core.categories.map(category => category.id)).size, 5);
+  assert.equal(new Set(core.categories.map(category => category.id)).size, 6);
   const ids = new Set(core.categories.map(category => category.id));
   const formulaIds = Object.keys(core.catalog);
   for (const config of advanced) {
@@ -76,7 +76,7 @@ test("five approved categories preserve Advanced distribution and capability-ori
       assert.ok(!formulaIds.some(id => keyword.toLowerCase().includes(id.toLowerCase())));
     }
   }
-  assert.deepEqual(Array.from(core.categories, category => advanced.filter(config => config.categoryId === category.id).length), [6, 5, 6, 6, 3]);
+  assert.deepEqual(Array.from(core.categories, category => advanced.filter(config => config.categoryId === category.id).length), [6, 5, 6, 6, 3, 0]);
 });
 
 test("default user-facing copy and search metadata contain no organization-specific terminology", () => {
