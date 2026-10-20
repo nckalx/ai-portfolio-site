@@ -47,6 +47,27 @@
   }
   function numeric(value, p) { return p.renderOperand({ type: "number", value }); }
   function blankCondition(cell, p) { return p.renderCondition({ left: cell, operator: "=", right: { type: "blank" } }); }
+  function validateAggregateCriterion(criterion, path) {
+    if (["=", "<>"].includes(criterion.operator) || ["number", "date", "cellRef"].includes(criterion.value.type)) return [];
+    return [{ path, code: "incompatibleCriterion", message: "Use a number, date, or cell containing a compatible value for this comparison." }];
+  }
+  // Named references and the widths of different multi-column spans are opaque.
+  function rangeWidthKind(range) {
+    if (range.type === "columnRef") return "single";
+    if (range.scope === "currentSheet") return range.startColumn === range.endColumn ? "single" : "multiple";
+    return null;
+  }
+  function validateAggregateRanges(ranges) {
+    let firstKnown = null;
+    const errors = [];
+    for (const [range, path] of ranges) {
+      const kind = rangeWidthKind(range);
+      if (!kind) continue;
+      if (!firstKnown) firstKnown = kind;
+      else if (kind !== firstKnown) errors.push({ path, code: "rangeAlignment", message: "Use ranges with the same number of columns and matching rows." });
+    }
+    return errors;
+  }
   const registry = createRegistry({
     decimalRounding: {
       validateOptions(options) { validateFunctionOptions(options, ["ROUND", "ROUNDUP", "ROUNDDOWN"]); },
@@ -209,6 +230,49 @@
       build(values, options, p) {
         const conditions = options.functionName === "NOT" ? [values.condition] : values.conditions;
         return p.renderFunctionCall(options.functionName, conditions.map(condition => p.renderCondition(condition)));
+      }
+    },
+    singleCriterionAggregate: {
+      validateOptions(options) { validateFunctionOptions(options, ["COUNTIF", "SUMIF", "AVERAGEIF"]); },
+      validate(values, options) {
+        const ranges = [[values.range, "range"]];
+        const output = options.functionName === "SUMIF" ? "sumRange" : options.functionName === "AVERAGEIF" ? "averageRange" : null;
+        if (output && Object.hasOwn(values, output)) ranges.push([values[output], output]);
+        return [...validateAggregateCriterion(values.criterion, "criterion"), ...validateAggregateRanges(ranges)];
+      },
+      build(values, options, p) {
+        const args = [p.renderRange(values.range), p.renderCriterion(values.criterion)];
+        const output = options.functionName === "SUMIF" ? "sumRange" : options.functionName === "AVERAGEIF" ? "averageRange" : null;
+        if (output && Object.hasOwn(values, output)) args.push(p.renderRange(values[output]));
+        return p.renderFunctionCall(options.functionName, args);
+      }
+    },
+    criteriaAggregate: {
+      validateOptions(options) { validateFunctionOptions(options, ["COUNTIFS", "SUMIFS"]); },
+      validate(values, options) {
+        const ranges = options.functionName === "SUMIFS" ? [[values.sumRange, "sumRange"]] : [];
+        values.criteria.forEach((pair, index) => ranges.push([pair.range, `criteria[${index}].range`]));
+        return [...values.criteria.flatMap((pair, index) => validateAggregateCriterion(pair.criterion, `criteria[${index}].criterion`)), ...validateAggregateRanges(ranges)];
+      },
+      build(values, options, p) {
+        const args = options.functionName === "SUMIFS" ? [p.renderRange(values.sumRange)] : [];
+        return p.renderFunctionCall(options.functionName, [...args, ...p.renderCriteriaPairs(values.criteria)]);
+      }
+    },
+    percentMatch: {
+      validateOptions: validateEmptyOptions,
+      validate(values) {
+        const errors = [];
+        if (rangeWidthKind(values.range) === "multiple") errors.push({ path: "range", code: "singleColumnRequired", message: "Choose one source column so each value represents one row." });
+        if (values.value.type === "blank") errors.push({ path: "value", code: "nonblankMatch", message: "Choose a nonblank match value." });
+        if (values.value.type === "textLiteral" && values.value.value === "") errors.push({ path: "value.value", code: "requiredText", message: "Enter text to match." });
+        return errors;
+      },
+      build(values, options, p) {
+        const range = p.renderRange(values.range);
+        const denominator = p.renderFunctionCall("COUNT", [range]);
+        const numerator = p.renderFunctionCall("COUNTIFS", [range, p.renderCriterion({ operator: "<>", value: { type: "blank" } }), range, p.renderCriterion({ operator: "=", value: values.value })]);
+        return p.renderFunctionCall("IF", [joinFragments([denominator, numeric("0", p)], " = ", p), numeric("0", p), joinFragments([numerator, denominator], " / ", p)]);
       }
     }
   });

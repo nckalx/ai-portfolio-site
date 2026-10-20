@@ -378,3 +378,34 @@ test("workspace and theme errors stay separate, and clear does not cancel theme 
   p.get("clear-work").dispatch("click"); finishTheme(); await tick();
   assert.equal(p.store.theme, "dark"); assert.equal(p.store[key], undefined);
 });
+
+const batch6 = require("./fixtures/formula-common-batch6-cases.json");
+async function savedBatch6(id, values) {
+  const p = panel(); library(p, "common"); p.get("category").value = "counts-calculations"; p.get("category").dispatch("change");
+  p.choose(id); await tick(); const saved = clone(p.store[key]); saved.drafts[id].values = clone(values); return saved;
+}
+const batch6RoundTrips = batch6.cases.filter(entry => ["representative", "empty input", "= false", "match false", "number", "= number", "match number", "pending Boolean", "empty type", "bad number", "empty text", "empty text rejected", "blank match rejected", "3 ordered pairs", "incomplete pair 1", "sumRange incomplete", "averageRange incomplete", "empty criteria"].includes(entry.name));
+for (const entry of batch6RoundTrips) test(`Batch 6 raw workspace restoration: ${entry.formulaType}: ${entry.name}`, async () => {
+  const p = await restore(await savedBatch6(entry.formulaType, entry.rawValues));
+  assert.equal(p.get("build-view").hidden, false);
+  assert.equal(p.get("formula-output").value, entry.expected.formula || ""); assert.equal(p.get("copy").disabled, entry.expected.formula === null);
+  assert.equal(p.get("validation").textContent, "");
+  assert.ok(descendants(p.get("fields")).every(n => n.getAttribute("aria-invalid") !== "true"));
+  p.get("back").dispatch("click"); await tick();
+  assert.deepEqual(p.store[key].drafts[entry.formulaType].values, entry.rawValues);
+  assert.equal(p.get("category").value, "counts-calculations");
+  p.choose(entry.formulaType); assert.equal(p.get("formula-output").value, entry.expected.formula || "");
+  assert.doesNotMatch(JSON.stringify(p.store[key]), /"touched"|"nextKey"|"rowKey"|"validationErrors"|"references"/);
+});
+for (const id of ["countIfs", "sumIfs"]) test(`Batch 6 reopened criteria regenerate gapped keys and clear touched state: ${id}`, async () => {
+  const values = clone(batch6.cases.find(e => e.formulaType === id && e.name === "3 ordered pairs").rawValues);
+  values.criteria[2] = {};
+  const p = await restore(await savedBatch6(id, values));
+  const third = structuredControl(p, "Range type", 2); third.dispatch("blur"); assert.notEqual(p.get("validation").textContent, "");
+  descendants(p.get("fields")).filter(n => n.tagName === "button" && n.textContent === "Remove")[1].dispatch("click");
+  assert.equal(structuredControl(p, "Range type", 1), third); await tick();
+  assert.deepEqual(p.store[key].drafts[id].values.criteria, [values.criteria[0], {}]);
+  const q = await restore(p.store[key]);
+  assert.notEqual(structuredControl(q, "Range type", 1).id, third.id);
+  assert.equal(q.get("validation").textContent, ""); assert.equal(q.get("copy").disabled, true);
+});

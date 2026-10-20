@@ -17,16 +17,16 @@ const incompatible = path => ({ path, code: "incompatibleComparison", message: "
 
 test("Batch 5 exact allocation, labels, categories and defaults", () => {
   assert.deepEqual(fixtures.formulas.map(config => config.id), ids);
-  assert.deepEqual(Object.keys(core.catalog).slice(-8), ids);
+  assert.deepEqual(Object.keys(core.catalog).slice(-14, -6), ids);
   assert.deepEqual(ids.map(id => core.catalog[id].label), ["Checkbox When Value Matches", "Return Text When Value Matches", "Flag Duplicate Values", "Combine Two Columns with Separator", "IF — Return a Value Based on a Condition", "AND — Check Whether All Conditions Are True", "OR — Check Whether Any Condition Is True", "NOT — Reverse a True/False Condition"]);
   assert.deepEqual(ids.map(id => core.catalog[id].builderKey), ["comparisonReturn", "comparisonReturn", "duplicateFlag", "textCombine", "comparisonReturn", "booleanGroup", "booleanGroup", "booleanGroup"]);
   const entries = Object.values(core.catalog), common = entries.filter(c => c.libraryId === "common");
-  assert.equal(entries.length, 62); assert.equal(common.length, 36);
-  assert.equal(entries.filter(c => c.availability.extension).length, 60);
+  assert.equal(entries.length, 68); assert.equal(common.length, 42);
+  assert.equal(entries.filter(c => c.availability.extension).length, 66);
   assert.equal(entries.filter(c => c.availability.portfolio).length, 26);
   assert.deepEqual(plain(core.categories.at(-1)), { id: "logic-conditions", label: "Logic & conditions" });
   assert.equal(core.categories.length, 6);
-  assert.deepEqual(["text-labels", "dates-status", "counts-calculations", "logic-conditions"].map(id => common.filter(c => c.categoryId === id).length), [11, 3, 15, 7]);
+  assert.deepEqual(["text-labels", "dates-status", "counts-calculations", "logic-conditions"].map(id => common.filter(c => c.categoryId === id).length), [11, 3, 21, 7]);
   for (const config of fixtures.formulas) {
     assert.deepEqual(plain(core.catalog[config.id]), { ...config, libraryId: "common", availability: { extension: true, portfolio: false }, inputContract: "structured-v1", guidance: guidance[config.id] });
     const defaults = config.id === "flagDuplicateValues" ? { ignoreBlank: true } : config.id === "combineTwoColumns" ? { separator: " - ", suppressBlank: true } : {};

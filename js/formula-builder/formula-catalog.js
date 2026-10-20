@@ -1917,6 +1917,92 @@
     }
   });
 
+  Object.assign(catalog, {
+    countIf: {
+      id: "countIf", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "COUNTIF", explanation: "Count cells in a range that match one criterion.",
+      inputContract: "structured-v1", builderKey: "singleCriterionAggregate", builderOptions: { functionName: "COUNTIF" },
+      fields: [
+        { id: "range", label: "Range to check", type: "range", required: true, requiredMessage: "Choose a range to check." },
+        { id: "criterion", label: "Criterion", type: "criterion", required: true }
+      ],
+      guidance: {
+        setupNotes: ["Use a separate destination cell for the count. Create named cross-sheet references in Smartsheet before using the formula.", "The builder cannot verify live source dimensions or data types."],
+        instructions: ["Choose the range, comparison and value. Select Specific text string for literal text or Cell in this row for a value from the current row.", "Equality and inequality accept text, numbers, dates, Boolean values, cells and Blank. Ordered comparisons require a number, date or cell containing a compatible value.", "This counts matching cells; use one source column to count rows. Smartsheet excludes blank cells from inequality matches."]
+      },
+      categoryId: "counts-calculations", keywords: ["countif", "count matching rows", "count matching cells", "one criterion", "conditional count", "checked", "unchecked"]
+    },
+    countIfs: {
+      id: "countIfs", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "COUNTIFS", explanation: "Count matching positions where every configured criterion is met.",
+      inputContract: "structured-v1", builderKey: "criteriaAggregate", builderOptions: { functionName: "COUNTIFS" },
+      fields: [{ id: "criteria", label: "Criterion", type: "criteria[]", required: true, minItems: 1, requiredMessage: "Add at least one criterion." }],
+      guidance: {
+        setupNotes: ["Create named cross-sheet references in Smartsheet before using the formula.", "Select ranges covering the same records in the same order. Using ranges from one source sheet is the clearest setup. The builder cannot verify live dimensions, row alignment or data types."],
+        instructions: ["Add one criterion for each range, comparison and value. Every criterion must match (AND). Use single-column ranges for a row count.", "Select Specific text string for literal text or Cell in this row for a value from the current row. Ordered comparisons require a number, date or compatible cell.", "True and False represent checked and unchecked checkbox values. Smartsheet excludes blank cells from inequality matches."]
+      },
+      categoryId: "counts-calculations", keywords: ["countifs", "count rows", "multiple criteria", "all conditions", "conditional count"]
+    },
+    sumIf: {
+      id: "sumIf", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "SUMIF", explanation: "Sum numeric values whose corresponding cells match one criterion.",
+      inputContract: "structured-v1", builderKey: "singleCriterionAggregate", builderOptions: { functionName: "SUMIF" },
+      fields: [
+        { id: "range", label: "Range to check", type: "range", required: true, requiredMessage: "Choose a range to check." },
+        { id: "criterion", label: "Criterion", type: "criterion", required: true },
+        { id: "sumRange", label: "Range to sum", type: "range", required: false, requiredMessage: "Choose a range to sum." }
+      ],
+      guidance: {
+        setupNotes: ["Create named cross-sheet references in Smartsheet before using the formula.", "Paired ranges should cover the same records in the same order, preferably on one source sheet. The builder cannot verify live dimensions, row alignment or data types."],
+        instructions: ["Choose the range to check, comparison and value. Ordered comparisons require a number, date or compatible cell. Select Cell in this row to use a current-row value.", "Leave Range to sum excluded to sum the checked range. Include it to sum a different aligned numeric range. Complete every included range.", "Smartsheet determines results for no matches, empty or mixed source data."]
+      },
+      categoryId: "counts-calculations", keywords: ["sumif", "conditional sum", "sum matching rows", "one criterion", "optional sum range"]
+    },
+    averageIf: {
+      id: "averageIf", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "AVERAGEIF", explanation: "Average numeric values whose corresponding cells match one criterion.",
+      inputContract: "structured-v1", builderKey: "singleCriterionAggregate", builderOptions: { functionName: "AVERAGEIF" },
+      fields: [
+        { id: "range", label: "Range to check", type: "range", required: true, requiredMessage: "Choose a range to check." },
+        { id: "criterion", label: "Criterion", type: "criterion", required: true },
+        { id: "averageRange", label: "Range to average", type: "range", required: false, requiredMessage: "Choose a range to average." }
+      ],
+      guidance: {
+        setupNotes: ["Create named cross-sheet references in Smartsheet before using the formula.", "Paired ranges should cover the same records in the same order, preferably on one source sheet. The builder cannot verify live dimensions, row alignment or data types."],
+        instructions: ["Choose the range to check, comparison and value. Ordered comparisons require a number, date or compatible cell. Select Cell in this row to use a current-row value.", "Leave Range to average excluded to average the checked range. Include it to average a different aligned numeric range. Complete every included range.", "Smartsheet determines the result when no numeric values qualify. This formula adds no error, blank or zero fallback."]
+      },
+      categoryId: "counts-calculations", keywords: ["averageif", "conditional average", "average matching rows", "mean", "one criterion"]
+    },
+    percentRowsMatchingValue: {
+      id: "percentRowsMatchingValue", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "Percent of Nonblank Values Matching One Value", explanation: "Return the share of nonblank source values matching one value, with 0 for an empty population.",
+      inputContract: "structured-v1", builderKey: "percentMatch", builderOptions: {},
+      fields: [
+        { id: "range", label: "Source range", type: "range", required: true, requiredMessage: "Choose a source range." },
+        { id: "value", label: "Match value", type: "typedOperand", required: true }
+      ],
+      guidance: {
+        setupNotes: ["Use one source column so each value represents one row. Create named cross-sheet references in Smartsheet first; a named source must represent one column.", "The builder cannot verify live source dimensions or data types. Format the destination cell as a percentage in Smartsheet; the formula returns a ratio, not a value multiplied by 100."],
+        instructions: ["Choose the source range and a nonblank match value. Blank and empty Specific text string matches are rejected. A current-row match cell is allowed; its live value cannot be checked here.", "The denominator counts nonblank source values. The numerator requires both a nonblank source value and equality to the match value. An empty population returns 0.", "Use True or False for checkbox values, or Cell in this row for a current-row match. Validate blank, formula-empty and unchecked-checkbox behavior in Smartsheet before relying on the result."]
+      },
+      categoryId: "counts-calculations", keywords: ["percent", "percentage", "matching value", "nonblank values", "nonblank rows", "share", "proportion", "completion rate"]
+    },
+    sumIfs: {
+      id: "sumIfs", libraryId: "common", availability: { extension: true, portfolio: false },
+      label: "SUMIFS", explanation: "Sum numeric values where every configured criterion matches the corresponding position.",
+      inputContract: "structured-v1", builderKey: "criteriaAggregate", builderOptions: { functionName: "SUMIFS" },
+      fields: [
+        { id: "sumRange", label: "Range to sum", type: "range", required: true, requiredMessage: "Choose a range to sum." },
+        { id: "criteria", label: "Criterion", type: "criteria[]", required: true, minItems: 1, requiredMessage: "Add at least one criterion." }
+      ],
+      guidance: {
+        setupNotes: ["Create named cross-sheet references in Smartsheet before using the formula.", "Select ranges covering the same records in the same order. Using ranges from one source sheet is the clearest setup. The builder cannot verify live dimensions, row alignment or data types."],
+        instructions: ["Choose the numeric range to sum first, then add all criteria in the desired order. Every criterion must match (AND).", "For each criterion choose a range, comparison and value. Ordered comparisons require a number, date or compatible cell. Select Cell in this row to use a current-row value.", "The range to sum is required. Smartsheet determines results for no matches, empty or mixed source data."]
+      },
+      categoryId: "counts-calculations", keywords: ["sumifs", "conditional sum", "multiple criteria", "sum matching rows", "all conditions"]
+    }
+  });
+
   const categories = [
     {
       "id": "text-labels",

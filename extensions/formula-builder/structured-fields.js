@@ -172,6 +172,7 @@
       const group = anchor(node, node, address, "group", composite ? rule.help : "");
       group.requiredMessage = () => requiredMessage(families[rule.type] ? " type" : "");
       if (rule.type === "array" && rule.items.type === "condition" && rule.minItems === 1) group.minItemsMessage = "Add at least one condition.";
+      if (schema.type === "criteria[]" && rule.minItems === 1) group.minItemsMessage = "Add at least one criterion.";
       let input, typeControl, scopeControl, add;
       const clearBody = () => {
         record.children.forEach(child => child.destroy()); record.children = [];

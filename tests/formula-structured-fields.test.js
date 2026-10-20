@@ -624,3 +624,13 @@ for (const config of batch4.formulas) {
     assert.equal(JSON.stringify(ui.snapshot().values).includes("r3"), false);
   });
 }
+
+test("criteria minimum is quiet until touched and then uses friendly singular copy", () => {
+  const ui = mount([{ id: "criteria", label: "Criterion", type: "criteria[]", minItems: 1, requiredMessage: "Add at least one criterion." }], { criteria: [] });
+  const errors = validate(ui.metadata.fields, ui.snapshot().values).errors;
+  ui.controller.update({ validationErrors: errors });
+  const visible = () => walk(ui.container).filter(n => n.className === "field-error" && !n.hidden).map(n => n.textContent);
+  assert.deepEqual(visible(), []); ui.at("criteria").dispatch("blur");
+  assert.deepEqual(visible(), ["Add at least one criterion."]);
+  assert.deepEqual(errors, [{ path: "criteria", code: "minItems", message: "Choose at least 1 item(s)." }]);
+});
