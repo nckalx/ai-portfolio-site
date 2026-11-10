@@ -10,6 +10,7 @@ const batch3 = require("./fixtures/formula-common-batch3-cases.json");
 const batch4 = require("./fixtures/formula-common-batch4-cases.json");
 const batch5 = require("./fixtures/formula-common-batch5-cases.json");
 const batch6 = require("./fixtures/formula-common-batch6-cases.json");
+const batch7 = require("./fixtures/formula-common-batch7-cases.json");
 const { discoveryFixture } = require("./helpers/formula-discovery-fixtures");
 const alphabetical = entries => [...entries].sort((a, b) => a.label.toLowerCase() < b.label.toLowerCase() ? -1 : a.label.toLowerCase() > b.label.toLowerCase() ? 1 : a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 const excluded = new Set(["multiLineReportLabel", "rioIdLookup"]);
@@ -190,20 +191,20 @@ function switchLibrary(panel, library) {
   radio.dispatch("change");
 }
 
-test("production Common navigation exposes forty-two choices and exact text/date/calculation/logic categories", () => {
+test("production Common navigation exposes forty-eight choices and exact text/date/calculation/logic categories", () => {
   const panel = setupExtension();
   assert.equal(panel.get("library-advanced").checked, true);
   assert.equal(panel.get("library-selector").hidden, false);
   switchLibrary(panel, "common");
-  assert.deepEqual(resultIds(panel), alphabetical([...batch1.formulas, ...batch2.formulas, ...batch3.formulas, ...batch4.formulas, ...batch5.formulas, ...batch6.formulas]).map(config => config.id));
-  assert.equal(panel.get("result-count").textContent, "42 formulas");
+  assert.deepEqual(resultIds(panel), alphabetical([...batch1.formulas, ...batch2.formulas, ...batch3.formulas, ...batch4.formulas, ...batch5.formulas, ...batch6.formulas, ...batch7.formulas]).map(config => config.id));
+  assert.equal(panel.get("result-count").textContent, "48 formulas");
   assert.deepEqual(categoryIds(panel), ["", "text-labels", "dates-status", "counts-calculations", "logic-conditions"]);
   panel.get("category").value = "text-labels"; panel.get("category").dispatch("change");
   assert.deepEqual(resultIds(panel), alphabetical([...batch2.formulas, ...batch5.formulas.filter(c => c.categoryId === "text-labels")]).map(config => config.id));
   assert.equal(panel.get("result-count").textContent, "11 formulas");
   panel.get("category").value = "dates-status"; panel.get("category").dispatch("change");
-  assert.deepEqual(resultIds(panel), ["dateFromParts", "isBlank", "todayDate"]);
-  assert.equal(panel.get("result-count").textContent, "3 formulas");
+  assert.deepEqual(resultIds(panel), ["dateFromParts", "daysBetweenDates", "daysUntilOrSinceDate", "flagOverdueRows", "isBlank", "netDays", "networkDays", "todayDate", "workdayDate"]);
+  assert.equal(panel.get("result-count").textContent, "9 formulas");
   panel.get("category").value = "counts-calculations"; panel.get("category").dispatch("change");
   assert.equal(panel.get("result-count").textContent, "21 formulas");
   panel.get("search").value = "  NUMBER stored AS TEXT  "; panel.get("search").dispatch("input");
@@ -217,7 +218,7 @@ test("production Common navigation exposes forty-two choices and exact text/date
   assert.equal(panel.get("results-scroll").scrollTop, 51);
   assert.equal(panel.document.activeElement, button);
   panel.get("clear-filters").dispatch("click");
-  assert.deepEqual(resultIds(panel), alphabetical([...batch1.formulas, ...batch2.formulas, ...batch3.formulas, ...batch4.formulas, ...batch5.formulas, ...batch6.formulas]).map(config => config.id));
+  assert.deepEqual(resultIds(panel), alphabetical([...batch1.formulas, ...batch2.formulas, ...batch3.formulas, ...batch4.formulas, ...batch5.formulas, ...batch6.formulas, ...batch7.formulas]).map(config => config.id));
   switchLibrary(panel, "advanced");
   assert.equal(panel.get("result-count").textContent, "24 formulas");
 });
@@ -768,7 +769,7 @@ for (const config of batch4.formulas) {
 test("all production Common formulas validate immediately but initially display no inline errors", () => {
   const panel = setupExtension();
   switchLibrary(panel, "common");
-  for (const config of [...batch1.formulas, ...batch2.formulas, ...batch3.formulas, ...batch4.formulas, ...batch5.formulas, ...batch6.formulas]) {
+  for (const config of [...batch1.formulas, ...batch2.formulas, ...batch3.formulas, ...batch4.formulas, ...batch5.formulas, ...batch6.formulas, ...batch7.formulas]) {
     panel.choose(config.id);
     assert.equal(panel.core.generateFormula(config.id, {}).validationErrors.length > 0, config.id !== "todayDate");
     assertCommonGuidance(panel, config.id);

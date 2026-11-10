@@ -66,9 +66,9 @@ test("five approved categories preserve Advanced distribution and capability-ori
   ]);
   assert.equal(new Set(core.categories.map(category => category.id)).size, 6);
   const ids = new Set(core.categories.map(category => category.id));
-  // These five new IDs coincide with public native function names that already
+  // These IDs coincide with public native function names that already
   // occur in Advanced keywords. Retain every pre-existing internal-ID exclusion.
-  const publicFunctionIds = ["countIf", "countIfs", "sumIf", "averageIf", "sumIfs"];
+  const publicFunctionIds = ["countIf", "countIfs", "sumIf", "averageIf", "sumIfs", "networkDays"];
   const formulaIds = Object.keys(core.catalog).filter(id => !publicFunctionIds.includes(id));
   for (const config of advanced) {
     assert.ok(ids.has(config.categoryId), config.id);

@@ -2003,6 +2003,372 @@
     }
   });
 
+
+  // Phase 5 Batch 7: fixed native date templates; native runtime acceptance is deferred.
+  Object.assign(catalog, {
+    "daysUntilOrSinceDate": {
+      "id": "daysUntilOrSinceDate",
+      "label": "Days Until or Since a Date",
+      "explanation": "Return a signed date difference relative to today using an explicit direction.",
+      "builderKey": "dateDelta",
+      "builderOptions": {
+        "operation": "relativeToToday"
+      },
+      "fields": [
+        {
+          "id": "date",
+          "label": "Date",
+          "type": "dateOperand",
+          "required": true,
+          "help": "Enter a date as YYYY-MM-DD, or choose a date-only cell in this row."
+        },
+        {
+          "id": "direction",
+          "label": "Direction",
+          "type": "enum",
+          "required": true,
+          "enum": [
+            "until",
+            "since"
+          ],
+          "help": "until subtracts today from the date; since subtracts the date from today. Results keep their sign."
+        }
+      ],
+      "keywords": [
+        "days until",
+        "days since",
+        "today",
+        "countdown",
+        "elapsed days",
+        "date difference",
+        "signed calendar days"
+      ],
+      "guidance": {
+        "setupNotes": [
+          "Use date-only source cells and a separate Text/Number destination. Hidden timestamps are outside this template's scope.",
+          "The builder validates literal civil dates, not native date limits or live column types."
+        ],
+        "instructions": [
+          "Choose Date or Cell in this row, then explicitly select until or since.",
+          "until emits date minus TODAY(); since emits TODAY() minus date. No absolute value or endpoint day is added.",
+          "A blank source date is intended to return blank. Verify true blank and formula-empty behavior in Smartsheet before relying on the result.",
+          "TODAY refresh depends on supported Smartsheet sheet updates; viewing a report or dashboard alone may not refresh it."
+        ]
+      },
+      "libraryId": "common",
+      "availability": {
+        "extension": true,
+        "portfolio": false
+      },
+      "inputContract": "structured-v1",
+      "categoryId": "dates-status"
+    },
+    "daysBetweenDates": {
+      "id": "daysBetweenDates",
+      "label": "Days Between Two Dates",
+      "explanation": "Subtract the start date from the end date, preserving the sign.",
+      "builderKey": "dateDelta",
+      "builderOptions": {
+        "operation": "subtract"
+      },
+      "fields": [
+        {
+          "id": "startDate",
+          "label": "Start date",
+          "type": "dateOperand",
+          "required": true,
+          "help": "Enter a date as YYYY-MM-DD, or choose a date-only cell in this row."
+        },
+        {
+          "id": "endDate",
+          "label": "End date",
+          "type": "dateOperand",
+          "required": true,
+          "help": "Enter a date as YYYY-MM-DD, or choose a date-only cell in this row. The result is End date minus Start date and can be negative."
+        }
+      ],
+      "keywords": [
+        "days between dates",
+        "date subtraction",
+        "calendar days",
+        "date difference",
+        "elapsed days",
+        "signed days"
+      ],
+      "guidance": {
+        "setupNotes": [
+          "Use date-only source cells and a separate Text/Number destination. Hidden timestamps are outside this template's scope.",
+          "The builder validates literal civil dates, not native date limits or live column types."
+        ],
+        "instructions": [
+          "Choose Start date and End date as Date or Cell in this row. The formula subtracts Start date from End date.",
+          "The formula preserves the supplied dates and sign without an extra endpoint day, absolute value or rounding.",
+          "A blank source date is intended to return blank. Verify true blank and formula-empty behavior in Smartsheet before relying on the result."
+        ]
+      },
+      "libraryId": "common",
+      "availability": {
+        "extension": true,
+        "portfolio": false
+      },
+      "inputContract": "structured-v1",
+      "categoryId": "dates-status"
+    },
+    "workdayDate": {
+      "id": "workdayDate",
+      "label": "WORKDAY",
+      "explanation": "Shift a date by whole working days using native WORKDAY and optional holiday dates.",
+      "builderKey": "workdayCalculation",
+      "builderOptions": {
+        "functionName": "WORKDAY"
+      },
+      "fields": [
+        {
+          "id": "startDate",
+          "label": "Start date",
+          "type": "dateOperand",
+          "required": true,
+          "help": "Enter a date as YYYY-MM-DD, or choose a date-only cell in this row."
+        },
+        {
+          "id": "offsetDays",
+          "label": "Working days offset",
+          "type": "integer",
+          "required": true,
+          "integerMessage": "Enter a whole number.",
+          "help": "Enter whole working days: positive, negative or zero. Native function limits and result-date overflow can still produce an error."
+        },
+        {
+          "id": "holidays",
+          "label": "Holiday dates",
+          "type": "range",
+          "required": false,
+          "help": "Choose one date column. For a current-sheet range use the same start and end column. A named reference must represent one column; its dimensions and contents cannot be checked here."
+        }
+      ],
+      "keywords": [
+        "workday",
+        "working day",
+        "business day",
+        "add workdays",
+        "subtract workdays",
+        "holiday dates",
+        "date offset"
+      ],
+      "guidance": {
+        "setupNotes": [
+          "Use date-only source cells and a separate Date destination that is not controlled by dependencies.",
+          "Create named holiday references in the destination Smartsheet sheet first. Use one date column; live dimensions and contents cannot be checked by the builder."
+        ],
+        "instructions": [
+          "Choose Start date and enter a whole Working days offset. Positive, negative and zero offsets are passed to native WORKDAY without rounding.",
+          "Leave Holiday dates excluded to omit the third argument, or include one complete date-column reference.",
+          "Working-day settings, zero offsets on nonworking dates, native offset limits and date overflow must be verified in Smartsheet.",
+          "A blank source date is intended to return blank. Verify true blank and formula-empty behavior in Smartsheet before relying on the result."
+        ]
+      },
+      "libraryId": "common",
+      "availability": {
+        "extension": true,
+        "portfolio": false
+      },
+      "inputContract": "structured-v1",
+      "categoryId": "dates-status"
+    },
+    "flagOverdueRows": {
+      "id": "flagOverdueRows",
+      "label": "Flag Overdue Rows",
+      "explanation": "Flag a past-due row, optionally suppressing rows completed by a checkbox or one configured status value.",
+      "builderKey": "overdueFlag",
+      "builderOptions": {},
+      "fields": [
+        {
+          "id": "dueDate",
+          "label": "Due date",
+          "type": "cellRef",
+          "required": true,
+          "help": "Choose a date-only due-date cell in this row."
+        },
+        {
+          "id": "completion",
+          "label": "Completion check",
+          "type": "object",
+          "required": false,
+          "presentation": "completionCheck",
+          "help": "Optional: suppress the flag using a completion checkbox or one status value. No source column or completion value is inferred.",
+          "fields": [
+            {
+              "id": "mode",
+              "label": "Completion check type",
+              "type": "enum",
+              "required": true,
+              "enum": [
+                "checkbox",
+                "status"
+              ],
+              "requiredMessage": "Choose a completion check type."
+            },
+            {
+              "id": "cell",
+              "label": "Completion cell",
+              "type": "cellRef",
+              "required": true
+            },
+            {
+              "id": "value",
+              "label": "Completion text",
+              "type": "text",
+              "required": false,
+              "help": "Enter the one status value that means complete. No value is supplied automatically."
+            }
+          ]
+        }
+      ],
+      "keywords": [
+        "overdue",
+        "past due",
+        "due date",
+        "checkbox",
+        "flag",
+        "completion checkbox",
+        "completed rows",
+        "status completion",
+        "today"
+      ],
+      "guidance": {
+        "setupNotes": [
+          "Use a separate Checkbox or Flag destination. Due date and completion sources must be cells in this row.",
+          "Use date-only due dates; live column types and native output behavior must be verified in Smartsheet."
+        ],
+        "instructions": [
+          "The intended flag is 1 for a due date before today, and 0 for a date due today, in the future or blank.",
+          "Leave Completion check excluded for due-date-only behavior. Include it to select a checkbox or a status column and your own completion text.",
+          "A positive completion match suppresses the flag. Blank completion data is intended to count as incomplete. Verify native checkbox and blank behavior before relying on the result.",
+          "Status text is preserved as entered and uses native Smartsheet equality; case and spacing behavior must be verified. No status or column name is inferred.",
+          "TODAY refresh depends on supported sheet updates; viewing a report or dashboard alone may not refresh it."
+        ]
+      },
+      "libraryId": "common",
+      "availability": {
+        "extension": true,
+        "portfolio": false
+      },
+      "inputContract": "structured-v1",
+      "categoryId": "dates-status"
+    },
+    "networkDays": {
+      "id": "networkDays",
+      "label": "NETWORKDAYS",
+      "explanation": "Call native NETWORKDAYS with the supplied start and end dates and optional holidays.",
+      "builderKey": "workdayCalculation",
+      "builderOptions": {
+        "functionName": "NETWORKDAYS"
+      },
+      "fields": [
+        {
+          "id": "startDate",
+          "label": "Start date",
+          "type": "dateOperand",
+          "required": true,
+          "help": "Enter a date as YYYY-MM-DD, or choose a date-only cell in this row."
+        },
+        {
+          "id": "endDate",
+          "label": "End date",
+          "type": "dateOperand",
+          "required": true,
+          "help": "Enter a date as YYYY-MM-DD, or choose a date-only cell in this row. Passed as the second NETWORKDAYS argument."
+        },
+        {
+          "id": "holidays",
+          "label": "Holiday dates",
+          "type": "range",
+          "required": false,
+          "help": "Choose one date column. For a current-sheet range use the same start and end column. A named reference must represent one column; its dimensions and contents cannot be checked here."
+        }
+      ],
+      "keywords": [
+        "networkdays",
+        "working days between",
+        "business days",
+        "workday count",
+        "holiday dates",
+        "date range"
+      ],
+      "guidance": {
+        "setupNotes": [
+          "Use date-only source cells and a separate Text/Number destination. Hidden timestamps are outside this template's scope.",
+          "The builder validates literal civil dates, not native date limits or live column types.",
+          "Create named holiday references in the destination Smartsheet sheet first. Use one date column; live dimensions and contents cannot be checked by the builder."
+        ],
+        "instructions": [
+          "Choose Start date and End date. NETWORKDAYS receives them in that order without adding or subtracting an endpoint day.",
+          "Leave Holiday dates excluded to omit the third argument, or include one complete date-column reference.",
+          "Smartsheet determines working-day calendar, endpoint and reversed-date behavior. Verify these behaviors in your sheet.",
+          "A blank source date is intended to return blank. Verify true blank and formula-empty behavior in Smartsheet before relying on the result."
+        ]
+      },
+      "libraryId": "common",
+      "availability": {
+        "extension": true,
+        "portfolio": false
+      },
+      "inputContract": "structured-v1",
+      "categoryId": "dates-status"
+    },
+    "netDays": {
+      "id": "netDays",
+      "label": "NETDAYS",
+      "explanation": "Call native NETDAYS with the supplied dates without endpoint or sign adjustments.",
+      "builderKey": "dateDelta",
+      "builderOptions": {
+        "operation": "netDays"
+      },
+      "fields": [
+        {
+          "id": "startDate",
+          "label": "Start date",
+          "type": "dateOperand",
+          "required": true,
+          "help": "Enter a date as YYYY-MM-DD, or choose a date-only cell in this row."
+        },
+        {
+          "id": "endDate",
+          "label": "End date",
+          "type": "dateOperand",
+          "required": true,
+          "help": "Enter a date as YYYY-MM-DD, or choose a date-only cell in this row. Passed as the second NETDAYS argument; this is not the subtraction template."
+        }
+      ],
+      "keywords": [
+        "netdays",
+        "calendar span",
+        "calendar dates",
+        "date range",
+        "start end dates"
+      ],
+      "guidance": {
+        "setupNotes": [
+          "Use date-only source cells and a separate Text/Number destination. Hidden timestamps are outside this template's scope.",
+          "The builder validates literal civil dates, not native date limits or live column types."
+        ],
+        "instructions": [
+          "Choose Start date and End date. NETDAYS receives them in that order without adjusting its result.",
+          "This native calendar-span function is separate from Days Between Two Dates. No holiday argument or weekend exclusion is configured here.",
+          "Verify native endpoint and reversed-date behavior in Smartsheet. Use NETWORKDAYS for the sheet's working-day calculation.",
+          "A blank source date is intended to return blank. Verify true blank and formula-empty behavior in Smartsheet before relying on the result."
+        ]
+      },
+      "libraryId": "common",
+      "availability": {
+        "extension": true,
+        "portfolio": false
+      },
+      "inputContract": "structured-v1",
+      "categoryId": "dates-status"
+    }
+  });
+
   const categories = [
     {
       "id": "text-labels",

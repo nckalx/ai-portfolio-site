@@ -14,14 +14,14 @@ const expected = entry => ({ formulaType: entry.formulaType,
 
 test("Batch 6 approved allocation, counts, fields, labels and no defaults", () => {
   assert.deepEqual(fixtures.formulas.map(config => config.id), ids);
-  assert.deepEqual(Object.keys(core.catalog).slice(-6), ids);
+  assert.deepEqual(Object.keys(core.catalog).slice(-12, -6), ids);
   assert.deepEqual(ids.map(id => core.catalog[id].label), ["COUNTIF", "COUNTIFS", "SUMIF", "AVERAGEIF", "Percent of Nonblank Values Matching One Value", "SUMIFS"]);
   assert.deepEqual(ids.map(id => core.catalog[id].builderKey), ["singleCriterionAggregate", "criteriaAggregate", "singleCriterionAggregate", "singleCriterionAggregate", "percentMatch", "criteriaAggregate"]);
   const all = Object.values(core.catalog), common = all.filter(c => c.libraryId === "common");
-  assert.equal(all.length, 68); assert.equal(common.length, 42);
-  assert.equal(all.filter(c => c.availability.extension).length, 66);
+  assert.equal(all.length, 74); assert.equal(common.length, 48);
+  assert.equal(all.filter(c => c.availability.extension).length, 72);
   assert.equal(all.filter(c => c.availability.portfolio).length, 26);
-  assert.deepEqual(["text-labels", "dates-status", "counts-calculations", "logic-conditions"].map(id => common.filter(c => c.categoryId === id).length), [11, 3, 21, 7]);
+  assert.deepEqual(["text-labels", "dates-status", "counts-calculations", "logic-conditions"].map(id => common.filter(c => c.categoryId === id).length), [11, 9, 21, 7]);
   assert.deepEqual(plain(ids.map(id => core.catalog[id].fields.map(f => f.id))), [["range", "criterion"], ["criteria"], ["range", "criterion", "sumRange"], ["range", "criterion", "averageRange"], ["range", "value"], ["sumRange", "criteria"]]);
   for (const config of fixtures.formulas) {
     assert.deepEqual(plain(core.catalog[config.id]), { ...config, libraryId: "common", availability: { extension: true, portfolio: false }, inputContract: "structured-v1", guidance: guidance[config.id] });

@@ -68,6 +68,13 @@
     }
     return errors;
   }
+  // Guard only current-row date cells; native blank/error semantics remain release QA.
+  function guardDateCells(dates, expression, p) {
+    const checks = dates.filter(date => date.type === "cellRef").map(cell => blankCondition(cell, p));
+    if (!checks.length) return expression;
+    const guard = checks.length === 1 ? checks[0] : p.renderFunctionCall("OR", checks);
+    return p.renderFunctionCall("IF", [guard, p.renderOperand({ type: "blank" }), expression]);
+  }
   const registry = createRegistry({
     decimalRounding: {
       validateOptions(options) { validateFunctionOptions(options, ["ROUND", "ROUNDUP", "ROUNDDOWN"]); },
@@ -257,6 +264,60 @@
       build(values, options, p) {
         const args = options.functionName === "SUMIFS" ? [p.renderRange(values.sumRange)] : [];
         return p.renderFunctionCall(options.functionName, [...args, ...p.renderCriteriaPairs(values.criteria)]);
+      }
+    },
+    dateDelta: {
+      validateOptions(options) {
+        try { namespace.primitives.assertRecord(options, ["operation"]); }
+        catch { throw new TypeError("Structured configuration: expected only operation in builder options."); }
+        if (!["relativeToToday", "subtract", "netDays"].includes(options.operation)) throw new TypeError("Structured configuration: unsupported date operation.");
+      },
+      validate() { return []; },
+      build(values, options, p) {
+        if (options.operation === "relativeToToday") {
+          const date = p.renderOperand(values.date), today = p.renderFunctionCall("TODAY", []);
+          const parts = values.direction === "until" ? [date, today] : [today, date];
+          return guardDateCells([values.date], joinFragments(parts, " - ", p), p);
+        }
+        const start = p.renderOperand(values.startDate), end = p.renderOperand(values.endDate);
+        const result = options.operation === "netDays" ? p.renderFunctionCall("NETDAYS", [start, end]) : joinFragments([end, start], " - ", p);
+        return guardDateCells([values.startDate, values.endDate], result, p);
+      }
+    },
+    workdayCalculation: {
+      validateOptions(options) { validateFunctionOptions(options, ["WORKDAY", "NETWORKDAYS"]); },
+      validate(values) {
+        return Object.hasOwn(values, "holidays") && rangeWidthKind(values.holidays) === "multiple"
+          ? [{ path: "holidays", code: "singleColumnRequired", message: "Choose one holiday date column." }] : [];
+      },
+      build(values, options, p) {
+        const workday = options.functionName === "WORKDAY";
+        const dates = workday ? [values.startDate] : [values.startDate, values.endDate];
+        const args = [p.renderOperand(values.startDate), workday ? numeric(values.offsetDays, p) : p.renderOperand(values.endDate)];
+        if (Object.hasOwn(values, "holidays")) args.push(p.renderRange(values.holidays));
+        return guardDateCells(dates, p.renderFunctionCall(options.functionName, args), p);
+      }
+    },
+    overdueFlag: {
+      validateOptions: validateEmptyOptions,
+      validate(values) {
+        if (!Object.hasOwn(values, "completion")) return [];
+        const completion = values.completion;
+        if (completion.mode === "checkbox" && Object.hasOwn(completion, "value")) return [{ path: "completion.value", code: "unexpectedCompletionValue", message: "Remove the completion text when using a checkbox." }];
+        if (completion.mode === "status" && (!Object.hasOwn(completion, "value") || !completion.value.trim())) return [{ path: "completion.value", code: "requiredText", message: "Enter the completion text." }];
+        return [];
+      },
+      build(values, options, p) {
+        let incomplete = numeric("1", p);
+        if (Object.hasOwn(values, "completion")) {
+          const completion = values.completion;
+          const match = p.renderCondition({ left: completion.cell, operator: "=", right: completion.mode === "checkbox"
+            ? { type: "number", value: "1" } : { type: "textLiteral", value: completion.value } });
+          incomplete = p.renderFunctionCall("IF", [match, numeric("0", p), incomplete]);
+        }
+        const overdue = joinFragments([p.renderOperand(values.dueDate), p.renderFunctionCall("TODAY", [])], " < ", p);
+        const flag = p.renderFunctionCall("IF", [overdue, incomplete, numeric("0", p)]);
+        return p.renderFunctionCall("IF", [blankCondition(values.dueDate, p), numeric("0", p), flag]);
       }
     },
     percentMatch: {

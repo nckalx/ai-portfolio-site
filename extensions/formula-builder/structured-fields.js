@@ -173,17 +173,30 @@
       group.requiredMessage = () => requiredMessage(families[rule.type] ? " type" : "");
       if (rule.type === "array" && rule.items.type === "condition" && rule.minItems === 1) group.minItemsMessage = "Add at least one condition.";
       if (schema.type === "criteria[]" && rule.minItems === 1) group.minItemsMessage = "Add at least one criterion.";
-      let input, typeControl, scopeControl, add;
+      let input, typeControl, scopeControl, add, completionMode;
       const clearBody = () => {
         record.children.forEach(child => child.destroy()); record.children = [];
         for (const cleanup of record.bodyCleanup || []) cleanup();
         record.bodyCleanup = [];
         body.textContent = "";
-        input = typeControl = scopeControl = add = null;
+        input = typeControl = scopeControl = add = completionMode = null;
       };
       function build() {
         if (rule.type === "object") {
-          record.children = rule.fields.map(field => makeField(field, childAddress(address, field.id), body));
+          if (rule.presentation === "completionCheck") {
+            completionMode = control(body, address, "mode", "Completion check type", [["checkbox", "Checkbox"], ["status", "Status text"]]);
+            completionMode.requiredMessage = () => "Choose a completion check type.";
+            completionMode.node.setAttribute("aria-required", "true");
+            const selector = completionMode.node;
+            record.bodyCleanup.push(interaction(selector, "change", () => {
+              clearTouched(address, [address + ".mode"]);
+              const mode = selector.value;
+              const next = mode === "checkbox" ? { mode, cell: {} } : mode === "status" ? { mode, cell: {}, value: "" } : {};
+              edit(record.parts, next, false, address + ".mode");
+            }, address + ".mode"));
+            record.completionHost = element("div"); body.appendChild(record.completionHost);
+            record.completionKind = null;
+          } else record.children = rule.fields.map(field => makeField(field, childAddress(address, field.id), body));
         } else if (rule.type === "array") {
           record.rowHost = element("div", undefined, "structured-rows"); body.appendChild(record.rowHost);
           add = element("button", `Add ${labelText}`, "secondary-button"); add.type = "button";
@@ -215,6 +228,7 @@
           const bounds = ["min", "max"].filter(key => Object.hasOwn(rule, key)).map(key => `${key === "min" ? "Minimum" : "Maximum"}: ${rule[key]}.`).join(" ");
           input = control(body, address, "input", labelText, choices, [rule.help, format, bounds].filter(Boolean).join(" "));
           input.requiredMessage = () => requiredMessage();
+          input.integerMessage = rule.integerMessage;
           if (["number", "integer"].includes(rule.type)) input.node.setAttribute("inputmode", rule.type === "integer" ? "numeric" : "decimal");
           input.node.setAttribute("aria-required", rule.required === false ? "false" : "true");
           const editor = input.node;
@@ -285,7 +299,22 @@
           if (input.node.value !== raw) input.node.value = raw;
           register(input, parts, address);
         } else if (typeControl) syncOperand(value);
-        else if (rule.type === "object") record.children.forEach(child => child.sync([...parts, child.fieldId]));
+        else if (rule.type === "object") {
+          if (completionMode) {
+            const mode = value?.mode || "";
+            if (completionMode.node.value !== mode) completionMode.node.value = mode;
+            register(completionMode, [...parts, "mode"], address + ".mode");
+            if (record.completionKind !== mode) {
+              record.children.forEach(child => child.destroy());
+              const cell = rule.fields.find(field => field.id === "cell");
+              const text = rule.fields.find(field => field.id === "value");
+              const fields = ["checkbox", "status"].includes(mode) ? [{ ...cell, label: mode === "checkbox" ? "Completion checkbox" : "Status column" }, ...(mode === "status" ? [{ ...text, required: true }] : [])] : [];
+              record.children = fields.map(field => makeField(field, childAddress(address, field.id), record.completionHost));
+              record.completionKind = mode;
+            }
+          }
+          record.children.forEach(child => child.sync([...parts, child.fieldId]));
+        }
         else if (rule.type === "array") {
           addresses.set(`${address}:add`, add);
           const keys = state.rows[address] || [];
@@ -359,6 +388,7 @@
         if (["required", "operandType", "comparisonOperator"].includes(error.code) && target.requiredMessage) message = target.requiredMessage();
         else if (error.code === "minItems" && target.minItemsMessage) message = target.minItemsMessage;
         else if (error.code === "number" && message === "Use decimal syntax.") message = "Enter a number.";
+        else if (error.code === "integer" && message === "Use integer syntax." && target.integerMessage) message = target.integerMessage;
         messages.get(target).push(message);
       }
       for (const target of anchors) {
